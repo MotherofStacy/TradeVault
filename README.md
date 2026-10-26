@@ -57,7 +57,7 @@ The first time you run the installer, Windows may say "Windows protected your PC
 
 ## The iPhone version
 
-The same journal, running as a home-screen app in Safari. Log trades and reviews during the day, then bring them into your PC with **Merge into my journal**. Saving a backup opens the iPhone share sheet, so you can mail it to yourself or save it to Files.
+The same journal, running as a home-screen app in Safari. Log trades and reviews during the day, then bring them into your PC with **Merge into my journal**. Saving a backup opens the iPhone share sheet, so you can mail it to yourself or save it to Files. After you open it once with a connection, it also opens with no internet at all, and it picks up new versions the next time you're online.
 
 ## Your privacy
 
