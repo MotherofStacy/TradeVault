@@ -6003,6 +6003,7 @@ ready.then(function(){return picMeta()}).then(function(list){
 var TA=window.__TAURI__||null,TFS=TA&&(TA.fs||window.__TAURI_PLUGIN_FS__),TDLG=TA&&(TA.dialog||window.__TAURI_PLUGIN_DIALOG__),TOPEN=TA&&(TA.opener||window.__TAURI_PLUGIN_OPENER__);
 var TNOTE=TA&&(TA.notification||window.__TAURI_PLUGIN_NOTIFICATION__)||null,TAUTO=TA&&(TA.autostart||window.__TAURI_PLUGIN_AUTOSTART__)||null;
 var TWIN=TA&&TA.window&&TA.window.getCurrentWindow?TA.window.getCurrentWindow():null;
+var TUPD=TA&&(TA.updater||window.__TAURI_PLUGIN_UPDATER__)||null,TPROC=TA&&(TA.process||window.__TAURI_PLUGIN_PROCESS__)||null;
 var APP=!!(TA&&TA.path&&TFS&&TDLG);
 var AUTO_KEEP=3,AUTO_EVERY=15*60000;
 /* home: the app's folder; file: journal.json; cfgFile: app.json, which keeps the backup folder and the tray and sign-in choices */
@@ -6051,7 +6052,7 @@ function appPrune(){return appListBackups().then(function(ns){var auto=ns.filter
   return Promise.all(auto.slice(AUTO_KEEP).map(function(n){return appJoin(appBkDir(),n).then(function(p){return TFS.remove(p)})}))})}
 /* every 15 minutes, only when something changed since the last automatic backup */
 function appTimed(){if(!appS.ready||(state.savedAt||0)<=(appS.autoAt||0))return;appBackup('auto','timed').catch(function(){})}
-var APP_BK_WHY={'open':'when the app opened','timed':'every 15 minutes','before-merge':'before a merge','before-restore':'before a restore','before-settings':'before loading settings','before-delete-all':'before deleting all trades','before-clear-examples':'before clearing examples'};
+var APP_BK_WHY={'open':'when the app opened','timed':'every 15 minutes','before-merge':'before a merge','before-update':'before an update','before-restore':'before a restore','before-settings':'before loading settings','before-delete-all':'before deleting all trades','before-clear-examples':'before clearing examples'};
 function appBkLabel(n){var m=/^(?:tradevault|trade-journal)-(auto|backup)-(\d{4}-\d{2}-\d{2})(?:-(\d{2})(\d{2})(\d{2})?)?(?:-([a-z][\w-]*))?\.json$/.exec(n);if(!m)return esc(n);
   var when=shortDate(m[2])+(m[3]?' at '+m[3]+':'+m[4]+(m[5]?':'+m[5]:''):''),why=APP_BK_WHY[m[6]]||'';
   return m[1]==='auto'?'<b>Automatic</b> · '+when+(why?' · '+why:''):'<b>Your backup</b> · '+when}
@@ -6082,13 +6083,40 @@ function appPanelHTML(){var c=appS.cfg;
 function appRefreshPanel(){var b=$('#appBox');if(b){b.outerHTML=appPanelHTML();appStat();appFillList()}}
 
 /* ---- the banner at the top: a missing backup folder, a welcome on the first run, and a nudge until a backup folder is chosen ---- */
-function renderAppNote(){var el=$('#appNote');if(!el)return;if(!APP||!appS.ready||ui.tab==='data'){el.hidden=true;el.innerHTML='';return}
+function renderAppNote(){var el=$('#appNote');if(!el)return;if(!APP||!appS.ready){el.hidden=true;el.innerHTML='';return}
+  var upd=appUpdBannerHTML();if(ui.tab==='data'){el.hidden=!upd;el.innerHTML=upd;return}
   var later=lsGet('dayTradeLedger.appNoteLater'),msgs=[],canLater=false;
   if(appS.bkMissing)msgs.push('<b>Your backup folder can’t be reached</b> ('+esc(appS.cfg.backupDir)+'). If it is on a drive that is unplugged, plug it back in. Until then, backups go to the app’s own folder.');
   if(appS.first&&exAny()){msgs.push('<b>Welcome to TradeVault.</b> To bring in your journal from the browser, use Restore from backup file in Setup &amp; data, Backup &amp; data, or drop the backup file onto this window.');canLater=true}
   if(!appS.cfg.backupDir&&!(later&&+later>Date.now())){msgs.push('<b>Choose a backup folder</b> so your backups are kept where you want them.');canLater=true}
-  if(!msgs.length){el.hidden=true;el.innerHTML='';return}
-  el.hidden=false;el.innerHTML='<div class="banner" role="status"><span>'+msgs.join('<br>')+'</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" type="button" id="appNoteGo">Open Backup &amp; data</button>'+(canLater?'<button class="btn small" type="button" id="appNoteLater">Later</button>':'')+'</span></div>'}
+  if(!msgs.length){el.hidden=!upd;el.innerHTML=upd;return}
+  el.hidden=false;el.innerHTML=upd+(upd?'<div style="height:8px"></div>':'')+'<div class="banner" role="status"><span>'+msgs.join('<br>')+'</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" type="button" id="appNoteGo">Open Backup &amp; data</button>'+(canLater?'<button class="btn small" type="button" id="appNoteLater">Later</button>':'')+'</span></div>'}
+
+/* ---- updates: TradeVault asks GitHub for the newest version a little after it opens, every 6 hours while it runs, and when you
+   press Check for updates. Installing saves the journal and backs it up first; the app then closes, updates and opens again ---- */
+function appUpdOn(){return appS.cfg.autoUpdate!==false}
+function appCheckUpdate(manual){if(!TUPD)return Promise.resolve(null);if(manual)appUpdStat('Checking…');
+  return Promise.resolve(TUPD.check()).then(function(u){appS.update=u||null;appS.updErr='';appS.updChecked=Date.now();renderAppNote();appUpdStat();
+      if(u&&!manual&&!document.hasFocus()&&appS.updTold!==u.version){appS.updTold=u.version;appTell('TradeVault '+u.version+' is ready','Open TradeVault and choose Update now.')}
+      if(manual&&!u)toast('You have the newest version');return u},
+    function(e){var m=appErr(e);if(/release JSON|404|error sending request|dns|connect/i.test(m))m='no update information found online (nothing published yet, or no internet connection)';
+      appS.updErr=m;appUpdStat();if(manual)toast('Could not check for updates: '+m);return null})}
+function appUpdStat(text){var el=$('#appUpdStat');if(!el)return;var u=appS.update;
+  el.innerHTML=text?esc(text):u?'<b>TradeVault '+esc(u.version)+' is ready.</b> <button class="btn small primary" type="button" id="appUpdNow">Update now</button>':
+    appS.updErr?'<span class="loss">Couldn’t check: '+esc(appS.updErr)+'</span>':
+    appS.updChecked?'You have the newest version. Checked at '+new Date(appS.updChecked).toLocaleTimeString()+'.':'Not checked yet.'}
+function appUpdBannerHTML(){var u=appS.update;if(!u||appS.updLater===u.version)return '';
+  if(appS.updating)return '<div class="banner" role="status"><span><b>Updating TradeVault to '+esc(u.version)+'…</b> <span id="appUpdPct"></span> TradeVault closes and opens again by itself.</span></div>';
+  var notes=String(u.body||'').split(/\r?\n/).map(function(l){return l.replace(/^[-•*]\s*/,'').trim()}).filter(Boolean).slice(0,3).join(' · ');
+  return '<div class="banner" role="status"><span><b>TradeVault '+esc(u.version)+' is ready.</b> '+(notes?esc(notes.length>220?notes.slice(0,217)+'…':notes)+' ':'')+'Your journal is saved and backed up before it installs.</span>'+
+    '<span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small primary" type="button" id="appUpdNow">Update now</button><button class="btn small" type="button" id="appUpdLater">Later</button></span></div>'}
+function appInstallUpdate(){var u=appS.update;if(!u||appS.updating)return;appS.updating=true;renderAppNote();appUpdStat('Updating…');
+  appSaveNow().then(function(){return appBackup('auto','before-update')}).catch(function(){})
+  .then(function(){var got=0,total=0;return u.downloadAndInstall(function(ev){
+    if(ev.event==='Started')total=ev.data&&ev.data.contentLength||0;
+    else if(ev.event==='Progress'){got+=ev.data&&ev.data.chunkLength||0;var el=$('#appUpdPct');if(el&&total)el.textContent=Math.min(100,Math.round(got/total*100))+'% downloaded.'}})})
+  .then(function(){return TPROC&&TPROC.relaunch()})
+  .catch(function(e){appS.updating=false;renderAppNote();appUpdStat();toast('The update did not install: '+appErr(e))})}
 
 /* ---- pictures as files: pictures\<id>.png (or .jpg and so on) plus pictures\pictures.json, which lists what each picture belongs to.
    The first time, pictures already saved in the app's browser storage are copied over; that copy is left as it was ---- */
@@ -6152,7 +6180,11 @@ function appSettingsHTML(){var c=appS.cfg,mode=appTrayMode(),hidden=c.startHidde
     opt('appTray','min',mode==='min','The minimize button (–) sends TradeVault to the tray, and the X closes it')+
     opt('appTray','close',mode==='close','The X sends TradeVault to the tray; quit from the tray icon')+
     opt('appTray','off',mode==='off','Neither: minimize and X work as usual')+
-    note('In the tray, TradeVault keeps saving, backing up every 15 minutes and showing reminder notifications. Click its icon by the clock (it may be behind the ^ arrow) to show or hide the window; right-click it to back up or quit.')}
+    note('In the tray, TradeVault keeps saving, backing up every 15 minutes and showing reminder notifications. Click its icon by the clock (it may be behind the ^ arrow) to show or hide the window; right-click it to back up or quit.')+
+    (TUPD?'<h2 class="sub" style="margin-top:20px">Updates</h2>'+
+      '<label class="chk"><input id="appAutoUpd" type="checkbox"'+(appUpdOn()?' checked':'')+'> Check for updates when TradeVault opens</label>'+
+      '<div class="actions" style="margin-top:8px;align-items:center"><button class="btn small" type="button" id="appUpdCheck">Check for updates</button><span class="muted" style="font-size:13px" id="appUpdStat"></span></div>'+
+      note('This is TradeVault '+esc(appS.version||'')+'. A new version is offered with an Update now button; your journal is saved and backed up first, then TradeVault closes, updates and opens again. Only the app changes: your journal, backups and pictures stay where they are.'):'')}
 
 /* ---- start-up: find the journal file, take whichever copy is newer, set up the picture files, then back up ---- */
 function appInit(){
@@ -6169,6 +6201,8 @@ function appInit(){
   .then(function(){return appS.ready?appPicStore().catch(function(e){appS.picErr=appErr(e);return null}):null}).then(function(s){if(picFilesDone)picFilesDone(s)})
   .then(function(){if(!appS.ready)return;
     setInterval(appTimed,AUTO_EVERY);setInterval(appBkProbe,60000);setInterval(appNotify,60000);setTimeout(appNotify,8000);
+    if(TA.app&&TA.app.getVersion)Promise.resolve(TA.app.getVersion()).then(function(v){appS.version=v}).catch(function(){});
+    if(TUPD){setTimeout(function(){if(appUpdOn())appCheckUpdate(false)},10000);setInterval(function(){if(appUpdOn())appCheckUpdate(false)},6*3600e3)}
     return appBackup('auto','open')})
   .catch(function(e){appS.err=appErr(e)})
   .then(function(){if(picFilesDone)picFilesDone(null);renderAppNote();appRefreshPanel();if(appS.err)toast('Journal file problem: '+appS.err)})}
@@ -6187,7 +6221,8 @@ if(APP){
   DATA_SUBS.push(['app','TradeVault app']);DATA_NOSAVE.push('app');
   var _renderDataBrowser=renderData;renderData=function(){_renderDataBrowser();var secs=document.querySelectorAll('#tab-data .dsec'),last=secs[secs.length-1];if(!last)return;
     last.insertAdjacentHTML('afterend','<div class="panel dsec" data-dsec="app"'+(ui.dataSub==='app'?'':' hidden')+'>'+appSettingsHTML()+'</div>');
-    if(TAUTO)Promise.resolve(TAUTO.isEnabled()).then(function(on){var cb=$('#appAuto');if(cb){cb.checked=!!on;cb.disabled=false}}).catch(function(){})};
+    if(TAUTO)Promise.resolve(TAUTO.isEnabled()).then(function(on){var cb=$('#appAuto');if(cb){cb.checked=!!on;cb.disabled=false}}).catch(function(){});
+    appUpdStat()};
   /* the Windows notifications switch sits at the top of the Dashboard reminders settings */
   if(TNOTE){var _remindHTMLBrowser=remindHTML;remindHTML=function(){return '<label class="chk" style="margin-bottom:6px"><input id="winNotify" type="checkbox"'+(appNotifyOn()?' checked':'')+'> Also show reminders as Windows notifications</label> <button class="btn small" type="button" id="winNotifyTest">Send a test notification</button>'+
     '<p class="muted" style="font-size:12px;margin:4px 0 10px">Each reminder pops up once a day, even when TradeVault is behind other windows or in the tray, but not while you are looking at the Dashboard or while the journal is locked.</p>'+_remindHTMLBrowser()}}
@@ -6210,6 +6245,9 @@ if(APP){
     else if(b.dataset.appres)appRestoreFrom(b.dataset.appres);
     else if(b.id==='appNoteGo'){ui.dataSub='backup';go('data')}
     else if(b.id==='appNoteLater'){lsSet('dayTradeLedger.appNoteLater',String(Date.now()+7*864e5));renderAppNote()}
+    else if(b.id==='appUpdNow')appInstallUpdate();
+    else if(b.id==='appUpdLater'){if(appS.update)appS.updLater=appS.update.version;renderAppNote();toast('The update will be offered again next time TradeVault opens')}
+    else if(b.id==='appUpdCheck')appCheckUpdate(true)
     else if(b.id==='winNotifyTest')appNotePerm().then(function(ok){if(!ok){toast('Windows did not allow notifications. Check Settings, System, Notifications');return}
       TNOTE.sendNotification({title:'TradeVault',body:'Notifications are working. Your reminders will show up like this.'});toast('Test notification sent')}).catch(function(err){toast('Could not send a notification: '+appErr(err))})});
   document.addEventListener('change',function(e){var t=e.target;
@@ -6217,6 +6255,7 @@ if(APP){
     if(t.id==='appAuto'){t.disabled=true;Promise.resolve(t.checked?TAUTO.enable():TAUTO.disable()).then(function(){return TAUTO.isEnabled()})
       .then(function(on){t.checked=!!on;toast(on?'TradeVault will open when you sign in':'TradeVault won’t open when you sign in')},function(err){toast('Could not change that: '+appErr(err))}).then(function(){t.disabled=false});return}
     if(t.name==='appStart'){appS.cfg.startHidden=t.value==='tray';appCfgSave().then(function(){toast(t.value==='tray'?'At sign-in it will start in the tray':'At sign-in it will open the window')});return}
+    if(t.id==='appAutoUpd'){appS.cfg.autoUpdate=t.checked;appCfgSave().then(function(){toast(t.checked?'TradeVault will check for updates when it opens':'Automatic update checks are off; use Check for updates')});return}
     if(t.name==='appTray'){appS.cfg.tray=t.value;appCfgSave().then(function(){toast(t.value==='min'?'Minimize now sends it to the tray':t.value==='close'?'The X now sends it to the tray':'Minimize and X work as usual')})}});
 }else if(picFilesDone)picFilesDone(null);
 load();
@@ -6928,5 +6967,17 @@ Version 75  (Oct 25, 2026)  (Update history: 2.01)
   download, which is unreliable in iPhone home-screen apps
 - In a browser, the journal asks for its storage to be kept for good, so
   the browser (Safari especially) doesn't clear it to save space
+Version 76  (Oct 25, 2026)  (Update history: 2.1)
+--------------------------
+- TradeVault app: automatic updates. A little after it opens (and every
+  6 hours while it runs) TradeVault checks for a new version and shows
+  Update now and Later. Updating saves and backs up your journal first,
+  then TradeVault closes, updates and opens again by itself
+- TradeVault app: Check for updates, and a switch for the automatic
+  check, on the TradeVault app page in Setup & data
+- Updates are signed: TradeVault only installs an update made with your
+  own signing key, and refuses anything changed along the way
+- TradeVault desktop app updated to 2.1.0, with Merge into my journal and
+  the phone changes from 2.0 and 2.01
 </script>
 </body></html>
