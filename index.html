@@ -49,6 +49,9 @@ h2.sub{font-family:var(--font-body);font-size:12px;font-weight:600;letter-spacin
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.danger{color:var(--loss)}
 .btn.small{padding:4px 9px;font-size:12px}
+/* with a box color of your own, text inside boxes uses its own readable color; text on the background keeps the theme's */
+:root[data-boxc] :is(.panel,.strip,.side,.acct-card,.remind,.dbar,.undo-bar,.kbd-card,.lock-card,.cal,.btn:not(.primary)){--fg:var(--box-fg);--muted:var(--box-muted);--bg:var(--box-field);--gain:var(--box-gain);--loss:var(--box-loss);--warn:var(--box-warn);--warn-bg:var(--box-warn-bg)}
+:root[data-boxc] :is(.panel,.strip,.side,.acct-card,.remind,.dbar,.undo-bar,.kbd-card,.lock-card,.cal){color:var(--fg)}
 .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .strip>div{padding:14px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0;min-width:0}
 .strip dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 4px}
@@ -5525,7 +5528,28 @@ function applyLookExtra(){
   var fb=fontStack(FONT_BODY,st.fontBody);if(fb)root.style.setProperty('--font-body',fb);else root.style.removeProperty('--font-body');
   /* numbers use the text font unless a separate numbers font is picked */
   var fm=fontStack(FONT_MONO,st.fontMono);if(fm)root.style.setProperty('--font-mono',fm);else root.style.removeProperty('--font-mono');
+  /* a button color of your own replaces the one taken from the background; text on it turns dark or light to stay readable */
+  if(ok(st.btnColor)){var c=st.btnColor,r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16),lum=(.2126*r+.7152*g+.0722*b)/255,
+      mix=function(v){return Math.round(v+(255-v)*.35)};
+    root.style.setProperty('--accent',c);root.style.setProperty('--accent-hi','rgb('+mix(r)+','+mix(g)+','+mix(b)+')');
+    root.style.setProperty('--accent-soft','rgba('+r+','+g+','+b+',.14)');root.style.setProperty('--accent-fg',lum>.55?'#14101a':'#ffffff')}
+  /* a box color of your own: panels, cards and calendar days use it, shaded a little, and the text turns dark or light to stay readable */
+  if(ok(st.boxColor)){var bc=st.boxColor,R=parseInt(bc.slice(1,3),16),G=parseInt(bc.slice(3,5),16),B=parseInt(bc.slice(5,7),16),pale=(.2126*R+.7152*G+.0722*B)/255>.55,
+      sh=function(k){var t=pale?0:255;return 'rgb('+[R,G,B].map(function(v){return Math.round(v+(t-v)*k)}).join(',')+')'};
+    root.style.setProperty('--surface','rgba('+R+','+G+','+B+',.86)');root.style.setProperty('--card',sh(.08));
+    root.style.setProperty('--cal-cell',bc);root.style.setProperty('--cal-head',sh(.1));root.style.setProperty('--cal-wk',sh(.05));root.style.setProperty('--cal-line',sh(.25));
+    root.style.setProperty('--cal-out','rgb('+[R,G,B].map(function(v){return Math.round(v+((pale?255:0)-v)*.25)}).join(',')+')');
+    root.style.setProperty('--box-fg',pale?'#16121c':'#f3f0f7');root.style.setProperty('--box-muted',pale?'#4a4452':'#c4bccd');
+    /* profit, loss and warning colors switch to the set made for that shade of box, unless you picked your own */
+    var sc=pale?{gain:'#0f7a3d',loss:'#b3261e',warn:'#8a5a00','warn-bg':'#fff4d6'}:{gain:'#4cc58a',loss:'#ff7b70',warn:'#f0c15a','warn-bg':'#2e2410'};
+    if(ok(st.gainColor))sc.gain=st.gainColor;if(ok(st.lossColor))sc.loss=st.lossColor;
+    Object.keys(sc).forEach(function(k){root.style.setProperty('--box-'+k,sc[k])});
+    root.style.setProperty('--box-field','rgb('+[R,G,B].map(function(v){return Math.round(v+((pale?255:0)-v)*(pale?.6:.3))}).join(',')+')');root.setAttribute('data-boxc','')}
+  else root.removeAttribute('data-boxc');
 }
+/* the color currently on screen as #rrggbb, for the color picker's starting value */
+function cssHex(v){var m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(v||'');if(!m){var d=document.createElement('i');d.style.color=v;document.body.appendChild(d);m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(d).color);d.remove()}
+  return m?'#'+[m[1],m[2],m[3]].map(function(x){return (+x).toString(16).padStart(2,'0')}).join(''):'#3fb7b0'}
 var _applyPalette29=applyPalette;applyPalette=function(){
   var st=state.settings,root=document.documentElement;root.style.removeProperty('--gain');root.style.removeProperty('--loss');_applyPalette29();applyLookExtra()};
 function lookExtraHTML(){var st=state.settings,g=/^#[0-9a-f]{6}$/i.test(st.gainColor||'')?st.gainColor:'#4cc58a',l=/^#[0-9a-f]{6}$/i.test(st.lossColor||'')?st.lossColor:'#ff7b70';
@@ -5533,6 +5557,12 @@ function lookExtraHTML(){var st=state.settings,g=/^#[0-9a-f]{6}$/i.test(st.gainC
   return '<div class="panel"><h2>Theme</h2><p class="help">Dark or light, or follow your computer&#39;s setting as it changes.</p><div class="seg">'+
       [['dark','Dark'],['light','Light'],['system','Match system']].map(function(o){return '<button class="btn'+(themePref()===o[0]?' primary':'')+'" type="button" data-themepick="'+o[0]+'">'+o[1]+'</button>'}).join('')+'</div></div>'+
     '<div class="panel"><h2>Colors and fonts</h2><p class="help">Pick the colors for profit and loss, and the fonts for text and numbers. Changes apply right away.</p>'+
+    (function(){var own=/^#[0-9a-f]{6}$/i.test(st.btnColor||''),v=own?st.btnColor:cssHex(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+      return '<div class="look-row"><label for="lx-btn">Button color</label><div class="look-ctl"><input id="lx-btn" type="color" value="'+v+'">'+(own?'<button class="btn small" type="button" data-lxreset="btnColor">Match background</button>':'')+
+        '<button class="btn small primary" type="button" tabindex="-1">Example</button><span class="muted" style="font-size:12px">'+(own?'Your own color':'Taken from the background')+'. Also colors the selected tab and highlights.</span></div></div>'})()+
+    (function(){var own=/^#[0-9a-f]{6}$/i.test(st.boxColor||''),v=own?st.boxColor:cssHex(getComputedStyle(document.documentElement).getPropertyValue('--cal-cell').trim());
+      return '<div class="look-row"><label for="lx-box">Box color</label><div class="look-ctl"><input id="lx-box" type="color" value="'+v+'">'+(own?'<button class="btn small" type="button" data-lxreset="boxColor">Match background</button>':'')+
+        '<span class="muted" style="font-size:12px">'+(own?'Your own color':'Taken from the background')+'. Used for panels, cards and calendar days; the text turns dark or light to stay readable.</span></div></div>'})()+
     '<div class="look-row"><label for="lx-gain">Profit color</label><div class="look-ctl"><input id="lx-gain" type="color" value="'+g+'"><button class="btn small" type="button" data-lxreset="gainColor">Default</button><span class="gain" style="font-family:var(--font-mono)">+'+esc(cur())+'125.00</span></div></div>'+
     '<div class="look-row"><label for="lx-loss">Loss color</label><div class="look-ctl"><input id="lx-loss" type="color" value="'+l+'"><button class="btn small" type="button" data-lxreset="lossColor">Default</button><span class="loss" style="font-family:var(--font-mono)">−'+esc(cur())+'80.00</span></div></div>'+
     '<div class="look-row"><label for="lx-fbody">Text font</label><div class="look-ctl">'+fontPicker('lx-fbody',FONT_BODY,st.fontBody)+'</div></div>'+
@@ -5540,12 +5570,14 @@ function lookExtraHTML(){var st=state.settings,g=/^#[0-9a-f]{6}$/i.test(st.gainC
     '<p class="muted" style="font-size:12px;margin:6px 0 0">Click a box and type to search, then pick from the list. Fonts like Inter or Roboto download from Google Fonts the first time, so they need an internet connection.</p></div>'}
 var _renderSettings29=renderSettings;renderSettings=function(){_renderSettings29();var c=document.querySelector('#tab-settings>div:not(.set-seg):not(.notes-wrap)');if(c)c.insertAdjacentHTML('beforeend',lookExtraHTML())};
 document.addEventListener('input',function(e){var id=e.target.id;
-  if(id==='lx-gain'||id==='lx-loss'){state.settings[id==='lx-gain'?'gainColor':'lossColor']=e.target.value;applyLookExtra();clearTimeout(lookExtraHTML.h);lookExtraHTML.h=setTimeout(save,300)}});
+  if(id==='lx-gain'||id==='lx-loss'||id==='lx-btn'||id==='lx-box'){state.settings[{'lx-gain':'gainColor','lx-loss':'lossColor','lx-btn':'btnColor','lx-box':'boxColor'}[id]]=e.target.value;applyLookExtra();clearTimeout(lookExtraHTML.h);lookExtraHTML.h=setTimeout(save,300)}});
+/* once a button color is picked, show the Match background button */
+document.addEventListener('change',function(e){var k={'lx-btn':'btnColor','lx-box':'boxColor'}[e.target.id];if(k&&!document.querySelector('[data-lxreset="'+k+'"]'))renderSettings()});
 document.addEventListener('change',function(e){var id=e.target.id;
   if(id==='lx-fbody'||id==='lx-fmono'){var list=id==='lx-fbody'?FONT_BODY:FONT_MONO,f=fontByName(list,e.target.value);
     if(!f){toast('No font by that name. Pick one from the list.');renderSettings();return}
     state.settings[id==='lx-fbody'?'fontBody':'fontMono']=f[0];save();applyLookExtra();e.target.value=f[1];toast('Font changed to '+f[1])}});
-document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-lxreset]');if(!b)return;delete state.settings[b.dataset.lxreset];save();applyPalette();renderSettings();toast('Color reset')});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-lxreset]');if(!b)return;delete state.settings[b.dataset.lxreset];save();applyPalette();renderSettings();toast({btnColor:'Buttons match the background again',boxColor:'Boxes match the background again'}[b.dataset.lxreset]||'Color reset')});
 
 /* ---------- Dashboard summary numbers you can pick and order ---------- */
 var TILES=[['net','Net P&L',1],['leader','Leader account',1],['win','Win rate',1],['pf','Profit factor',1],['exp','Expectancy',1],['avgr','Average R',1],['avgwl','Avg win / loss',1],['dd','Max drawdown',1],
@@ -7645,6 +7677,16 @@ Version 81  (Oct 26, 2026)  (Update history: 2.22)
 - An account with its own trades can't be removed until they're moved to
   another account
 - TradeVault desktop app updated to 2.22.0
+Version 82  (Oct 26, 2026)  (Update history: 2.23)
+--------------------------
+- Button color: pick your own color for buttons in Customize, Look,
+  Colors and fonts, instead of the one taken from the background. It also
+  colors the selected tab and highlights. Match background goes back
+- Box color: pick your own color for panels, cards and calendar days.
+  Text inside the boxes turns dark or light to stay readable, and profit,
+  loss and warning colors switch to match (your own profit and loss
+  colors are kept). Text on the background is unchanged
+- TradeVault desktop app updated to 2.23.0
 
 </script>
 </body></html>
