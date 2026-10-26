@@ -427,6 +427,8 @@ tr[data-trow]:hover td{background:rgba(255,255,255,.05)}
 .rv-pics{margin-top:16px}
 @media (max-width:760px){.rv-split{grid-template-columns:1fr}}
 #planForm .plan-grid{grid-auto-flow:row dense}
+.plan-sess{margin-top:12px}.plan-sess .ps-dot{color:var(--accent);font-weight:700}.btn.primary .ps-dot{color:inherit}
+tr.sess-row>td{background:rgba(127,127,127,.08);padding-top:10px;padding-bottom:10px}tr.sess-row .btn{margin-left:6px}
 .cbox-drag{flex:none;cursor:grab;padding:1px 5px;color:var(--muted);touch-action:none;line-height:1}
 .cbox-drag svg{display:block}
 .cbox-head .cbox-drag{opacity:0;pointer-events:none;transition:opacity .12s}
@@ -983,7 +985,7 @@ var ui={tab:'dash',calMode:'all',calMonth:ymd(new Date()).slice(0,7),calSel:null
   revTab:'daily',revDate:ymd(new Date()),revWeek:weekStart(ymd(new Date())),planDate:ymd(new Date()),draftId:null,lb:null,thumbUrls:[]};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function save(){calcCacheReset();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function save(){tdNorm();calcCacheReset();try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 function load(){
   var raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}
   if(raw){try{var o=JSON.parse(raw);
@@ -996,9 +998,9 @@ function load(){
         if(state.trades.every(function(t){return t.ex}))seed();else state.v=2;
         save();
       }
-      migrate();return}
+      migrate();tdNorm();return}
   }catch(e){}}
-  seed();migrate();
+  seed();migrate();tdNorm();
 }
 /* ---------- accounts: one leader, any number of followers that copy it ---------- */
 function migrate(){
@@ -1586,7 +1588,7 @@ function filteredTrades(){
     if(!tfMatch(x.t,x.c))return false;
     return true});
   var k=ui.sortKey,d=ui.sortDir;
-  var val=function(x){return k==='mood'||k==='sleep'?(lifeNum(lifeOn(x.t.date),k)||-1):k==='net'?x.c.net:k==='pts'?x.c.pts:k==='r'?(x.c.r==null?-Infinity:x.c.r):k==='held'?(holdMin(x.t)==null?-1:holdMin(x.t)):k==='fees'?feeOf(x.t):k==='stop'||k==='target'?(+x.t[k]||0):k==='conds'?condsOf(x.t).join(', ').toLowerCase():k==='session'?sessionOf(x.t).toLowerCase():k==='mistake'?mistakeText(x.t).toLowerCase():k==='qty'||k==='entry'||k==='exit'?x.t[k]:String(x.t[k]||'').toLowerCase()};
+  var val=function(x){return k==='mood'||k==='sleep'?(lifeNum(lifeOn(calDate(x.t)),k)||-1):k==='net'?x.c.net:k==='pts'?x.c.pts:k==='r'?(x.c.r==null?-Infinity:x.c.r):k==='held'?(holdMin(x.t)==null?-1:holdMin(x.t)):k==='fees'?feeOf(x.t):k==='stop'||k==='target'?(+x.t[k]||0):k==='conds'?condsOf(x.t).join(', ').toLowerCase():k==='session'?sessionOf(x.t).toLowerCase():k==='mistake'?mistakeText(x.t).toLowerCase():k==='qty'||k==='entry'||k==='exit'?x.t[k]:String(x.t[k]||'').toLowerCase()};
   list.sort(function(a,b){var A=val(a),B=val(b);if(A<B)return -1*d;if(A>B)return 1*d;return a.t.id<b.t.id?-1:1});
   return list;
 }
@@ -1624,7 +1626,7 @@ function tradeColOrder(){return placeMissing(tradeColCfg().order.filter(function
 function tradeCols(){var cfg=tradeColCfg();return tradeColOrder().map(function(k){return TRADE_COLS.filter(function(x){return x[0]===k})[0]}).filter(function(c){return !cfg.hidden[c[0]]&&!(off('life')&&(c[0]==='mood'||c[0]==='sleep'))&&!(c[0]==='grp'&&!multiGrp())})}
 function tradeCell(k,t,c){var dash='<span class="muted">–</span>';
   switch(k){
-    case 'date':return '<td>'+esc(t.date)+(t.time?' <span class="muted">'+esc(t.time)+'</span>':'')+(t.ex?' <span class="tag ex">example</span>':'')+(t.src==='tv'&&!t.setup?' <span class="tag ex" title="Imported from '+esc(t.srcName||'TradingView')+'. Open it to add the setup, stop and mistake.">needs tags</span>':'')+'</td>';
+    case 'date':return '<td>'+esc(t.date)+(t.time?' <span class="muted"'+(t.cdate?' title="Placed '+esc(shortDate(t.cdate))+' at '+esc(t.time)+', so it counts toward the next trading day"':'')+'>'+(t.cdate?esc(t.cdate.slice(5))+' ':'')+esc(t.time)+'</span>':'')+(t.ex?' <span class="tag ex">example</span>':'')+(t.src==='tv'&&!t.setup?' <span class="tag ex" title="Imported from '+esc(t.srcName||'TradingView')+'. Open it to add the setup, stop and mistake.">needs tags</span>':'')+'</td>';
     case 'ticker':return '<td><b>'+esc(t.ticker)+'</b></td>';
     case 'side':return '<td><span class="tag '+t.side.toLowerCase()+'">'+t.side+'</span></td>';
     case 'setup':return '<td class="wrap">'+esc(t.setup)+'</td>';
@@ -1645,8 +1647,8 @@ function tradeCell(k,t,c){var dash='<span class="muted">–</span>';
     case 'grp':return '<td>'+esc(grpById(tradeGrp(t)).name)+'</td>';
     case 'session':return '<td>'+(sessionOf(t)?esc(sessionOf(t)):dash)+'</td>';
     case 'conds':return '<td class="wrap">'+(condsOf(t).length?esc(condsOf(t).join(', ')):dash)+'</td>';
-    case 'mood':var lm=lifeNum(lifeOn(t.date),'mood');return '<td class="num">'+(lm?'<span class="'+moodCls(lm)+'">'+lm+'/5</span>':dash)+'</td>';
-    case 'sleep':var ls=lifeNum(lifeOn(t.date),'sleep');return '<td class="num">'+(ls!=null?sleepRing(ls):dash)+'</td>';
+    case 'mood':var lm=lifeNum(lifeOn(calDate(t)),'mood');return '<td class="num">'+(lm?'<span class="'+moodCls(lm)+'">'+lm+'/5</span>':dash)+'</td>';
+    case 'sleep':var ls=lifeNum(lifeOn(calDate(t)),'sleep');return '<td class="num">'+(ls!=null?sleepRing(ls):dash)+'</td>';
     case 'charts':return '<td>'+picCell('trade:'+t.id,t.ticker+' '+t.date)+'</td>';
     case 'notes':return '<td class="notes" title="'+esc(t.notes)+'">'+esc(t.notes)+xHTML(t.x,'add')+'</td>';
   }return '<td></td>';
@@ -1670,7 +1672,7 @@ function renderAdd(){
   $('#tab-add').innerHTML='<div class="add-wrap"><form id="tradeForm" class="panel" novalidate><div class="add-head"><h2>'+(ui.editId?'Edit trade':'New trade')+'</h2>'+(ui.editId?'':tvHeadHTML())+'</div>'+'<p class="help">'+(multiGrp()?'Pick the account group this trade was taken in. Its leader logs it, the other accounts in that group copy it, and other groups are not affected. Imports below go to the group picked here. ':ui.editId?'':'Logging on <b>'+esc(state.settings.accounts[0].name)+'</b>, your leader. Your other accounts copy it. ')+'MAE and MFE are optional: how many points price went against you and in your favor while you were in. They power the trade management stats on the Dashboard. Point value fills in when you type a known contract (ES 50, MES 5, NQ 20, MNQ 2, CL 1,000, GC 100 and others). Type your own for anything else. Entry time is optional and powers the time of day stats on the Dashboard. Add the exit time too and the Dashboard shows how long you hold winners and losers. Target price is optional and shows whether you reach your planned targets. Tick every mistake that applies, or none for a clean trade. Commissions and fees come off the P&amp;L: leave the box blank to use your per-contract rates from Setup &amp; data, or type the exact amount from your broker statement. Set Result to Breakeven for scratch trades: they still count toward P&amp;L, but not as a win or a loss, so they do not skew your win rate. With Result on Automatic, any trade within plus or minus '+money(isFinite(state.settings.beRange)?+state.settings.beRange:10)+' counts as breakeven (change the range on Setup &amp; data). Pick Win or loss to override it.</p>'+(ui.editId?'':'<div class="err" id="tvMsg" role="status"></div>')+
     '<div class="form-grid">'+
     (multiGrp()?'<div><label for="f-grp" title="The accounts this trade counts for">Account group</label><select id="f-grp">'+(function(cg){return state.settings.groups.map(function(g){var ld=grpLeader(g.id);return '<option value="'+esc(g.id)+'"'+(g.id===cg?' selected':'')+'>'+esc(g.name)+(ld?' ('+esc(ld.name)+')':'')+'</option>'}).join('')})(t.grp&&grpById(t.grp)?t.grp:ui.editId?tradeGrp(t):curGrp())+'</select></div>':'')+
-    '<div><label for="f-date">Date</label><input id="f-date" type="date" value="'+esc(t.date)+'"></div>'+
+    '<div><label for="f-date"'+(tdStart()!=null?' title="The day you placed it. From '+esc(hhmm(tdStart()))+' on, a trade counts toward the next trading day."':'')+'>Date</label><input id="f-date" type="date" value="'+esc(calDate(t))+'"></div>'+
     '<div><label for="f-time">Entry time</label><input id="f-time" type="time" value="'+esc(t.time||'')+'"></div>'+
     '<div><label for="f-xtime" title="When you were fully out. With the entry time it gives the hold time.">Exit time</label><input id="f-xtime" type="time" value="'+esc(t.xtime||'')+'"></div>'+
     '<div><label for="f-xdate" title="Only for trades held overnight or longer. Leave blank for a same-day trade.">Exit date, if a later day</label><input id="f-xdate" type="date" value="'+esc(t.xdate||'')+'"></div>'+
@@ -1776,10 +1778,22 @@ function updatePreview(){
 }
 /* ---------- hold time and planned targets ---------- */
 function tmin(s){var m=/^(\d{1,2}):(\d{2})/.exec(s||'');return m?+m[1]*60+ +m[2]:null}
+/* ---------- trading day: futures trade from 6 PM to 5 PM the next day (New York time), so a trade at 7 PM Monday counts
+   toward Tuesday. t.date is the trading day; t.cdate keeps the calendar date when the two differ. Switch it off in Customize ---------- */
+function tdStart(){var s=state.settings;if(s.tdOn===false)return null;var m=+s.dayStart;return m>0&&m<1440?m:18*60}
+function calDate(t){return t.cdate||t.date}
+function tdOf(d,time){var s=tdStart(),m=tmin(time);return s!=null&&m!=null&&m>=s?addDays(d,1):d}
+/* the trading day it is right now: after 6 PM, tomorrow's */
+function tday(){var n=new Date();return tdOf(ymd(n),hhmm(n.getHours()*60+n.getMinutes()))}
+function tdNorm(){(state.trades||[]).forEach(function(t){var c=calDate(t),d=tdOf(c,t.time);if(d!==c){t.cdate=c;t.date=d}else{t.date=c;delete t.cdate}})}
+/* trades placed on a calendar date, for comparing with the life journal, which keeps calendar days */
+/* in the order they were placed: calendar date, then time, so 7 PM Monday comes before 9 AM Tuesday */
+function byClock(a,b){var x=calDate(a)+' '+(a.time||''),y=calDate(b)+' '+(b.time||'');return x<y?-1:x>y?1:(a.id<b.id?-1:1)}
+function calTradesOn(d){return sortedChrono().filter(function(t){return calDate(t)===d})}
 /* with an exit date, a trade can run over several days; without one, an exit before the entry time means it ran past midnight */
 function daysBetween(a,b){return Math.round((pd(b)-pd(a))/864e5)}
 function holdMin(t){var a=tmin(t.time),b=tmin(t.xtime);if(a==null||b==null)return null;
-  if(t.xdate&&t.xdate>t.date)return daysBetween(t.date,t.xdate)*1440+b-a;var d=b-a;if(d<0)d+=1440;return d}
+  var cd=calDate(t);if(t.xdate&&t.xdate>cd)return daysBetween(cd,t.xdate)*1440+b-a;var d=b-a;if(d<0)d+=1440;return d}
 function holdFmt(m){if(m==null)return '–';if(m<1)return 'under 1 min';if(m<60)return m+' min';
   if(m>=1440){var dd=Math.floor(m/1440),hh=Math.round((m%1440)/60);return dd+(dd===1?' day':' days')+(hh?' '+hh+' h':'')}
   var h=Math.floor(m/60),r=m%60;return h+' h'+(r?' '+r+' min':'')}
@@ -1842,10 +1856,17 @@ function dailyView(){
     h+='<dl class="strip" style="margin:0">'+statCell('Net P&amp;L',money(s.net,true),cls(s.net),'')+statCell('Trades',s.n,'',wl(s))+
       statCell('Win rate',pct(s.winRate,0),'','')+statCell('Followed plan',pn?s.planYes+' of '+pn:'–','','')+
       statCell('Best trade',money(s.best,true),cls(s.best),'')+statCell('Worst trade',money(s.worst,true),cls(s.worst),'')+'</dl>';
-    tp+='<div class="panel"><h2>Trades this day</h2><div class="scroll"><table><thead><tr><th>Contract</th><th>Side</th><th class="num">Net P&amp;L</th><th class="num">R</th><th>Plan</th><th>Mistake</th><th>Charts</th><th>Notes</th></tr></thead><tbody>'+
-      ts.map(function(t){var c=calc(t);return '<tr><td><b>'+esc(t.ticker)+'</b></td><td><span class="tag '+t.side.toLowerCase()+'">'+t.side+'</span></td>'+
-        '<td class="num '+cls(c.net)+'">'+money(c.net,true)+'</td><td class="num '+cls(c.r||0)+'">'+rfmt(c.r)+'</td><td>'+esc(t.plan||'')+'</td><td>'+esc(mistakeText(t))+'</td><td>'+picCell('trade:'+t.id,t.ticker+' '+t.date)+'</td><td class="wrap">'+esc(t.notes)+xHTML(t.x,'add')+'</td></tr>'}).join('')+
-      '</tbody></table></div></div>';
+    var row=function(t){var c=calc(t);return '<tr><td class="muted">'+(t.time?(t.cdate?esc(shortDate(t.cdate).replace(/,.*/,''))+' ':'')+esc(t.time):'–')+'</td><td><b>'+esc(t.ticker)+'</b></td><td><span class="tag '+t.side.toLowerCase()+'">'+t.side+'</span></td>'+
+        '<td class="num '+cls(c.net)+'">'+money(c.net,true)+'</td><td class="num '+cls(c.r||0)+'">'+rfmt(c.r)+'</td><td>'+esc(t.plan||'')+'</td><td>'+esc(mistakeText(t))+'</td><td>'+picCell('trade:'+t.id,t.ticker+' '+t.date)+'</td><td class="wrap">'+esc(t.notes)+xHTML(t.x,'add')+'</td></tr>'};
+    /* grouped by plan session in the order the trading day runs, each with its result and its plan */
+    var P=state.plans[d],groups=planSessDayOrder().map(function(x){return [x[0],ts.filter(function(t){return planSessOf(t)===x[0]})]})
+      .concat([['',ts.filter(function(t){return !planSessOf(t)})]]).filter(function(g){return g[1].length});
+    groups.forEach(function(g){g[1].sort(byClock)});
+    var rows=groups.length===1&&!groups[0][0]?groups[0][1].map(row).join(''):groups.map(function(g){var gs=stats(g[1]),sp=g[0]&&P&&P.s&&sessHas(P.s[g[0]])?P.s[g[0]]:null;
+      return '<tr class="sess-row"><td colspan="9"><b>'+esc(g[0]||'No entry time')+'</b> <span class="muted">· '+g[1].length+(g[1].length===1?' trade':' trades')+' ·</span> <b class="'+cls(gs.net)+'">'+money(gs.net,true)+'</b> <span class="muted">· '+pct(gs.winRate,0)+' won'+
+        (sp?' · plan bias '+esc((sp.bias||'not set').toLowerCase())+'</span> <button class="btn small" type="button" data-popen="'+d+'" data-psn="'+esc(g[0])+'">Open '+esc(g[0])+' plan</button>':'</span>')+'</td></tr>'+g[1].map(row).join('')}).join('');
+    tp+='<div class="panel"><h2>Trades this day</h2><div class="scroll"><table><thead><tr><th>Time</th><th>Contract</th><th>Side</th><th class="num">Net P&amp;L</th><th class="num">R</th><th>Plan</th><th>Mistake</th><th>Charts</th><th>Notes</th></tr></thead><tbody>'+
+      rows+'</tbody></table></div></div>';
   }else{
     tp+='<div class="panel empty">No trades logged for '+esc(shortDate(d))+'. You can still write a review.</div>';
   }
@@ -1996,7 +2017,7 @@ function picsBlock(label,inline){
   return '<div class="pics wide'+(inline?' inline':'')+'"><label>'+esc(label)+'</label><p class="help">Pictures are shrunk to fit and saved '+(APP?'as files in the app’s folder':'in this browser')+'. Download backup file includes them.<span class="pic-note"></span></p><div class="drop">Drop images here, paste a screenshot with Ctrl+V or Cmd+V, or <button class="btn small" type="button" data-pic-add>choose files</button></div>'+
     '<input class="pic-file" type="file" accept="image/*" multiple hidden aria-label="Choose pictures"><div class="thumbs"></div></div>';
 }
-function currentPicOwner(){if(ui.tab==='playbook'&&ui.pbOpen)return 'setup:'+ui.pbOpen;if(ui.tab==='life')return ui.lifeTab==='weekly'?'lifew:'+ui.lifeWeek:'life:'+ui.lifeDate;if(ui.tab==='review'&&ui.revTab==='daily')return 'review:'+ui.revDate;if(ui.tab==='add')return 'trade:'+(ui.editId||ui.draftId);if(ui.tab==='plan')return 'plan:'+ui.planDate;return null}
+function currentPicOwner(){if(ui.tab==='playbook'&&ui.pbOpen)return 'setup:'+ui.pbOpen;if(ui.tab==='life')return ui.lifeTab==='weekly'?'lifew:'+ui.lifeWeek:'life:'+ui.lifeDate;if(ui.tab==='review'&&ui.revTab==='daily')return 'review:'+ui.revDate;if(ui.tab==='add')return 'trade:'+(ui.editId||ui.draftId);if(ui.tab==='plan')return 'plan:'+ui.planDate+(ui.planSess?'|'+ui.planSess:'');return null}
 function currentPicTitle(){
   if(ui.tab==='playbook')return 'Model chart: '+ui.pbOpen;
   if(ui.tab==='life')return ui.lifeTab==='weekly'?'Life week of '+ui.lifeWeek:'Life journal '+ui.lifeDate;
@@ -2082,6 +2103,25 @@ document.addEventListener('drop',function(e){dropHint(false);if(!dropHasFiles(e)
 document.addEventListener('keydown',function(e){if(!ui.lb)return;if(e.key==='Escape')lbClose();else if(e.key==='ArrowLeft')lbStep(-1);else if(e.key==='ArrowRight')lbStep(1)});
 
 /* ---------- premarket plan ---------- */
+/* sessions: Asia, London and New York each get their own plan (bias, levels, news, if/then, charts), kept in p.s[name];
+   the loss limit, size, routine and your own boxes stay with the whole trading day */
+var PLAN_SESS_DEF=[['Asia',18*60],['London',3*60],['New York',8*60]],SESS_F=['bias','mood','levels','news','scen'];
+function planSessCfg(){var s=state.settings.planSess;return Array.isArray(s)&&s.length?s:PLAN_SESS_DEF}
+/* like the market sessions, each runs until the next one starts and the latest wraps past midnight */
+function planSessAt(m){if(m==null)return '';var S=planSessCfg().slice().sort(function(a,b){return a[1]-b[1]}),pick=S[S.length-1];S.forEach(function(s){if(s[1]<=m)pick=s});return pick[0]}
+function planSessOf(t){return planSessAt(tmin(t.time))}
+/* in the order the trading day runs: the session that starts at 6 PM first */
+function planSessDayOrder(){var st=tdStart()||0;return planSessCfg().slice().sort(function(a,b){return (a[1]-st+1440)%1440-(b[1]-st+1440)%1440})}
+function planSessNow(){var n=new Date();return planSessAt(n.getHours()*60+n.getMinutes())}
+function sessHas(o){return !!o&&SESS_F.some(function(k){return o[k]})}
+function dayHas(p){return !!p&&(SESS_F.some(function(k){return p[k]})||!!(p.maxLoss||p.maxTrades||p.size||p.x)||Object.keys(p.checks||{}).length>0)}
+function sessPlans(p){var s=p&&p.s||{};return planSessDayOrder().map(function(x){return [x[0],s[x[0]]]}).filter(function(x){return sessHas(x[1])})}
+function sessPlanOf(p,t){var n=planSessOf(t),s=p&&p.s&&p.s[n];return sessHas(s)?{name:n,p:s}:null}
+/* "Bullish" for a whole-day plan, or "Asia bullish · New York bearish" from the session plans */
+function planBiasText(p){if(!p)return '';var b=sessPlans(p).filter(function(x){return x[1].bias}).map(function(x){return x[0]+' '+x[1].bias.toLowerCase()}).join(' · ');return p.bias?(b?p.bias+' · '+b:p.bias):b}
+/* the tab the plan page shows: the session going on now when it is today's plan, otherwise the whole day */
+function curPlanSess(){if(ui.planSess==null)ui.planSess=ui.planDate===tday()?planSessNow():'';
+  if(ui.planSess&&!planSessCfg().some(function(s){return s[0]===ui.planSess}))ui.planSess='';return ui.planSess}
 function lastReviewBefore(d){var ks=Object.keys(state.reviews.daily).filter(function(k){return k<d}).sort();return ks.length?ks[ks.length-1]:null}
 function planCheck(d){
   var p=state.plans[d],ts=tradesOn(d,d);if(!p||!ts.length)return null;
@@ -2095,36 +2135,41 @@ function planCheckHTML(d,withLink){
   var c=planCheck(d);if(!c)return '';
   var rows=c.items.map(function(i){return '<tr><td>'+esc(i.label)+'</td><td class="num">'+esc(i.value)+'</td><td><span class="tag '+(i.ok?'ok':'bad')+'">'+(i.ok?'Within plan':'Outside plan')+'</span></td></tr>'}).join('');
   return '<div class="panel"><h2>Against your premarket plan</h2><div class="scroll"><table><tbody>'+rows+'</tbody></table></div>'+
-    (withLink?'<p class="help" style="margin:10px 0 0">Bias for the day was '+esc((c.p.bias||'not set').toLowerCase())+'. <button class="btn small" type="button" data-popen="'+d+'">Open plan</button></p>':'')+'</div>';
+    (withLink?'<p class="help" style="margin:10px 0 0">Bias for the day was '+esc(planBiasText(c.p).toLowerCase()||'not set')+'. <button class="btn small" type="button" data-popen="'+d+'">Open plan</button></p>':'')+'</div>';
 }
 function renderPlan(){
-  var d=ui.planDate,p=state.plans[d]||{},has=!!state.plans[d];
+  var d=ui.planDate,P=state.plans[d]||{},sn=curPlanSess(),p=sn?((P.s||{})[sn]||{}):P,has=!!state.plans[d];
   var prev=lastReviewBefore(d),pr=prev?state.reviews.daily[prev]:null;
   var canCopy=!has&&Object.keys(state.plans).some(function(k){return k<d});
+  var ss=tdStart(),span=ss!=null?' <span class="muted" style="font-weight:400">from '+esc(shortDate(addDays(d,-1)))+', '+esc(hhmm(ss))+'</span>':'';
+  var stabs=[['','Whole day']].concat(planSessDayOrder().map(function(s){return [s[0],s[0]]})).map(function(o){var on=o[0]===sn,dot=o[0]?sessHas((P.s||{})[o[0]]):dayHas(P);
+    return '<button class="btn'+(on?' primary':'')+'" type="button" role="tab" aria-selected="'+on+'" data-psess="'+esc(o[0])+'">'+esc(o[1])+(dot?' <span class="ps-dot" title="Has a plan">\u2022</span>':'')+'</button>'}).join('');
   var h='<div class="panel"><div class="rev-nav"><button class="btn small" type="button" data-pstep="-1" aria-label="Previous day">\u2190</button>'+
     '<input id="p-date" type="date" value="'+d+'" aria-label="Plan date"><button class="btn small" type="button" data-pstep="1" aria-label="Next day">\u2192</button>'+
-    '<button class="btn small" type="button" data-ptoday>Today</button><b>'+esc(shortDate(d))+'</b>'+
-    (canCopy?'<button class="btn small" type="button" data-pcopy>Start from my last plan</button>':'')+'</div></div>';
+    '<button class="btn small" type="button" data-ptoday>Today</button><b>'+esc(shortDate(d))+span+'</b>'+
+    (canCopy?'<button class="btn small" type="button" data-pcopy>Start from my last plan</button>':'')+'</div>'+
+    '<div class="seg plan-sess" role="tablist" aria-label="Plan session">'+stabs+'</div></div>';
   if(pr&&(pr.focus||pr.wrong)&&!off('review')){
     h+='<div class="panel"><h2 class="sub">From your review on '+esc(shortDate(prev))+'</h2>'+
       bq('Focus',pr.focus)+bq('Watch for',pr.wrong)+'</div>';
   }
   var sel=function(id,label,opts,val,blank){if(hid(id))return '';return '<div>'+lbl(id,label)+'<select id="'+id+'"><option value="">'+blank+'</option>'+
     opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>'}).join('')+'</select></div>'};
-  var checks=p.checks||{};
-  h+='<form id="planForm" class="panel" novalidate><h2>Premarket plan</h2><p class="help">One point per line. Press Enter for a new bullet.</p><div class="plan-grid">'+
+  var checks=p.checks||{},sFrom=sn?planSessCfg().filter(function(s){return s[0]===sn})[0][1]:0;
+  h+='<form id="planForm" class="panel" novalidate><h2>'+(sn?esc(sn)+' plan':'Premarket plan')+'</h2><p class="help">'+
+    (sn?'From '+esc(hhmm(sFrom))+'. Trades placed in this session are linked to this plan. Your loss limit, size and routine are on Whole day. ':'For the whole trading day. Each session has its own tab for its bias, levels and if/then. ')+'One point per line. Press Enter for a new bullet.</p><div class="plan-grid">'+
     '<div class="c3">'+sel('p-bias','Market bias',withCur(BIASES,p.bias),p.bias,'Not set')+'</div>'+
     '<div class="c3">'+sel('p-mood','State of mind',MOODS,p.mood,'Not noted')+'</div>'+
-    '<div class="c2"><label for="p-maxloss">Max daily loss, $</label><input id="p-maxloss" type="number" step="any" min="0" inputmode="decimal" value="'+esc(p.maxLoss||'')+'"></div>'+
+    (sn?'':'<div class="c2"><label for="p-maxloss">Max daily loss, $</label><input id="p-maxloss" type="number" step="any" min="0" inputmode="decimal" value="'+esc(p.maxLoss||'')+'"></div>'+
     '<div class="c2"><label for="p-maxtrades">Max trades</label><input id="p-maxtrades" type="number" step="1" min="0" inputmode="numeric" value="'+esc(p.maxTrades||'')+'"></div>'+
-    '<div class="c2"><label for="p-size">Max size</label><input id="p-size" type="text" placeholder="5 MES or 1 ES" value="'+esc(p.size||'')+'"></div>'+
-    '<div class="c6">'+bulletArea('p-levels','Key levels',p.levels,'Prior day high and low, overnight high and low, VWAP, round numbers.')+'</div>'+
+    '<div class="c2"><label for="p-size">Max size</label><input id="p-size" type="text" placeholder="5 MES or 1 ES" value="'+esc(p.size||'')+'"></div>')+
+    '<div class="c6">'+bulletArea('p-levels','Key levels',p.levels,sn==='Asia'?'Prior day high and low, settlement, round numbers.':'Prior day high and low, overnight high and low, VWAP, round numbers.')+'</div>'+
     '<div class="c6">'+bulletArea('p-news','News and events',p.news,'Data releases and times (ET), Fed speakers, earnings that move the index.')+'</div>'+
     '<div class="c7">'+bulletArea('p-scen','If this, then that',p.scen,'If price holds above X, I look for... If it loses Y, I stay out until...')+'</div>'+
-    '<div class="c5" data-bk="p-routine"><label>Routine</label><div class="chk-grid">'+
+    (sn?'':'<div class="c5" data-bk="p-routine"><label>Routine</label><div class="chk-grid">'+
       (state.settings.premarketChecks||[]).map(function(c,i){return '<label class="chk" for="p-chk-'+i+'"><input type="checkbox" id="p-chk-'+i+'" data-chk="'+esc(c)+'"'+(checks[c]?' checked':'')+'> '+esc(c)+'</label>'}).join('')+'</div></div>'+
-    entryBoxes('plan',p.x,true,'c6')+picsBlock('Premarket charts and level screenshots')+'</div>'+
-    '<div class="actions"><button class="btn primary" type="submit">Save plan</button><button class="btn danger" type="button" id="delPlan">Delete plan</button><span id="planStatus" class="muted" role="status"></span></div></form>';
+    entryBoxes('plan',p.x,true,'c6'))+picsBlock(sn?sn+' charts and level screenshots':'Premarket charts and level screenshots')+'</div>'+
+    '<div class="actions"><button class="btn primary" type="submit">Save plan</button><button class="btn danger" type="button" id="delPlan">'+(sn?'Delete '+esc(sn)+' plan':'Delete plan')+'</button><span id="planStatus" class="muted" role="status"></span></div></form>';
   h+=planCheckHTML(d,false);
   $('#tab-plan').innerHTML='<div style="display:flex;flex-direction:column;gap:20px">'+h+'</div>';
   refreshThumbs();
@@ -2133,11 +2178,18 @@ function savePlan(manual){
   clearTimeout(savePlan.h);savePlan.h=null;
   if(!$('#planForm'))return;
   var v=function(id){var el=$('#'+id);return el?(isBul(el)?cleanBullets(el.value):el.value.trim()):''};
-  var checks={};
+  var checks={},P=state.plans[ui.planDate],sn=ui.planSess||'',hidMap={bias:'p-bias',mood:'p-mood',levels:'p-levels',news:'p-news',scen:'p-scen'};
   document.querySelectorAll('#planForm input[data-chk]').forEach(function(el){if(el.checked)checks[el.dataset.chk]=true});
-  var o={bias:v('p-bias'),mood:v('p-mood'),levels:v('p-levels'),news:v('p-news'),scen:v('p-scen'),maxLoss:v('p-maxloss'),maxTrades:v('p-maxtrades'),size:v('p-size'),checks:checks};var xp=readBoxes('#planForm');if(xp)o.x=xp;keepHid(o,state.plans[ui.planDate],{bias:'p-bias',mood:'p-mood',levels:'p-levels',news:'p-news',scen:'p-scen'});
-  var empty=!o.bias&&!o.mood&&!o.levels&&!o.news&&!o.scen&&!o.maxLoss&&!o.maxTrades&&!o.size&&!Object.keys(checks).length&&!o.x;
-  if(empty)delete state.plans[ui.planDate];else state.plans[ui.planDate]=o;
+  var o;
+  if(sn){var so={bias:v('p-bias'),mood:v('p-mood'),levels:v('p-levels'),news:v('p-news'),scen:v('p-scen')};keepHid(so,P&&P.s&&P.s[sn],hidMap);
+    o=P?Object.assign({},P):{};o.s=Object.assign({},o.s||{});if(sessHas(so))o.s[sn]=so;else delete o.s[sn]}
+  else{o={bias:v('p-bias'),mood:v('p-mood'),levels:v('p-levels'),news:v('p-news'),scen:v('p-scen'),maxLoss:v('p-maxloss'),maxTrades:v('p-maxtrades'),size:v('p-size'),checks:checks};var xp=readBoxes('#planForm');if(xp)o.x=xp;keepHid(o,P,hidMap);
+    if(P&&P.s)o.s=P.s}
+  if(o.s&&!Object.keys(o.s).length)delete o.s;
+  if(!dayHas(o)&&!o.s)delete state.plans[ui.planDate];else state.plans[ui.planDate]=o;
+  /* keep the dots on the session tabs in step without redrawing the form you are typing in */
+  var NP=state.plans[ui.planDate]||{};document.querySelectorAll('.plan-sess [data-psess]').forEach(function(bt){var k=bt.dataset.psess,has=k?sessHas((NP.s||{})[k]):dayHas(NP),dt=bt.querySelector('.ps-dot');
+    if(has&&!dt)bt.insertAdjacentHTML('beforeend',' <span class="ps-dot" title="Has a plan">•</span>');else if(!has&&dt)dt.remove()});
   save();
   var st=$('#planStatus');if(st)st.textContent=manual?'Saved':'Saved automatically';
 }
@@ -2153,7 +2205,7 @@ function copyLastPlan(){
 function toCSV(){
   var cols=['date','ticker','side','setup','qty','entry','exit','stop','multiplier','plan','mistake','notes','time','exit time','exit date','target','fees','conditions','grade','group'];
   var q=function(x){x=x==null?'':String(x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x};
-  return [cols.join(',')].concat(sortedChrono().map(function(t){return [t.date,t.ticker,t.side,t.setup,t.qty,t.entry,t.exit,t.stop==null?'':t.stop,t.mult,t.plan,mistakesOf(t).join('; ')||'None',t.notes,t.time||'',t.xtime||'',t.xdate||'',t.target>0?t.target:'',+feeOf(t).toFixed(2),condsOf(t).join('; '),t.egrade||'',grpById(tradeGrp(t)).name].map(q).join(',')})).join('\n');
+  return [cols.join(',')].concat(sortedChrono().map(function(t){return [calDate(t),t.ticker,t.side,t.setup,t.qty,t.entry,t.exit,t.stop==null?'':t.stop,t.mult,t.plan,mistakesOf(t).join('; ')||'None',t.notes,t.time||'',t.xtime||'',t.xdate||'',t.target>0?t.target:'',+feeOf(t).toFixed(2),condsOf(t).join('; '),t.egrade||'',grpById(tradeGrp(t)).name].map(q).join(',')})).join('\n');
 }
 function parseCSV(text){
   var rows=[],row=[],f='',inq=false;
@@ -2314,7 +2366,7 @@ function ratingAvg(list){var v=list.map(function(x){return parseFloat(x.rating)}
 function calCtx(){
   var idx={},weeks=calWeeks(ui.calMonth);
   state.trades.forEach(function(t){(idx[t.date]||(idx[t.date]=[])).push(t)});
-  return {month:ui.calMonth,idx:idx,weeks:weeks,today:ymd(new Date())};
+  return {month:ui.calMonth,idx:idx,weeks:weeks,today:tday()};
 }
 function calSummary(mode,cx){
   var m=cx.month,inM=function(k){return k.slice(0,7)===m};
@@ -2367,7 +2419,7 @@ function calDayCell(d,mode,cx){
   }
   if(mode==='plan'){
     if(pl){style='background:color-mix(in srgb,var(--accent) 14%,var(--cal-cell))';
-      body+='<span class="cal-line"><b>'+esc(pl.bias||'Plan')+'</b></span>'+(tot?'<span class="cal-sub">'+planDone(pl)+' of '+tot+' routine</span>':'');
+      body+='<span class="cal-line"><b>'+esc(planBiasText(pl)||'Plan')+'</b></span>'+(tot?'<span class="cal-sub">'+planDone(pl)+' of '+tot+' routine</span>':'');
       label.push('premarket plan written');
     }else if(ts.length){body+='<span class="cal-flag">Traded, no plan</span>';label.push('traded without a plan')}
   }
@@ -2437,9 +2489,12 @@ function calDayDetail(d,mode){
     if(pl){
       var tot=(state.settings.premarketChecks||[]).length,lim=[];
       if(pl.maxLoss)lim.push('max loss $'+pl.maxLoss);if(pl.maxTrades)lim.push(pl.maxTrades+' trades max');if(pl.size)lim.push('size '+pl.size);
-      inner='<p class="quote"><b>Bias</b>'+esc(pl.bias||'Not set')+(pl.mood?' · '+esc(pl.mood):'')+'</p>'+
+      var sps=sessPlans(pl);
+      inner=(pl.bias||pl.mood||!sps.length?'<p class="quote"><b>Bias</b>'+esc(pl.bias||'Not set')+(pl.mood?' · '+esc(pl.mood):'')+'</p>':'')+
         bq('Levels',pl.levels)+bq('News and events',pl.news)+
-        bq('If / then',pl.scen)+xBq(pl.x,'plan')+
+        bq('If / then',pl.scen)+
+        sps.map(function(x){var s=x[1];return '<p class="quote"><b>'+esc(x[0])+'</b>'+esc(s.bias||'Bias not set')+(s.mood?' · '+esc(s.mood):'')+'</p>'+bq(x[0]+' levels',s.levels)+bq(x[0]+' news',s.news)+bq(x[0]+' if / then',s.scen)}).join('')+
+        xBq(pl.x,'plan')+
         (lim.length?'<p class="quote"><b>Limits</b>'+esc(lim.join(', '))+'</p>':'')+
         (tot?'<p class="quote"><b>Routine</b>'+planDone(pl)+' of '+tot+' done</p>':'')+
         '<div class="actions" style="margin-top:6px"><button class="btn small" type="button" data-popen="'+d+'">Open plan</button></div>';
@@ -2767,9 +2822,11 @@ function galFill(){
     recs.forEach(function(r){var o=r.owner;if(o.indexOf(pre)!==0&&!(kind==='life'&&o.indexOf('lifew:')===0))return;
       var t=kind==='trade'?byId[o.slice(6)]:null;if(kind==='trade'&&!t)return;
       var i=counts[o]=(counts[o]||0);counts[o]++;
-      var d=kind==='trade'?t.date:o.slice(o.indexOf(':')+1),wk=o.indexOf('lifew:')===0;
-      items.push({r:r,owner:o,idx:i,t:t,date:d,net:t?calc(t).net:0,
-        wk:wk,title:kind==='trade'?t.ticker+' '+t.date:(wk?'Life week of ':{review:'Daily review ',plan:'Premarket ',life:'Life journal '}[kind])+d})});
+      var d=kind==='trade'?t.date:o.slice(o.indexOf(':')+1),wk=o.indexOf('lifew:')===0,ps='';
+      /* a session plan's pictures belong to "plan:<date>|<session>" */
+      if(kind==='plan'&&d.indexOf('|')>0){ps=d.slice(d.indexOf('|')+1);d=d.slice(0,d.indexOf('|'))}
+      items.push({r:r,owner:o,idx:i,t:t,date:d,ps:ps,net:t?calc(t).net:0,
+        wk:wk,title:kind==='trade'?t.ticker+' '+t.date:(wk?'Life week of ':{review:'Daily review ',plan:'Premarket ',life:'Life journal '}[kind])+d+(ps?' '+ps:'')})});
     items.forEach(function(it){it.n=counts[it.owner]});
     if(kind==='trade'){var q=g.q.trim().toLowerCase();
       items=items.filter(function(it){
@@ -2800,7 +2857,7 @@ function galFill(){
           :it.wk?'<button class="btn small" type="button" data-gal-lifew="'+esc(it.date)+'">Open week</button>'
           :kind==='life'?'<button class="btn small" type="button" data-gal-life="'+esc(it.date)+'">Open entry</button>'
           :kind==='review'?'<button class="btn small" type="button" data-gal-review="'+esc(it.date)+'">Open review</button>'
-          :'<button class="btn small" type="button" data-gal-plan="'+esc(it.date)+'">Open plan</button>';
+          :'<button class="btn small" type="button" data-gal-plan="'+esc(it.date+(it.ps?'|'+it.ps:''))+'">Open plan</button>';
         return '<div class="gcard"><button class="gcard-img" type="button" data-gal="'+i+'" aria-label="Open picture of '+esc(it.title)+'"><img loading="lazy" src="'+u+'" alt="'+esc(it.title)+'">'+(it.n>1?'<span class="gcard-count">'+(it.idx+1)+' / '+it.n+'</span>':'')+'</button>'+
           '<div class="gcard-body"><div class="gcard-top"><b>'+head+'</b>'+(c?'<span class="gcard-pnl '+cls(c.net)+'">'+money(c.net,true)+'</span>':'')+'</div>'+
           '<div class="gcard-sub">'+esc(shortDate(it.date))+(t?' · '+t.side+(t.setup?' · '+esc(t.setup):'')+(c&&c.r!=null?' · '+rfmt(c.r):''):'')+'</div>'+act+'</div></div>'}).join('')+'</div>';
@@ -2991,7 +3048,7 @@ document.addEventListener('click',function(e){
 
 /* ---------- life and trading: how sleep, mood, energy and habits line up with P&L ---------- */
 function lifeTradeHTML(){
-  var days=[];Object.keys(state.life||{}).forEach(function(d){var ts=tradesOn(d,d);if(ts.length)days.push({d:d,e:state.life[d],net:dayNet(ts),ts:ts})});
+  var days=[];Object.keys(state.life||{}).forEach(function(d){var ts=calTradesOn(d);if(ts.length)days.push({d:d,e:state.life[d],net:dayNet(ts),ts:ts})});
   var head='<div class="panel"><h2>Life and trading</h2>';
   if(!days.length)return head+'<div class="empty">Once you have life journal entries on days you trade, this shows how your sleep, mood, energy and habits line up with your P&amp;L.</div></div>';
   var row=function(label,list){var tot=list.reduce(function(a,x){return a+x.net},0),gr=list.filter(function(x){return x.net>0}).length,av=tot/list.length,all=[];list.forEach(function(x){all=all.concat(x.ts)});
@@ -3199,7 +3256,7 @@ function addMonthsYmd(d,n){var p=pd(d),y=p.getFullYear(),m=p.getMonth()+n,day=p.
 
 /* ---------- insights in plain sentences ---------- */
 function lifeInsightsHTML(){
-  var days=[];Object.keys(state.life||{}).forEach(function(d){var ts=tradesOn(d,d);if(ts.length)days.push({d:d,e:state.life[d],net:dayNet(ts)})});
+  var days=[];Object.keys(state.life||{}).forEach(function(d){var ts=calTradesOn(d);if(ts.length)days.push({d:d,e:state.life[d],net:dayNet(ts)})});
   var head='<div class="panel"><h2>Insights</h2>';
   if(days.length<6)return head+'<div class="empty">After about a week of trading days that also have a life journal entry, short insights about how your life and your trading line up show up here.</div></div>';
   var min=3,out=[],avg=function(l){return l.reduce(function(a,x){return a+x.net},0)/l.length};
@@ -3353,14 +3410,14 @@ function tradeDetailHTML(t){
   var acc=state.settings.accounts.filter(function(a){return acctHas(a,t)});
   var accRows=acc.length>1||(multiGrp()&&acc.length)?'<div><h2 class="sub">Across your accounts'+(multiGrp()?', '+esc(grpById(tradeGrp(t)).name):'')+'</h2><div class="scroll"><table><thead><tr><th>Account</th><th class="num">Size</th><th class="num">P&amp;L</th></tr></thead><tbody>'+
     acc.map(function(a){var f=(a.mult>0?a.mult:1)/(t.lm>0?t.lm:1),n=c.net*f;return '<tr><td>'+esc(a.name)+'</td><td class="num">×'+(+f.toFixed(3))+'</td><td class="num '+cls(n)+'">'+money(n,true)+'</td></tr>'}).join('')+'</tbody></table></div></div>':'';
-  var pl=off('plan')?null:state.plans[t.date],rv=off('review')?null:state.reviews.daily[t.date],le=off('life')?null:(state.life||{})[t.date],pc=off('plan')?null:planCheck(t.date);
+  var pl=off('plan')?null:state.plans[t.date],rv=off('review')?null:state.reviews.daily[t.date],le=off('life')?null:(state.life||{})[calDate(t)],pc=off('plan')?null:planCheck(t.date);
   var ctx='<div class="quote"><b>That day</b>'+day.length+(day.length===1?' trade':' trades')+', '+'<span class="'+cls(dn)+'">'+money(dn,true)+'</span>. This was trade '+pos+' of '+day.length+'.</div>'+
-    (pl?'<div class="quote"><b>Premarket</b>Bias '+esc((pl.bias||'not set').toLowerCase())+(pc?'. '+pc.items.map(function(i){return esc(i.label)+': '+esc(i.value)+(i.ok?'':' (outside plan)')}).join('. '):'')+'</div>':(off('plan')?'':'<div class="quote"><b>Premarket</b>No plan written for this day.</div>'))+
+    (pl?'<div class="quote"><b>Premarket</b>'+(function(){var sp=sessPlanOf(pl,t);return sp?esc(sp.name)+' plan: bias '+esc((sp.p.bias||'not set').toLowerCase())+(sp.p.scen?'. If / then: '+esc(sp.p.scen.split('\n')[0])+(sp.p.scen.indexOf('\n')>0?' …':''):'')+' <button class="btn small" type="button" data-popen="'+esc(t.date)+'" data-psn="'+esc(sp.name)+'">Open</button>':'Bias '+esc((pl.bias||'not set').toLowerCase())})()+(pc?'. '+pc.items.map(function(i){return esc(i.label)+': '+esc(i.value)+(i.ok?'':' (outside plan)')}).join('. '):'')+'</div>':(off('plan')?'':'<div class="quote"><b>Premarket</b>No plan written for this day.</div>'))+
     (rv?'<div class="quote"><b>Daily review</b>'+(rv.rating?'Discipline '+esc(rv.rating)+'/5. ':'')+esc(snipB(rv.focus||rv.wrong||rv.right||'',160))+'</div>':(off('review')?'':'<div class="quote"><b>Daily review</b>Not written yet.</div>'))+
     (le?'<div class="quote"><b>Life journal</b>'+[le.mood?'mood '+esc(le.mood)+'/5':'',le.energy?'energy '+esc(le.energy)+'/5':'',le.sleep?esc(le.sleep)+' h sleep':'',le.feel?esc(le.feel.toLowerCase()):''].filter(Boolean).join(', ')+'</div>':'');
   var notes=(t.notes?'<p class="quote" style="white-space:pre-wrap">'+esc(t.notes)+'</p>':'')+xBq(t.x,'add');
   return '<div class="tv-head"><div><div class="tv-title">'+esc(t.ticker)+' <span class="tag '+t.side.toLowerCase()+'">'+t.side+'</span>'+(t.ex?'<span class="tag ex">example</span>':'')+(t.src==='tv'&&!t.setup?'<span class="tag ex">needs tags</span>':'')+(c.be?'<span class="tag">breakeven</span>':'')+(EXIT_HOW[t.exitHow]?'<span class="tag" title="How the trade ended, from the order that closed it">'+EXIT_HOW[t.exitHow]+'</span>':'')+'</div>'+
-      '<div class="muted">'+esc(shortDate(t.date))+(t.time?' · '+esc(t.time):'')+(t.setup?' · '+esc(t.setup):'')+(t.src==='tv'?' · imported from '+esc(t.srcName||'TradingView'):'')+'</div></div>'+
+      '<div class="muted">'+esc(shortDate(t.date))+(t.time?' · '+(t.cdate?'placed '+esc(shortDate(t.cdate))+' ':'')+esc(t.time):'')+(t.setup?' · '+esc(t.setup):'')+(t.src==='tv'?' · imported from '+esc(t.srcName||'TradingView'):'')+'</div></div>'+
       '<div class="tv-tools"><button class="btn small" type="button" data-tvstep="-1"'+(ix>0?'':' disabled')+' aria-label="Previous trade">←</button><button class="btn small" type="button" data-tvstep="1"'+(ix>=0&&ix<list.length-1?'':' disabled')+' aria-label="Next trade">→</button><button class="btn small" type="button" data-tvclose aria-label="Close">Close</button></div></div>'+
     '<div><div class="tv-pnl '+cls(c.net)+'">'+money(c.net,true)+'</div><div class="muted">'+ptsFmt(c.pts)+' points'+(c.ticks!=null?' ('+(c.ticks>0?'+':'')+Math.round(c.ticks*10)/10+' ticks)':'')+(c.r!=null?' · '+rfmt(c.r):' · no stop set, so no R')+'</div></div>'+
     '<dl class="strip" style="margin:0">'+statCell('Contracts',t.qty,'','')+statCell('Entry',px(t.entry),'','')+statCell('Exit',px(t.exit),'','')+statCell('Stop',t.stop?px(t.stop):'–','','')+
@@ -3369,7 +3426,7 @@ function tradeDetailHTML(t){
       (t.egrade?statCell('Execution grade',esc(t.egrade),'',''):'')+(sessionOf(t)?statCell('Session',esc(sessionOf(t)),'',''):'')+
       (t.xtime||t.time?statCell('Held',holdFmt(holdMin(t)),'',t.time&&t.xtime?esc(t.time)+' to '+(t.xdate?esc(shortDate(t.xdate))+' ':'')+esc(t.xtime):'needs entry and exit time'):'')+
       (t.target>0?statCell('Target',px(t.target),'',plannedRR(t)!=null?plannedRR(t).toFixed(2)+' : 1 planned':''):'')+
-      (function(){if(off('life'))return '';var le=lifeOn(t.date),m=lifeNum(le,'mood'),sl=lifeNum(le,'sleep');return statCell('Mood that day',m?m+'/5':'\u2013',m?moodCls(m):'',le?'':'no journal entry')+statCell('Sleep night before',sl!=null?sleepRing(sl,30,true):'\u2013','',le?'':'no journal entry')})()+'</dl>'+
+      (function(){if(off('life'))return '';var le=lifeOn(calDate(t)),m=lifeNum(le,'mood'),sl=lifeNum(le,'sleep');return statCell('Mood that day',m?m+'/5':'\u2013',m?moodCls(m):'',le?'':'no journal entry')+statCell('Sleep night before',sl!=null?sleepRing(sl,30,true):'\u2013','',le?'':'no journal entry')})()+'</dl>'+
     '<div class="tv-grid"><div><h2 class="sub">Notes</h2>'+(notes||'<p class="muted" style="margin:0">No notes on this trade.</p>')+accRows+
       (function(){var R=t.rules||{},ks=Object.keys(R);if(!ks.length||off('rules'))return '';return '<h2 class="sub" style="margin-top:14px">Rules</h2>'+ks.map(function(k){var r=ruleById(k);return '<div class="quote"><b class="'+(R[k]==='yes'?'gain':'loss')+'">'+(R[k]==='yes'?'\u2713 Followed':'\u2717 Broke')+'</b>'+esc(r?r.text:'Deleted rule')+'</div>'}).join('')})()+
       (t.fills?'<h2 class="sub" style="margin-top:14px">Fills</h2>'+[['in','Entries'],['out','Exits']].map(function(k){var L=t.fills[k[0]]||[];return '<div class="quote"><b>'+k[1]+'</b>'+L.map(function(f){return (+f.qty)+' @ '+px(+f.price)}).join(', ')+(L.length>1?' (avg '+px(fillSum(L).avg)+')':'')+'</div>'}).join(''):'')+
@@ -3631,7 +3688,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id==='bkPwIn'){e.preventDefault();var b=$('#bkUnlock');if(b)b.click()}});
 
 /* ---------- check my journal: the usual things that go wrong, with a fix where one is safe ---------- */
-function healthCheck(){var real=state.trades.filter(function(t){return !t.ex}),today=ymd(new Date());
+function healthCheck(){var real=state.trades.filter(function(t){return !t.ex}),today=tday();
   var key=function(t){return [t.date,t.time||'',t.ticker,t.side,t.qty,t.entry,t.exit].join('|')},seen={},dups=[];real.forEach(function(t){var k=key(t);if(seen[k])dups.push(t);else seen[k]=1});
   var days=uniq(real.map(function(t){return t.date})).sort();
   var r={total:real.length,dups:dups,noStop:real.filter(function(t){return !(t.stop>0)}),noSetup:real.filter(function(t){return !t.setup}),
@@ -3973,8 +4030,8 @@ function pbFeatures(){var F=[['setup','Setup',function(t){return t.setup||null},
     ['hold','Hold time',function(t){var m=holdMin(t);if(m==null)return null;var b=holdBuckets().filter(function(x){return m>=x[1]&&m<x[2]})[0];return b?b[0]:null},String,'hold'],
     ['grade','Execution grade',function(t){return t.egrade||null},String,'grade'],
     ['plan','Followed plan',function(t){return t.plan||null},String,'plan']];
-  if(!off('life'))F.push(['sleep','Sleep the night before',function(t){var b=sleepBucket(lifeNum(lifeOn(t.date),'sleep'));return b==='none'?null:b},function(v){return 'Slept '+sleepLabels()[v]},'sleep'],
-    ['mood','Mood that day',function(t){var b=moodBucket(lifeNum(lifeOn(t.date),'mood'));return b==='none'?null:b},function(v){return 'Mood '+moodLabels()[v].toLowerCase()},'mood']);
+  if(!off('life'))F.push(['sleep','Sleep the night before',function(t){var b=sleepBucket(lifeNum(lifeOn(calDate(t)),'sleep'));return b==='none'?null:b},function(v){return 'Slept '+sleepLabels()[v]},'sleep'],
+    ['mood','Mood that day',function(t){var b=moodBucket(lifeNum(lifeOn(calDate(t)),'mood'));return b==='none'?null:b},function(v){return 'Mood '+moodLabels()[v].toLowerCase()},'mood']);
   return F}
 /* for each feature, the value with the best expectancy among values with enough trades, if it makes money */
 function pbProfile(){var min=pbMin(),out=[];
@@ -4092,7 +4149,7 @@ function rDistHTML(){
 function streaksOf(ts){var cur=0,curT='',bw=0,bl=0,run=0,runT='';
   ts.forEach(function(t){var c=calc(t),k=c.win?'w':c.loss?'l':'';if(!k)return;if(k===runT)run++;else{runT=k;run=1}if(k==='w'&&run>bw)bw=run;if(k==='l'&&run>bl)bl=run});
   return {cur:run,curT:runT,bw:bw,bl:bl}}
-function sortedByTime(){return (dashF?state.trades.filter(dashF):state.trades.slice()).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:((a.time||'')<(b.time||'')?-1:(a.time||'')>(b.time||'')?1:(a.id<b.id?-1:1))})}
+function sortedByTime(){return (dashF?state.trades.filter(dashF):state.trades.slice()).sort(byClock)}
 function mgmtHTML(){
   var ts=sortedByTime(),sk=streaksOf(ts);
   var h='<dl class="strip" style="margin:0 0 14px">'+statCell('Current streak',sk.cur?sk.cur+(sk.curT==='w'?(sk.cur===1?' win':' wins'):(sk.cur===1?' loss':' losses')):'\u2013',sk.curT==='w'?'gain':sk.curT==='l'?'loss':'','breakevens skipped')+
@@ -4122,7 +4179,7 @@ function tiltPool(d){
   if(sp==='any')return {ts:all,label:'in a row'};
   if(sp==='days'){var from=addDays(d,-(w-1));return {ts:all.filter(function(t){return t.date>=from}),label:w===1?'in a row today':'in a row over the last '+w+' days'}}
   if(sp==='hours'){
-    var stamp=function(t){var m=tmin(t.time);return m==null?null:pd(t.date).getTime()-12*36e5+m*6e4};
+    var stamp=function(t){var m=tmin(t.time);return m==null?null:pd(calDate(t)).getTime()-12*36e5+m*6e4};
     var timed=all.filter(function(t){return stamp(t)!=null});
     if(!timed.length)return {ts:all.filter(function(t){return t.date===d}),label:'in a row today'};
     var end=stamp(timed[timed.length-1]);
@@ -4140,7 +4197,7 @@ function tiltWarnings(d){
     if(mt>0&&ts.length>=mt)out.push('<b>You have taken '+ts.length+' of '+mt+' planned trades.</b> '+(ts.length>mt?'You are past your limit.':'That was the last one for today.'))}
   return out;
 }
-var _rAdd15=renderAdd;renderAdd=function(){_rAdd15();if(ui.editId)return;var d=(document.getElementById('f-date')||{}).value||ymd(new Date()),w=tiltWarnings(d);
+var _rAdd15=renderAdd;renderAdd=function(){_rAdd15();if(ui.editId)return;var fd=(document.getElementById('f-date')||{}).value,ft=(document.getElementById('f-time')||{}).value,d=fd?tdOf(fd,ft):tday(),w=tiltWarnings(d);
   if(w.length)$('#tab-add').insertAdjacentHTML('afterbegin','<div class="banner tilt" role="alert"><span>'+w.join('<br>')+'</span></div>')};
 
 /* ---------- daily limits: once today's loss or number of trades reaches its limit, a stop banner shows on every tab ----------
@@ -4155,8 +4212,8 @@ function limitLevel(d){var L=dayLimits(d),ts=tradesOn(d,d).filter(function(t){re
   return {level:'',text:''}}
 /* your own rule about losses or stopping, if you wrote one, is shown with the banner */
 function limitRule(){var r=(state.rules||[]).filter(function(x){return x.active!==false&&/loss|limit|stop trading|done for the day|walk away|quit/i.test(x.text||'')})[0];return r?r.text:''}
-function limitSeen(){var o={};try{o=JSON.parse(lsGet('dayTradeLedger.limitSeen')||'{}')||{}}catch(e){}return o.day===ymd(new Date())?o:{day:ymd(new Date())}}
-function renderLimit(){var box=$('#limitBox');if(!box)return;var today=ymd(new Date()),L=state.settings.stopBanner===false?{level:''}:limitLevel(today),seen=limitSeen();
+function limitSeen(){var o={};try{o=JSON.parse(lsGet('dayTradeLedger.limitSeen')||'{}')||{}}catch(e){}return o.day===tday()?o:{day:tday()}}
+function renderLimit(){var box=$('#limitBox');if(!box)return;var today=tday(),L=state.settings.stopBanner===false?{level:''}:limitLevel(today),seen=limitSeen();
   if(!L.level||seen.hidden===L.level){box.hidden=true;box.innerHTML='';return}
   var rule=limitRule();
   box.hidden=false;box.innerHTML='<div class="banner '+(L.level==='stop'?'stopbar':'tilt')+'" role="alert"><span><b>'+(L.level==='stop'?'Stop trading for today.':'Careful.')+'</b> '+esc(L.text)+(rule?' <span class="muted">Your rule: “'+esc(rule)+'”</span>':'')+'</span>'+
@@ -4303,9 +4360,11 @@ function remHidden(){var o={};try{o=JSON.parse(localStorage.getItem('dayTradeLed
 function remHide(o){try{localStorage.setItem('dayTradeLedger.remindHide',JSON.stringify(o))}catch(e){}}
 function remList(){
   var st=state.settings,now=new Date(),today=ymd(now),dow=now.getDay(),L=[],btn=function(go,label,extra){return ' <button class="btn small" type="button" data-remgo="'+go+'"'+(extra||'')+'>'+label+'</button>'};
-  if(!off('plan')&&remOn('Plan')&&remPlanDays().indexOf(dow)>=0&&!state.plans[today])L.push(['plan','No premarket plan for today yet.'+btn('plan','Write it')]);
-  if(!off('review')&&remOn('Review')){var from=addDays(today,-remReviewDays()),days=uniq(state.trades.filter(function(t){return t.date<today&&t.date>=from}).map(function(t){return t.date})).sort();
-    if(remReviewDays()===1){var past=uniq(state.trades.filter(function(t){return t.date<today}).map(function(t){return t.date})).sort();days=past.length?[past[past.length-1]]:[]}
+  /* plans and reviews follow the trading day: after 6 PM the plan is for tomorrow, and today's session is ready to review */
+  var td=tday();
+  if(!off('plan')&&remOn('Plan')&&remPlanDays().indexOf(pd(td).getDay())>=0&&!state.plans[td])L.push(['plan','No premarket plan for '+(td===today?'today':esc(shortDate(td)))+' yet.'+btn('plan','Write it')]);
+  if(!off('review')&&remOn('Review')){var from=addDays(td,-remReviewDays()),days=uniq(state.trades.filter(function(t){return t.date<td&&t.date>=from}).map(function(t){return t.date})).sort();
+    if(remReviewDays()===1){var past=uniq(state.trades.filter(function(t){return t.date<td}).map(function(t){return t.date})).sort();days=past.length?[past[past.length-1]]:[]}
     var miss=days.filter(function(d){return !state.reviews.daily[d]});
     if(miss.length===1)L.push(['review','Your daily review for '+esc(shortDate(miss[0]))+' is not written yet.'+btn('review','Write it',' data-remdate="'+miss[0]+'"')]);
     else if(miss.length)L.push(['review',miss.length+' trading days in the last '+remReviewDays()+' days have no daily review.'+btn('review','Start with '+esc(shortDate(miss[0])),' data-remdate="'+miss[0]+'"')])}
@@ -4344,7 +4403,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   if(b.dataset.remweek!==undefined){H.until=addDays(today,6);remHide(H);renderRemind();toast('Reminders hidden for a week');return}
   if(b.dataset.remone){if(H.day!==today){H.day=today;H.keys=[]}H.keys.push(b.dataset.remone);remHide(H);renderRemind();return}
   var g=b.dataset.remgo;
-  if(g==='plan'){ui.planDate=today;go('plan');return}
+  if(g==='plan'){ui.planDate=tday();ui.planSess=null;go('plan');return}
   if(g==='review'){ui.revTab='daily';ui.revDate=b.dataset.remdate;ui.revWeek=weekStart(ui.revDate);go('review');return}
   if(g==='weekly'){ui.revTab='weekly';ui.revWeek=b.dataset.remdate;go('review');return}
   if(g==='life'){ui.lifeTab='daily';ui.lifeDate=today;go('life');return}
@@ -4449,7 +4508,7 @@ function calExport(){
     var ts=idx[d]||[],net=ts.length?dayNet(ts):0,pl=state.plans[d],rv=state.reviews.daily[d],le=L[d],lm=le?parseInt(le.mood,10):0,o={bg:null,lines:[],chips:[],sleep:null};
     if((mode==='trades'||mode==='all')&&ts.length){if(net!==0)o.bg=tint(net>0?GAIN:LOSS,0.22);
       o.lines.push({t:money(net,true),c:net>0?GAIN:net<0?LOSS:FG,f:'mono',sz:17});o.lines.push({t:ts.length+(ts.length===1?' trade':' trades'),c:MUT,sz:12})}
-    if(mode==='plan'){if(pl){o.bg=tint(ACC,0.18);o.lines.push({t:pl.bias||'Plan',c:FG,sz:15,w:'600'});if(tot)o.lines.push({t:planDone(pl)+' of '+tot+' routine',c:MUT,sz:12})}
+    if(mode==='plan'){if(pl){o.bg=tint(ACC,0.18);o.lines.push({t:planBiasText(pl)||'Plan',c:FG,sz:15,w:'600'});if(tot)o.lines.push({t:planDone(pl)+' of '+tot+' routine',c:MUT,sz:12})}
       else if(ts.length)o.lines.push({t:'Traded, no plan',c:WARN,sz:12,w:'600'})}
     if(mode==='daily'){if(rv){o.bg=tint(ACC,0.18);o.lines.push({t:rv.rating?rv.rating+'/5':'Reviewed',c:FG,sz:15,w:'600'});if(rv.mood)o.lines.push({t:rv.mood,c:MUT,sz:12})}
       else if(ts.length&&d<=ymd(new Date()))o.lines.push({t:'Not reviewed',c:WARN,sz:12,w:'600'})}
@@ -4652,7 +4711,7 @@ document.addEventListener('click',function(e){
   if(b.dataset.galkind){ui.gal=ui.gal||{q:'',res:'',setup:'',sort:'new',kind:'trade'};ui.gal.kind=b.dataset.galkind;renderGallery();return}
   if(b.dataset.galReview){flushReview();ui.revTab='daily';ui.revDate=b.dataset.galReview;ui.revWeek=weekStart(ui.revDate);go('review');return}
   if(b.dataset.galEdit){ui.tlist=(ui.galItems||[]).filter(function(x){return x.t}).map(function(x){return x.t.id}).filter(function(v,i,a){return a.indexOf(v)===i});openTrade(b.dataset.galEdit);return}
-  if(b.dataset.galPlan){flushReview();ui.planDate=b.dataset.galPlan;go('plan');return}
+  if(b.dataset.galPlan){flushReview();var gp=b.dataset.galPlan.split('|');ui.planDate=gp[0];ui.planSess=gp[1]||'';go('plan');return}
   if(b.id==='boxAdd'){boxAdd();return}
   if(b.id==='boxCancel'){boxPopClose();return}
   if(b.dataset.boxDel){var bd=b.dataset.boxDel.split('|');
@@ -4699,12 +4758,17 @@ document.addEventListener('click',function(e){
     else{b.dataset.armed='1';b.textContent='Click again to delete'}
     return}
   if(b.dataset.pstep){flushPlan();ui.planDate=addDays(ui.planDate,parseInt(b.dataset.pstep,10));renderPlan();return}
-  if(b.dataset.ptoday!==undefined){flushPlan();ui.planDate=ymd(new Date());renderPlan();return}
-  if(b.dataset.popen){flushReview();ui.planDate=b.dataset.popen;go('plan');return}
+  if(b.dataset.ptoday!==undefined){flushPlan();ui.planDate=tday();ui.planSess=null;renderPlan();return}
+  if(b.dataset.popen){flushReview();if(ui.tview)closeTrade();ui.planDate=b.dataset.popen;ui.planSess=b.dataset.psn||null;go('plan');return}
+  if(b.dataset.psess!==undefined){flushPlan();ui.planSess=b.dataset.psess;renderPlan();return}
   if(b.dataset.pcopy!==undefined){copyLastPlan();return}
   if(b.id==='delPlan'){
-    if(b.dataset.armed){clearTimeout(savePlan.h);savePlan.h=null;var pdk=ui.planDate,oldP=state.plans[pdk];delete state.plans[pdk];save();renderAll();
-      undoOffer('Deleted the premarket plan for '+shortDate(pdk)+'.',function(){if(oldP)state.plans[pdk]=oldP},function(){})}
+    if(b.dataset.armed){clearTimeout(savePlan.h);savePlan.h=null;var pdk=ui.planDate,oldP=state.plans[pdk],psn=ui.planSess||'';
+      /* on a session tab only that session's plan goes; on Whole day, the whole day with its sessions */
+      if(psn&&oldP){var np=Object.assign({},oldP);np.s=Object.assign({},np.s||{});delete np.s[psn];if(!Object.keys(np.s).length)delete np.s;if(!dayHas(np)&&!np.s)delete state.plans[pdk];else state.plans[pdk]=np}
+      else delete state.plans[pdk];
+      save();renderAll();
+      undoOffer('Deleted the '+(psn?psn+' plan':'premarket plan')+' for '+shortDate(pdk)+'.',function(){if(oldP)state.plans[pdk]=oldP},function(){})}
     else{b.dataset.armed='1';b.textContent='Click again to delete'}
     return}
   if(b.dataset.picAdd!==undefined){var fi=$('#tab-'+ui.tab+' .pic-file');if(fi)fi.click();return}
@@ -5534,7 +5598,9 @@ function renderCustom(){
     custField('Time of day groups',cSel('hourStep',[[60,'Every hour'],[30,'Every 30 minutes'],[15,'Every 15 minutes']],[15,30,60].indexOf(+st.hourStep)>=0?st.hourStep:60))+
     custField('Sleep groups, hours',cIn('sleepCuts',sleepCuts().join(', '),'type="text" data-ct="csv2"'),'Two numbers: short sleep is under the first, good sleep is the second or more.')+
     custField('Mood and energy groups',cIn('moodCuts',moodCuts().join(', '),'type="text" data-ct="csv2"'),'Two numbers: low is the first or less, good is the second or more.')+
-    custField('Market sessions','<textarea data-cs="sessions" data-ct="sessions" rows="7">'+esc(sessionsCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','One per line: a name and the time it starts, like London 03:00. Each runs until the next one starts. Uses the time zone you log trades in (the starting list is New York time). Clear it to go back to the original.')+'</div></div>'+
+    custField('Market sessions','<textarea data-cs="sessions" data-ct="sessions" rows="7">'+esc(sessionsCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','One per line: a name and the time it starts, like London 03:00. Each runs until the next one starts. Uses the time zone you log trades in (the starting list is New York time). Clear it to go back to the original.')+
+    custField('Plan sessions','<textarea data-cs="planSess" data-ct="sessions" rows="4">'+esc(planSessCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','The tabs on the premarket plan, one per line with the time it starts, like Asia 18:00. Each runs until the next one starts, and a trade is linked to the session it was placed in. Clear it to go back to Asia, London and New York.')+
+    custField('Trading day',cChk('tdOn',tdStart()!=null,'A new trading day starts at')+' <input data-cs="dayStart" data-ct="hhmm" type="time" value="'+esc(hhmm(tdStart()==null?18*60:tdStart()))+'" style="max-width:130px" aria-label="Trading day starts at">','Futures trade from 6 PM to 5 PM New York time, so a trade placed at 7 PM Monday counts toward Tuesday: in the calendar, the daily P&amp;L, your loss limit and reviews. The trade still shows when you placed it. The Life journal keeps calendar days. Switch it off to use calendar days for everything.')+'</div></div>'+
     '<div class="panel"><h2>Keyboard shortcuts</h2><p class="help">'+(keyFor('help')?'Press <kbd>'+esc(keyShow(keyFor('help')))+'</kbd> anywhere to see these. ':'')+'They do nothing while you are typing in a box. The arrow keys and Esc always work in the trade view and picture viewer.</p>'+shortcutsEditHTML()+'</div>'+
   '<div class="panel"><h2>Formats</h2><div class="cust-grid">'+
     custField('Currency symbol',cIn('currency',cur(),'type="text" maxlength="4" style="max-width:100px"'),'Only changes the symbol shown, not the math.')+
@@ -5657,6 +5723,7 @@ document.addEventListener('change',function(e){var el=e.target;if(!el.dataset||!
       var o=old?JSON.parse(JSON.stringify(old)):{title:ti,kind:'percent'};o.title=ti;o.cat=ca||o.cat||'Personal';return o}):undefined}
     else v=L.length?L:undefined}
   else if(t==='text'){v=v.trim()?v:undefined}
+  else if(t==='hhmm'){var hm=tmin(v);if(hm==null){toast('Enter a time, like 18:00');return}v=hm}
   else if(k==='tdef.ticker'){v=v.trim().toUpperCase()||undefined}
   /* Customize redraws itself; Setup & data does not, so anything typed there but not saved yet stays put */
   custSet(k,v);save();applyCustom();renderAcctCard();if(el.closest('#tab-custom'))renderCustom();toast('Saved')});
@@ -5924,15 +5991,20 @@ function tabKeysOn(){return state.settings.tabKeys!==false}
 function keyActName(a){var x=myKeyActs().filter(function(m){return m[0]===a})[0];return x?x[1]:a}
 /* what a key already does, so no key does two things */
 function keyTaken(k,skipAct,skipMine){
+  if(skipAct!=='quicklog'&&qlOn()&&qlCombo()===k)return QL_NAME;
   var b=KEY_ACTS.filter(function(x){return x[0]!==skipAct&&keyFor(x[0])===k})[0];if(b)return b[1];
   var m=myKeys().filter(function(x,i){return i!==skipMine&&x.k===k})[0];return m?keyActName(m.a):''}
 function shortcutRows(){var r=KEY_ACTS.filter(function(a){return keyFor(a[0])}).map(function(a){return [keyShow(keyFor(a[0])),a[1]]});
   if(tabKeysOn())r.splice(2,0,['1 to 9','Jump to that tab in the sidebar']);
+  if(qlOn())r.unshift([qlKeyShow(qlKey()),QL_NAME]);
   r=r.concat(myKeys().filter(function(x){return x.k}).map(function(x){return [keyShow(x.k),keyActName(x.a)]}));
   return r.concat([['← →','Previous or next trade in the trade view, or picture in the viewer'],['Esc','Close the trade view, the picture viewer or this list']])}
 function shortcutsListHTML(){return '<table class="kbd-list"><tbody>'+shortcutRows().map(function(s){return '<tr><td><kbd>'+esc(s[0])+'</kbd></td><td>'+esc(s[1])+'</td></tr>'}).join('')+'</tbody></table>'}
 function shortcutsEditHTML(){var acts=myKeyActs();
-  return '<table class="kbd-list"><tbody>'+KEY_ACTS.map(function(a){return '<tr><td><input class="kbd-in" data-keyact="'+a[0]+'" value="'+esc(keyShow(keyFor(a[0])))+'" placeholder="off" aria-label="Key for '+esc(a[1])+'"></td><td>'+esc(a[1])+'</td></tr>'}).join('')+'</tbody></table>'+
+  /* in the TradeVault app, the quick log shortcut sits at the top: it works from any program, so it is set apart from the keys below */
+  var ql=TGS?'<tr><td><input id="appQlKey" class="kbd-in" readonly value="'+esc(qlKeyShow(qlKey()))+'" aria-label="Key for '+QL_NAME+'"></td><td>'+QL_NAME+' <span class="muted">(TradeVault app; works even while your trading platform is in front)</span> '+
+    '<button class="btn small" type="button" id="appQlOff">'+(qlKey()?'Turn off':'Use Ctrl+Alt+T')+'</button>'+(appS.qlErr?' <span class="loss">That key is taken by another program: '+esc(appS.qlErr)+'</span>':'')+'</td></tr>':'';
+  return '<table class="kbd-list"><tbody>'+ql+KEY_ACTS.map(function(a){return '<tr><td><input class="kbd-in" data-keyact="'+a[0]+'" value="'+esc(keyShow(keyFor(a[0])))+'" placeholder="off" aria-label="Key for '+esc(a[1])+'"></td><td>'+esc(a[1])+'</td></tr>'}).join('')+'</tbody></table>'+
   cChk('tabKeys',tabKeysOn(),'Keys 1 to 9 jump to the tabs in the sidebar')+
   '<h2 class="sub" style="margin-top:16px">Your own shortcuts</h2>'+
   (myKeys().length?'<table class="kbd-list"><tbody>'+myKeys().map(function(x,i){return '<tr><td><input class="kbd-in" data-mykey="'+i+'" value="'+esc(keyShow(x.k))+'" placeholder="press a key" aria-label="Key for this shortcut"></td>'+
@@ -6179,7 +6251,7 @@ document.addEventListener('click',function(e){var id=e.target.id;
   if(id==='bkClear'){ui.sel={};renderTrades();return}
   /* duplicate: a new trade with the same details, dated today, ready to adjust */
   if(e.target.closest&&e.target.closest('[data-tvdup]')){var t=tradeById(ui.tview);if(!t)return;var c=JSON.parse(JSON.stringify(t));
-    ['id','ex','oids','src','srcName','lm','fills'].forEach(function(k){delete c[k]});c.date=ymd(new Date());delete c.xdate;
+    ['id','ex','oids','src','srcName','lm','fills','cdate'].forEach(function(k){delete c[k]});c.date=ymd(new Date());delete c.xdate;
     closeTrade();ui.editId=null;ui.draftId=null;ui.addDraft=c;ui.backTo=null;go('add');toast('Copied. Change what is different and press Add trade.')}
 });
 
@@ -6236,7 +6308,7 @@ function tfMatch(t,c){var f=ui.tf,on=function(k){return f[k]&&!(state.settings.t
   if(on('side')&&t.side!==f.side)return false;
   if(on('setup')&&t.setup!==f.setup)return false;
   if(on('result')){var rs=f.result;if(rs==='win'&&!c.win||rs==='loss'&&!c.loss||rs==='be'&&!c.be||rs==='broke'&&!off('rules')&&!ruleBroke(t)||rs==='untag'&&!(t.src==='tv'&&!t.setup))return false}
-  if(!off('life')&&(on('sleep')||on('mood'))){var le=lifeOn(t.date);
+  if(!off('life')&&(on('sleep')||on('mood'))){var le=lifeOn(calDate(t));
     if(on('sleep')&&sleepBucket(lifeNum(le,'sleep'))!==f.sleep)return false;
     if(on('mood')&&moodBucket(lifeNum(le,'mood'))!==f.mood)return false}
   if(on('r')){var r=c.r;if(f.r==='none'){if(r!=null)return false}else{if(r==null)return false;if(f.r==='lt-1'&&!(r<-1))return false;if(f.r==='-1to0'&&!(r>=-1&&r<0))return false;if(f.r==='0to1'&&!(r>=0&&r<1))return false;if(f.r==='1to2'&&!(r>=1&&r<2))return false;if(f.r==='gt2'&&!(r>=2))return false}}
@@ -6529,9 +6601,6 @@ function appSettingsHTML(){var c=appS.cfg,mode=appTrayMode(),hidden=c.startHidde
     opt('appTray','close',mode==='close','The X sends TradeVault to the tray; quit from the tray icon')+
     opt('appTray','off',mode==='off','Neither: minimize and X work as usual')+
     note('In the tray, TradeVault keeps saving, backing up every 15 minutes and showing reminder notifications. Click its icon by the clock (it may be behind the ^ arrow) to show or hide the window; right-click it to back up or quit.')+
-    (TGS?'<h2 class="sub" style="margin-top:20px">Quick log shortcut</h2>'+
-      '<div class="actions" style="margin-top:0;align-items:center"><input id="appQlKey" class="kbd-in" readonly value="'+esc(qlKeyShow(qlKey()))+'" aria-label="Quick log shortcut, click and press keys"><button class="btn small" type="button" id="appQlOff">'+(qlKey()?'Turn off':'Use Ctrl+Alt+T')+'</button></div>'+
-      note('Press it anywhere, even while your trading platform is in front, and TradeVault opens Quick log ready for the entry price. Click the box and press the keys you want, with Ctrl or Alt.'+(appS.qlErr?' <span class="loss">That key is taken by another program: '+esc(appS.qlErr)+'</span>':'')):'')+
     '<h2 class="sub" style="margin-top:20px">Import folder</h2>'+
     '<div class="app-row"><div class="app-txt"><div class="app-path">'+(appS.cfg.importDir?esc(appS.cfg.importDir):'Not set.')+'</div><div class="muted" style="font-size:12px" id="appImpStat">'+(appS.cfg.importDir?appImportStat():'')+'</div></div>'+
       '<div class="app-btns"><button class="btn small" type="button" id="appImpPick">'+(appS.cfg.importDir?'Change folder':'Choose folder')+'</button>'+(appS.cfg.importDir?'<button class="btn small" type="button" id="appImpOff">Stop</button>':'')+'</div></div>'+
@@ -6548,8 +6617,14 @@ function appSettingsHTML(){var c=appS.cfg,mode=appTrayMode(),hidden=c.startHidde
 
 /* ---- the quick log shortcut: a key that opens Quick log from anywhere, even while your trading platform is in front ---- */
 var TGS=TA&&(TA.globalShortcut||window.__TAURI_PLUGIN_GLOBAL_SHORTCUT__)||null;
+var QL_NAME='Quick log, from any program';
 function qlKey(){var k=appS.cfg.quickKey;return typeof k==='string'?k:'CommandOrControl+Alt+T'}
+function qlOn(){return !!TGS&&!!qlKey()}
 function qlKeyShow(k){return k?k.replace('CommandOrControl','Ctrl'):'Off'}
+/* the same key written the way the in-journal shortcuts are, like ctrl+alt+t, so the two lists can't clash */
+function qlCombo(){return qlKey().replace('CommandOrControl','ctrl').toLowerCase()}
+/* the shortcut lives with the others in Customize, Pages */
+function qlRedraw(){if(ui.tab==='custom')renderCustom();else renderData()}
 function appQuickKey(){if(!TGS)return Promise.resolve();var old=appS.qlReg,k=qlKey();appS.qlErr='';
   return Promise.resolve(old?TGS.unregister(old):null).catch(function(){}).then(function(){appS.qlReg='';if(!k)return;
     return Promise.resolve(TGS.register(k,function(ev){if(ev&&ev.state&&ev.state!=='Pressed')return;appOpenQuick()})).then(function(){appS.qlReg=k})})
@@ -6563,7 +6638,8 @@ function qlKeyFrom(e){var k=e.key;if(!k||/^(Control|Shift|Alt|Meta)$/.test(k))re
 
 document.addEventListener('keydown',function(e){if(e.target.id!=='appQlKey')return;if(e.key==='Tab')return;e.preventDefault();e.stopPropagation();var k=qlKeyFrom(e);
   if(!k){if(!/^(Control|Shift|Alt|Meta)$/.test(e.key))toast('Hold Ctrl or Alt with a letter, number or F key');return}
-  appS.cfg.quickKey=k;appCfgSave();appQuickKey().then(function(){if(appS.qlErr){toast('That key can’t be used: '+appS.qlErr)}else toast('Quick log shortcut: '+qlKeyShow(k));renderData()})},true);
+  var clash=keyTaken(k.replace('CommandOrControl','ctrl').toLowerCase(),'quicklog',-1);if(clash){toast(qlKeyShow(k)+' already does: '+clash);return}
+  appS.cfg.quickKey=k;appCfgSave();appQuickKey().then(function(){if(appS.qlErr){toast('That key can’t be used: '+appS.qlErr)}else toast('Quick log shortcut: '+qlKeyShow(k));qlRedraw()})},true);
 
 /* ---- the import folder: new trade CSV files that appear there are imported by themselves, within about 30 seconds ----
    Files already in the folder when you choose it are left alone; ones that arrive while TradeVault is closed come in when it opens */
@@ -6586,7 +6662,7 @@ function appChooseImportDir(){return TDLG.open({directory:true,title:'Choose the
 
 /* ---- the tray icon's tooltip: today's P&L and number of trades ---- */
 function appTrayTip(){var T=TA.tray&&TA.tray.TrayIcon;if(!T||!appS.ready)return;var txt='TradeVault';
-  if(appS.cfg.trayPnl!==false){var d=ymd(new Date()),ts=allChrono().filter(function(t){return !t.ex&&t.date===d}),L=limitLevel(d);
+  if(appS.cfg.trayPnl!==false){var d=tday(),ts=allChrono().filter(function(t){return !t.ex&&t.date===d}),L=limitLevel(d);
     txt+='\nToday: '+(ts.length?money(dayNet(ts),true)+' · '+ts.length+(ts.length===1?' trade':' trades'):'no trades yet')+(L.level==='stop'?'\nDaily limit reached':'')}
   if(txt===appTrayTip.last)return;appTrayTip.last=txt;Promise.resolve(T.getById('main')).then(function(t){if(t)return t.setTooltip(txt)}).catch(function(){})}
 
@@ -6667,7 +6743,7 @@ if(APP){
     else if(b.id==='appUpdCheck')appCheckUpdate(true)
     else if(b.id==='appImpPick')appChooseImportDir()
     else if(b.id==='appImpOff'){appS.cfg.importDir='';appS.cfg.imported={};appCfgSave().then(function(){renderData();toast('No longer watching a folder')})}
-    else if(b.id==='appQlOff'){appS.cfg.quickKey=qlKey()?'':'CommandOrControl+Alt+T';appCfgSave();appQuickKey().then(function(){renderData();toast(qlKey()?'Quick log shortcut: '+qlKeyShow(qlKey()):'Quick log shortcut off')})}
+    else if(b.id==='appQlOff'){appS.cfg.quickKey=qlKey()?'':'CommandOrControl+Alt+T';appCfgSave();appQuickKey().then(function(){qlRedraw();toast(qlKey()?'Quick log shortcut: '+qlKeyShow(qlKey()):'Quick log shortcut off')})}
     else if(b.id==='winNotifyTest')appNotePerm().then(function(ok){if(!ok){toast('Windows did not allow notifications. Check Settings, System, Notifications');return}
       TNOTE.sendNotification({title:'TradeVault',body:'Notifications are working. Your reminders will show up like this.'});toast('Test notification sent')}).catch(function(err){toast('Could not send a notification: '+appErr(err))})});
   document.addEventListener('change',function(e){var t=e.target;
@@ -6682,6 +6758,7 @@ if(APP){
     if(t.name==='appTray'){appS.cfg.tray=t.value;appCfgSave().then(function(){toast(t.value==='min'?'Minimize now sends it to the tray':t.value==='close'?'The X now sends it to the tray':'Minimize and X work as usual')})}});
 }else if(picFilesDone)picFilesDone(null);
 load();
+ui.planDate=tday();
 (function(){var ex=Object.keys(state.reviews.daily).filter(function(k){return state.reviews.daily[k].ex}).sort().pop();
   if(ex){ui.revDate=ex;ui.revWeek=weekStart(ex);ui.planDate=ex;if(state.life&&state.life[ex])ui.lifeDate=ex}})();
 /* open on the page chosen in Customize, Tabs in the sidebar */
@@ -7451,5 +7528,28 @@ Version 78  (Oct 26, 2026)  (Update history: 2.2)
 - Includes the import fixes from 2.11 (blank commissions, market names,
   Tradovate Orders files)
 - TradeVault desktop app updated to 2.2.0
+Version 79  (Oct 26, 2026)  (Update history: 2.21)
+--------------------------
+- Trading day: futures run from 6 PM to 5 PM New York time, so a trade
+  placed at 7 PM Monday now counts toward Tuesday in the calendar, daily
+  P&L, loss limit, reviews and stats. The trade still shows when you
+  placed it. Change the start time or switch it off in Customize, Stats
+- Premarket plans by session: Asia, London and New York tabs, each with
+  its own bias, levels, news, if/then and charts. Loss limit, size and
+  routine stay on Whole day. Rename or change the sessions in Customize
+- A trade shows the plan for the session it was placed in, with a button
+  to open it
+- The Life journal keeps calendar days: sleep and mood are matched with
+  the day a trade was actually placed
+- Daily review: the day's trades are grouped by session (Asia, London,
+  New York) in the order they happened, each with its P&L, win rate and
+  a button to open that session's plan
+- TradeVault app: the quick log shortcut (Ctrl+Alt+T) now sits with the
+  other keyboard shortcuts in Customize, Pages, shows in the shortcut list
+  (press ?), and can't be given the same keys as another shortcut
+- The losing-streak warning and trade order follow the time trades were
+  placed, so evening trades come first in their trading day
+- TradeVault desktop app updated to 2.2.1
+
 </script>
 </body></html>
