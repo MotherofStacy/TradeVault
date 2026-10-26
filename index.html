@@ -1031,7 +1031,7 @@ function migrate(){
   /* account groups: each group has its own leader (its first account) and followers; older journals become one group */
   if(!Array.isArray(st.groups)||!st.groups.length)st.groups=[{id:'main',name:'Main'}];
   st.groups.forEach(function(g,i){if(!g.id)g.id=uid();if(typeof g.name!=='string'||!g.name.trim())g.name=i?'Group '+(i+1):'Main'});
-  st.groups.forEach(function(g){if(g.follow&&(g.follow===g.id||!grpById(g.follow)))delete g.follow});
+  st.groups.forEach(function(g){if(g.solo!==true)delete g.solo;if(g.follow&&(g.follow===g.id||!grpById(g.follow)))delete g.follow});
   st.accounts.forEach(function(a){if(!grpById(a.grp))a.grp=st.groups[0].id});
   sortAccts();
   st.startBalance=st.accounts[0].start;
@@ -1094,24 +1094,38 @@ function multiGrp(){return (state.settings.groups||[]).length>1}
 /* a trade with no group, or one whose group was removed, belongs to the first group */
 function tradeGrp(t){return t.grp&&grpById(t.grp)?t.grp:state.settings.groups[0].id}
 function grpAccts(g){return state.settings.accounts.filter(function(a){return a.grp===g})}
-function grpLeader(g){return grpAccts(g)[0]||null}
+/* a group can have no leader: its accounts then don't copy each other, and each trade belongs to one account (t.acct) */
+function grpSolo(g){var o=grpById(g);return !!(o&&o.solo)}
+function grpLeader(g){return grpSolo(g)?null:grpAccts(g)[0]||null}
 function isLead(a){return grpLeader(a.grp)===a}
+function acctById(id){return state.settings.accounts.filter(function(a){return a.id===id})[0]||null}
+/* puts a trade in a group (and, in a group with no leader, on one of its accounts), sized so its P&L is what was logged */
+function placeTrade(t,g,aid){t.grp=g;
+  var a=acctById(aid);if(!a||a.grp!==g)a=grpSolo(g)?grpAccts(g)[0]||null:null;
+  if(a){t.acct=a.id;t.lm=a.mult>0?a.mult:1}else{delete t.acct;t.lm=leaderMult(g)}}
+/* the Account box on the trade form lists the group's accounts, starting on the one last used */
+/* "all" adds a choice for every account in the group, for trades logged while it still had a leader */
+function acctOpts(g,cur,all){var as=grpAccts(g),pick=as.filter(function(a){return a.id===cur})[0]||(all?null:as.filter(function(a){return a.id===state.settings.lastAcct})[0]||as[0]);
+  return (all?'<option value=""'+(pick?'':' selected')+'>Every account in the group</option>':'')+as.map(function(a){return '<option value="'+esc(a.id)+'"'+(a===pick?' selected':'')+'>'+esc(a.name)+'</option>'}).join('')}
+document.addEventListener('change',function(e){if(e.target.id!=='f-grp')return;var g=e.target.value,box=$('#f-acctBox');if(!box)return;
+  box.hidden=!grpSolo(g);$('#f-acct').innerHTML=acctOpts(g,$('#f-acct').value,false)});
+function soloTrades(a){return state.trades.filter(function(t){return t.acct===a.id}).length}
 /* the group new trades and imports go to: the one last used */
 function curGrp(){var g=state.settings.lastGrp;return grpById(g)?g:state.settings.groups[0].id}
 /* keep accounts in group order, so each group's leader comes first in it */
 function sortAccts(){var st=state.settings,gi={};st.groups.forEach(function(g,i){gi[g.id]=i});
   st.accounts=st.accounts.map(function(a,i){return [a,i]}).sort(function(x,y){return (gi[x[0].grp]-gi[y[0].grp])||(x[1]-y[1])}).map(function(x){return x[0]})}
 /* a group can follow another group's leader: that group's trades then count for it too, and so on down a chain */
-function grpFollow(g){var o=grpById(g);return o&&o.follow&&o.follow!==g&&grpById(o.follow)?o.follow:null}
+function grpFollow(g){var o=grpById(g);return o&&!o.solo&&o.follow&&o.follow!==g&&grpById(o.follow)&&!grpSolo(o.follow)?o.follow:null}
 function grpGets(g,src){var seen={};while(g&&!seen[g]){if(g===src)return true;seen[g]=1;g=grpFollow(g)}return false}
 /* an account counts a trade when the trade is in its group (or a group it follows) and on or after its start date */
-function acctHas(a,t){return grpGets(a.grp,tradeGrp(t))&&!(a.since&&t.date<a.since)}
-function leaderMult(g){var a=grpLeader(g||state.settings.groups[0].id)||state.settings.accounts[0];return a&&a.mult>0?a.mult:1}
+function acctHas(a,t){var own=t.acct&&acctById(t.acct);return (own?own===a:grpGets(a.grp,tradeGrp(t)))&&!(a.since&&t.date<a.since)}
+function leaderMult(g){g=g||state.settings.groups[0].id;if(grpSolo(g))return 1;var a=grpLeader(g)||state.settings.accounts[0];return a&&a.mult>0?a.mult:1}
 /* a leader's size is against the leader it follows; everyone else's is against their own group's leader */
 function relBase(a){return isLead(a)?(grpFollow(a.grp)?leaderMult(grpFollow(a.grp)):a.mult>0?a.mult:1):leaderMult(a.grp)}
 function rel(a){return +(((a.mult>0?a.mult:1)/relBase(a)).toFixed(4))}
 /* the Dashboard's leader tile shows the first group's leader, named when there are several groups */
-function leadTile(){return multiGrp()?esc(state.settings.groups[0].name)+' leader':'Leader account'}
+function leadTile(){var g0=state.settings.groups[0];return grpSolo(g0.id)?esc(state.settings.accounts[0].name):multiGrp()?esc(g0.name)+' leader':'Leader account'}
 function acctRows(){
   var tr=allChrono();
   return state.settings.accounts.map(function(a,i){
@@ -1157,27 +1171,34 @@ document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' '
 /* changing who a group follows saves straight away, so the leader's size box can switch on */
 document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('g-follow'))return;var gid=el.dataset.g;
   collectAccounts();save();renderData();renderAcctCard();var g=grpById(gid),f=grpFollow(gid);if(g)toast(f?g.name+' now follows the '+grpById(f).name+' leader. Set its size in the leader row.':g.name+' follows its own leader only')});
+function soloChk(g){return '<label class="chk" style="margin:0;flex:1 1 260px" title="Each account in this group has its own trades, and none copies another"><input class="g-solo" data-g="'+esc(g.id)+'" type="checkbox"'+(g.solo?' checked':'')+'> No leader: each account trades on its own</label>'}
+/* switching a group to no leader (or back) saves straight away; trades already logged keep counting the way they were logged */
+document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('g-solo'))return;
+  collectAccounts();var g=grpById(el.dataset.g);if(!g)return;
+  if(el.checked){g.solo=true;delete g.follow;state.settings.groups.forEach(function(x){if(x.follow===g.id)delete x.follow})}else delete g.solo;
+  save();renderData();renderAcctCard();
+  toast(el.checked?g.name+' has no leader now. Pick the account on each new trade.':g.name+' has a leader again: '+grpLeader(g.id).name+'. New trades are copied to its followers.')});
 function acctPanel(){
   var rows=acctRows(),tot=0,net=0,start=0;
   rows.forEach(function(r){tot+=r.equity;net+=r.net;start+=r.a.start});
   var mg=multiGrp(),gsum={};
   if(mg)rows.forEach(function(r){var s=gsum[r.a.grp]=gsum[r.a.grp]||{net:0,eq:0,n:0};s.net+=r.net;s.eq+=r.equity;s.n++});
   var body=rows.map(function(r,k){
-    var lim='\u2013',room='\u2013',lead=isLead(r.a);
+    var lim='\u2013',room='\u2013',lead=isLead(r.a),solo=grpSolo(r.a.grp);
     /* with more than one group, each group gets a heading row with its own totals */
-    var gh=mg&&(k===0||rows[k-1].a.grp!==r.a.grp)?(function(){var g=grpById(r.a.grp),s=gsum[r.a.grp];var fl=grpFollow(g.id);return '<tr class="grp-head"><td colspan="3"><b>'+esc(g.name)+'</b> <span class="muted">'+s.n+(s.n===1?' account':' accounts')+(fl?', follows '+esc(grpById(fl).name):'')+'</span></td><td class="num '+cls(s.net)+'">'+money(s.net,true)+'</td><td class="num">'+money(s.eq)+'</td><td colspan="3"></td></tr>'})():'';
+    var gh=mg&&(k===0||rows[k-1].a.grp!==r.a.grp)?(function(){var g=grpById(r.a.grp),s=gsum[r.a.grp];var fl=grpFollow(g.id);return '<tr class="grp-head"><td colspan="3"><b>'+esc(g.name)+'</b> <span class="muted">'+s.n+(s.n===1?' account':' accounts')+(fl?', follows '+esc(grpById(fl).name):'')+(g.solo?', no leader':'')+'</span></td><td class="num '+cls(s.net)+'">'+money(s.net,true)+'</td><td class="num">'+money(s.eq)+'</td><td colspan="3"></td></tr>'})():'';
     if(r.floor!=null){
       lim='<b>'+money(r.floor)+'</b><div class="muted" style="font-size:11px">'+(r.type==='fixed'?'fixed, '+money(r.dd):'trailing, '+money(r.dd)+(r.locked?' (locked)':''))+'</div>';
       room=r.breached?'<b class="loss">Breached</b><div class="muted" style="font-size:11px">'+money(r.room)+'</div>':'<b class="'+(r.room<r.dd*ddWarnPct()/100?'loss':'gain')+'">'+money(r.room)+'</b>';
     }
-    return gh+'<tr><td><b>'+esc(r.a.name)+'</b> <span class="tag'+(lead?' ok':'')+'">'+(lead?'leader':'follower')+'</span>'+(r.a.since?' <span class="tag" title="Account start date: trades before it are not counted for this account">since '+esc(pd(r.a.since).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</span>':'')+
+    return gh+'<tr><td><b>'+esc(r.a.name)+'</b> <span class="tag'+(lead?' ok':'')+'">'+(solo?'own trades':lead?'leader':'follower')+'</span>'+(r.a.since?' <span class="tag" title="Account start date: trades before it are not counted for this account">since '+esc(pd(r.a.since).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</span>':'')+
       (r.adj?' <span class="tag" title="Balance manually adjusted by '+money(r.adj,true)+'">adjusted</span>':'')+'</td>'+
-      '<td class="num">\u00D7'+rel(r.a)+'</td><td class="num">'+money(r.a.start)+'</td><td class="num '+cls(r.net)+'">'+money(r.net,true)+'</td>'+
+      '<td class="num">'+(solo?'\u2013':'\u00D7'+rel(r.a))+'</td><td class="num">'+money(r.a.start)+'</td><td class="num '+cls(r.net)+'">'+money(r.net,true)+'</td>'+
       '<td class="num"><b>'+money(r.equity)+'</b></td><td class="num '+cls(r.net)+'">'+(r.ret==null?'\u2013':(r.ret>0?'+':'')+pct(r.ret,2))+'</td>'+
       '<td class="num">'+lim+'</td><td class="num">'+room+'</td></tr>'}).join('');
   var foot=rows.length>1?'<tr class="total"><td>All accounts</td><td></td><td class="num">'+money(start)+'</td><td class="num '+cls(net)+'">'+money(net,true)+'</td><td class="num">'+money(tot)+'</td><td class="num '+cls(net)+'">'+(start?(net>0?'+':'')+pct(net/start,2):'\u2013')+'</td><td></td><td></td></tr>':'';
   return '<div class="panel"><h2>Accounts</h2><div class="scroll"><table><thead><tr><th>Account</th><th class="num">Size</th><th class="num">Start</th><th class="num">Net P&amp;L</th><th class="num">Equity</th><th class="num">Return</th><th class="num">Drawdown limit</th><th class="num">Room left</th></tr></thead><tbody>'+body+foot+'</tbody></table></div>'+
-    '<p class="help" style="margin:10px 0 0">'+(mg?'Log each trade once, in its group. The group&#39;s followers copy it at their size multiple, and other groups are not affected.':'Log trades once, on the leader. Each follower copies them at its size multiple.')+' Add or change accounts, groups, drawdown limits and balances in Setup &amp; data.</p></div>';
+    '<p class="help" style="margin:10px 0 0">'+(mg?'Log each trade once, in its group. The group&#39;s followers copy it at their size multiple, and other groups are not affected. In a group with no leader, each trade counts only for the account you pick.':grpSolo(state.settings.groups[0].id)?'There is no leader: each trade counts only for the account you pick when you log it.':'Log trades once, on the leader. Each follower copies them at its size multiple.')+' Add or change accounts, groups, drawdown limits and balances in Setup &amp; data.</p></div>';
 }
 function collectAccounts(){
   var rows=document.querySelectorAll('#tab-data .acct-row'),out=[],bals=[],moved=[];
@@ -1203,22 +1224,25 @@ function collectAccounts(){
     /* a typed balance becomes a lasting adjustment on top of start + P&L, so later trades still add to it */
     var calc0=acctRows();bals.forEach(function(b,i){if(b!=null)out[i].adj=+(b-(out[i].start+calc0[i].net)).toFixed(2)});
     /* an account moved to another group joins it as a follower, after the accounts already there */
-    if(moved.length){state.settings.accounts=out.filter(function(a){return moved.indexOf(a)<0}).concat(moved);sortAccts()}
+    if(moved.length){state.settings.accounts=out.filter(function(a){return moved.indexOf(a)<0}).concat(moved);sortAccts();
+      /* an account's own trades (from a group with no leader) go with it */
+      moved.forEach(function(a){state.trades.forEach(function(t){if(t.acct===a.id)t.grp=a.grp})})}
   }
   state.settings.startBalance=state.settings.accounts[0].start;
 }
 function acctRowHTML(a,i){
   var r=acctRows()[i],fl='flex:1 1 150px';
   var typeSel='<select class="a-ddtype" aria-label="Drawdown type">'+[['none','No limit'],['fixed','Fixed (start minus max)'],['trail','Trailing (follows EOD high)']].map(function(o){return '<option value="'+o[0]+'"'+((a.ddType||'none')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>';
-  var calcBal=r.equity.toFixed(2),lead=isLead(a);
+  var calcBal=r.equity.toFixed(2),lead=isLead(a),solo=grpSolo(a.grp);
   var grpSel=!lead&&multiGrp()?'<div style="flex:1 1 140px"><label>Group</label><select class="a-grp" aria-label="Account group">'+state.settings.groups.map(function(g){return '<option value="'+esc(g.id)+'"'+(g.id===a.grp?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></div>':'';
   return '<div class="acct-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:10px;padding:10px;border:1px solid var(--line);border-radius:12px">'+
-    '<div style="flex:2 1 160px"><label>'+(lead?'Leader account name':'Follower name')+'</label><input class="a-name" type="text" aria-label="Account name" value="'+esc(a.name)+'"></div>'+
+    '<div style="flex:2 1 160px"><label>'+(solo?'Account name':lead?'Leader account name':'Follower name')+'</label><input class="a-name" type="text" aria-label="Account name" value="'+esc(a.name)+'"></div>'+
     '<div style="flex:1 1 120px"><label>Starting balance, $</label><input class="a-start" type="number" step="any" min="0" aria-label="Starting balance" value="'+a.start+'"></div>'+
-    (function(){var fl=lead?grpFollow(a.grp):null,fn=fl&&grpLeader(fl)?grpLeader(fl).name:'';
-      return '<div style="flex:1 1 110px"><label>'+(fl?'Size vs '+esc(fn):'Size vs leader')+'</label><input class="a-mult" type="number" step="any" min="0" aria-label="'+(fl?'Size compared with '+esc(fn):'Size compared with the leader')+'" value="'+rel(a)+'"'+(lead&&!fl?' disabled':'')+'></div>'})()+
+    /* with no leader there is nothing to size against, so the size box is kept but not shown */
+    (solo?'<input class="a-mult" type="hidden" value="'+rel(a)+'">':(function(){var fl=lead?grpFollow(a.grp):null,fn=fl&&grpLeader(fl)?grpLeader(fl).name:'';
+      return '<div style="flex:1 1 110px"><label>'+(fl?'Size vs '+esc(fn):'Size vs leader')+'</label><input class="a-mult" type="number" step="any" min="0" aria-label="'+(fl?'Size compared with '+esc(fn):'Size compared with the leader')+'" value="'+rel(a)+'"'+(lead&&!fl?' disabled':'')+'></div>'})())+
     '<div style="flex:1 1 140px"><label>Account start date, optional</label><input class="a-since" type="date" aria-label="Account start date: only trades from this date on count for this account" value="'+esc(a.since||'')+'"></div>'+grpSel+
-    (lead?'<span class="tag ok">leader</span>':'<button class="btn small" type="button" data-acct-lead="'+i+'">Make leader</button><button class="btn small danger" type="button" data-acct-del="'+i+'">Remove</button>')+
+    (lead?'<span class="tag ok">leader</span>':(solo?'':'<button class="btn small" type="button" data-acct-lead="'+i+'">Make leader</button>')+(solo&&grpAccts(a.grp).length<2?'':'<button class="btn small danger" type="button" data-acct-del="'+i+'">Remove</button>'))+
     '<div style="flex-basis:100%;height:0"></div>'+
     '<div style="flex:2 1 200px"><label>Max drawdown rule</label>'+typeSel+'</div>'+
     '<div style="'+fl+'"><label>Max drawdown, $</label><input class="a-dd" type="number" step="any" min="0" aria-label="Max drawdown in dollars" value="'+(a.dd>0?a.dd:'')+'" placeholder="e.g. 2000"></div>'+
@@ -1638,7 +1662,7 @@ var TRADE_COLS=[['date','Date',0,1,1],['ticker','Contract',0,1,1],['side','Side'
 function tradeColCfg(){var st=state.settings,c=st.tradeCols;if(!c||typeof c!=='object'||Array.isArray(c))c=st.tradeCols={};
   if(!Array.isArray(c.order))c.order=[];if(!c.hidden||typeof c.hidden!=='object'){c.hidden={};TRADE_COLS.forEach(function(x){if(!x[4])c.hidden[x[0]]=1})}return c}
 function tradeColOrder(){return placeMissing(tradeColCfg().order.filter(function(k){return TRADE_COLS.some(function(x){return x[0]===k})}),TRADE_COLS.map(function(x){return x[0]}))}
-function tradeCols(){var cfg=tradeColCfg();return tradeColOrder().map(function(k){return TRADE_COLS.filter(function(x){return x[0]===k})[0]}).filter(function(c){return !cfg.hidden[c[0]]&&!(off('life')&&(c[0]==='mood'||c[0]==='sleep'))&&!(c[0]==='grp'&&!multiGrp())})}
+function tradeCols(){var cfg=tradeColCfg();return tradeColOrder().map(function(k){return TRADE_COLS.filter(function(x){return x[0]===k})[0]}).filter(function(c){return !cfg.hidden[c[0]]&&!(off('life')&&(c[0]==='mood'||c[0]==='sleep'))&&!(c[0]==='grp'&&!multiGrp()&&!grpSolo(state.settings.groups[0].id))}).map(function(c){return c[0]==='grp'&&!multiGrp()?['grp','Account'].concat(c.slice(2)):c})}
 function tradeCell(k,t,c){var dash='<span class="muted">–</span>';
   switch(k){
     case 'date':return '<td>'+esc(t.date)+(t.time?' <span class="muted"'+(t.cdate?' title="Placed '+esc(shortDate(t.cdate))+' at '+esc(t.time)+', so it counts toward the next trading day"':'')+'>'+(t.cdate?esc(t.cdate.slice(5))+' ':'')+esc(t.time)+'</span>':'')+(t.ex?' <span class="tag ex">example</span>':'')+(t.src==='tv'&&!t.setup?' <span class="tag ex" title="Imported from '+esc(t.srcName||'TradingView')+'. Open it to add the setup, stop and mistake.">needs tags</span>':'')+'</td>';
@@ -1659,7 +1683,7 @@ function tradeCell(k,t,c){var dash='<span class="muted">–</span>';
     case 'plan':return '<td>'+esc(t.plan||'')+'</td>';
     case 'mistake':return '<td class="wrap">'+esc(mistakeText(t))+'</td>';
     case 'egrade':return '<td>'+(t.egrade?'<span class="tag">'+esc(t.egrade)+'</span>':dash)+'</td>';
-    case 'grp':return '<td>'+esc(grpById(tradeGrp(t)).name)+'</td>';
+    case 'grp':var ta=t.acct&&acctById(t.acct);return '<td>'+(multiGrp()?esc(grpById(tradeGrp(t)).name)+(ta?' <span class="muted">· '+esc(ta.name)+'</span>':''):ta?esc(ta.name):'<span class="muted">All</span>')+'</td>';
     case 'session':return '<td>'+(sessionOf(t)?esc(sessionOf(t)):dash)+'</td>';
     case 'conds':return '<td class="wrap">'+(condsOf(t).length?esc(condsOf(t).join(', ')):dash)+'</td>';
     case 'mood':var lm=lifeNum(lifeOn(calDate(t)),'mood');return '<td class="num">'+(lm?'<span class="'+moodCls(lm)+'">'+lm+'/5</span>':dash)+'</td>';
@@ -1670,9 +1694,9 @@ function tradeCell(k,t,c){var dash='<span class="muted">–</span>';
 }
 function colsPanelHTML(){var cfg=tradeColCfg(),ord=tradeColOrder();
   return '<div class="cols-panel"><p class="help" style="margin:0 0 8px">Tick the columns to show, and use the arrows to change their order. Edit and Delete always stay on the right.</p><div class="cols-list">'+
-    ord.map(function(k,i){var c=TRADE_COLS.filter(function(x){return x[0]===k})[0],life=(k==='mood'||k==='sleep')&&off('life'),ng=k==='grp'&&!multiGrp();
+    ord.map(function(k,i){var c=TRADE_COLS.filter(function(x){return x[0]===k})[0],life=(k==='mood'||k==='sleep')&&off('life'),ng=k==='grp'&&!multiGrp()&&!grpSolo(state.settings.groups[0].id);
       return '<div class="cols-row"><button class="btn small" type="button" data-colmove="'+k+'|-1" aria-label="Move '+esc(c[1])+' left"'+(i?'':' disabled')+'>↑</button><button class="btn small" type="button" data-colmove="'+k+'|1" aria-label="Move '+esc(c[1])+' right"'+(i<ord.length-1?'':' disabled')+'>↓</button>'+
-        '<label class="chk"><input type="checkbox" data-colshow="'+k+'"'+(cfg.hidden[k]?'':' checked')+(life||ng?' disabled':'')+'> '+esc(c[1])+(life?' <span class="muted">(Life journal is off)</span>':ng?' <span class="muted">(shows with more than one account group)</span>':'')+'</label></div>'}).join('')+
+        '<label class="chk"><input type="checkbox" data-colshow="'+k+'"'+(cfg.hidden[k]?'':' checked')+(life||ng?' disabled':'')+'> '+esc(c[1])+(life?' <span class="muted">(Life journal is off)</span>':ng?' <span class="muted">(shows with more than one account group, or no leader)</span>':'')+'</label></div>'}).join('')+
     '</div><div class="actions" style="margin-top:8px"><button class="btn small" type="button" id="colsReset">Reset columns</button><button class="btn small primary" type="button" id="colsDone">Done</button></div></div>'}
 
 /* ---------- add / edit trade ---------- */
@@ -1683,10 +1707,11 @@ function renderAdd(){
   var TD=state.settings.tdef||{};
   t=t||{date:ui.addDate||ymd(new Date()),ticker:TD.ticker||'',side:TD.side==='Short'?'Short':'Long',setup:TD.setup&&state.settings.setups.indexOf(TD.setup)>=0?TD.setup:(state.settings.setups[0]||''),qty:TD.qty>0?TD.qty:'',entry:'',exit:'',stop:'',mult:TD.ticker?(pointValue(TD.ticker)||''):'',plan:TD.plan==='No'?'No':'Yes',mistake:'None',notes:''};
   if(ui.addDraft){t=Object.assign({},t,ui.addDraft);ui.addDraft=null}
-  var v=function(x){return x==null?'':x};
-  $('#tab-add').innerHTML='<div class="add-wrap"><form id="tradeForm" class="panel" novalidate><div class="add-head"><h2>'+(ui.editId?'Edit trade':'New trade')+'</h2>'+(ui.editId?'':tvHeadHTML())+'</div>'+'<p class="help">'+(multiGrp()?'Pick the account group this trade was taken in. Its leader logs it, the other accounts in that group copy it, and other groups are not affected. Imports below go to the group picked here. ':ui.editId?'':'Logging on <b>'+esc(state.settings.accounts[0].name)+'</b>, your leader. Your other accounts copy it. ')+'MAE and MFE are optional: how many points price went against you and in your favor while you were in. They power the trade management stats on the Dashboard. Point value fills in when you type a known contract (ES 50, MES 5, NQ 20, MNQ 2, CL 1,000, GC 100 and others). Type your own for anything else. Entry time is optional and powers the time of day stats on the Dashboard. Add the exit time too and the Dashboard shows how long you hold winners and losers. Target price is optional and shows whether you reach your planned targets. Tick every mistake that applies, or none for a clean trade. Commissions and fees come off the P&amp;L: leave the box blank to use your per-contract rates from Setup &amp; data, or type the exact amount from your broker statement. Set Result to Breakeven for scratch trades: they still count toward P&amp;L, but not as a win or a loss, so they do not skew your win rate. With Result on Automatic, any trade within plus or minus '+money(isFinite(state.settings.beRange)?+state.settings.beRange:10)+' counts as breakeven (change the range on Setup &amp; data). Pick Win or loss to override it.</p>'+(ui.editId?'':'<div class="err" id="tvMsg" role="status"></div>')+
+  var v=function(x){return x==null?'':x},fg=t.grp&&grpById(t.grp)?t.grp:ui.editId?tradeGrp(t):curGrp();
+  $('#tab-add').innerHTML='<div class="add-wrap"><form id="tradeForm" class="panel" novalidate><div class="add-head"><h2>'+(ui.editId?'Edit trade':'New trade')+'</h2>'+(ui.editId?'':tvHeadHTML())+'</div>'+'<p class="help">'+(multiGrp()?'Pick the account group this trade was taken in. Its leader logs it, the other accounts in that group copy it, and other groups are not affected. In a group with no leader, pick the account too: the trade counts only for it. Imports below go to the group'+(state.settings.groups.some(function(g){return g.solo})?' and account':'')+' picked here. ':grpSolo(fg)?'Pick the account this trade was taken on. It counts only for that account. ':ui.editId?'':'Logging on <b>'+esc(state.settings.accounts[0].name)+'</b>, your leader. Your other accounts copy it. ')+'MAE and MFE are optional: how many points price went against you and in your favor while you were in. They power the trade management stats on the Dashboard. Point value fills in when you type a known contract (ES 50, MES 5, NQ 20, MNQ 2, CL 1,000, GC 100 and others). Type your own for anything else. Entry time is optional and powers the time of day stats on the Dashboard. Add the exit time too and the Dashboard shows how long you hold winners and losers. Target price is optional and shows whether you reach your planned targets. Tick every mistake that applies, or none for a clean trade. Commissions and fees come off the P&amp;L: leave the box blank to use your per-contract rates from Setup &amp; data, or type the exact amount from your broker statement. Set Result to Breakeven for scratch trades: they still count toward P&amp;L, but not as a win or a loss, so they do not skew your win rate. With Result on Automatic, any trade within plus or minus '+money(isFinite(state.settings.beRange)?+state.settings.beRange:10)+' counts as breakeven (change the range on Setup &amp; data). Pick Win or loss to override it.</p>'+(ui.editId?'':'<div class="err" id="tvMsg" role="status"></div>')+
     '<div class="form-grid">'+
-    (multiGrp()?'<div><label for="f-grp" title="The accounts this trade counts for">Account group</label><select id="f-grp">'+(function(cg){return state.settings.groups.map(function(g){var ld=grpLeader(g.id);return '<option value="'+esc(g.id)+'"'+(g.id===cg?' selected':'')+'>'+esc(g.name)+(ld?' ('+esc(ld.name)+')':'')+'</option>'}).join('')})(t.grp&&grpById(t.grp)?t.grp:ui.editId?tradeGrp(t):curGrp())+'</select></div>':'')+
+    (multiGrp()?'<div><label for="f-grp" title="The accounts this trade counts for">Account group</label><select id="f-grp">'+(function(cg){return state.settings.groups.map(function(g){var ld=grpLeader(g.id);return '<option value="'+esc(g.id)+'"'+(g.id===cg?' selected':'')+'>'+esc(g.name)+(ld?' ('+esc(ld.name)+')':'')+'</option>'}).join('')})(fg)+'</select></div>':'')+
+    '<div id="f-acctBox"'+(grpSolo(fg)||t.acct?'':' hidden')+'><label for="f-acct" title="In a group with no leader, the one account this trade counts for">Account</label><select id="f-acct">'+acctOpts(fg,t.acct,!!ui.editId&&(!t.acct||!grpSolo(fg)))+'</select></div>'+
     '<div><label for="f-date"'+(tdStart()!=null?' title="The day you placed it. From '+esc(hhmm(tdStart()))+' on, a trade counts toward the next trading day."':'')+'>Date</label><input id="f-date" type="date" value="'+esc(calDate(t))+'"></div>'+
     '<div><label for="f-time">Entry time</label><input id="f-time" type="time" value="'+esc(t.time||'')+'"></div>'+
     '<div><label for="f-xtime" title="When you were fully out. With the entry time it gives the hold time.">Exit time</label><input id="f-xtime" type="time" value="'+esc(t.xtime||'')+'"></div>'+
@@ -1774,7 +1799,7 @@ function syncFills(){
 function readForm(){
   var n=function(id){var x=$('#'+id).value;return x===''?null:parseFloat(x)};
   var qty=n('f-qty');
-  return {grp:$('#f-grp')?$('#f-grp').value:undefined,date:$('#f-date').value,ticker:$('#f-ticker').value.trim().toUpperCase(),side:$('#f-side').value,setup:$('#f-setup').value,
+  return {grp:$('#f-grp')?$('#f-grp').value:undefined,acct:$('#f-acctBox')&&!$('#f-acctBox').hidden?$('#f-acct').value:undefined,date:$('#f-date').value,ticker:$('#f-ticker').value.trim().toUpperCase(),side:$('#f-side').value,setup:$('#f-setup').value,
     qty:qty,entry:n('f-entry'),exit:n('f-exit'),stop:n('f-stop'),mult:n('f-mult'),
     time:$('#f-time')?$('#f-time').value:'',mae:$('#f-mae')&&$('#f-mae').value!==''?parseFloat($('#f-mae').value):null,mfe:$('#f-mfe')&&$('#f-mfe').value!==''?parseFloat($('#f-mfe').value):null,rules:readRuleChecks(),be:!!($('#f-be')&&$('#f-be').value==='be'),notBe:!!($('#f-be')&&$('#f-be').value==='no'),plan:$('#f-plan').value,egrade:$('#f-egrade')?$('#f-egrade').value:'',mistakes:readMistakes(),conds:readConds(),mistake:readMistakes()[0]||'None',
     xtime:$('#f-xtime')?$('#f-xtime').value:'',xdate:(function(){var x=$('#f-xdate'),d=$('#f-date');return x&&x.value&&d&&x.value>d.value?x.value:''})(),target:n('f-target'),fee:$('#f-fee')?n('f-fee'):null,fills:readFills()||undefined,notes:$('#f-notes')?$('#f-notes').value.trim():undefined,x:readBoxes('#tradeForm')||undefined};
@@ -2218,9 +2243,9 @@ function copyLastPlan(){
 
 /* ---------- setup & data ---------- */
 function toCSV(){
-  var cols=['date','ticker','side','setup','qty','entry','exit','stop','multiplier','plan','mistake','notes','time','exit time','exit date','target','fees','conditions','grade','group'];
+  var cols=['date','ticker','side','setup','qty','entry','exit','stop','multiplier','plan','mistake','notes','time','exit time','exit date','target','fees','conditions','grade','group','account'];
   var q=function(x){x=x==null?'':String(x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x};
-  return [cols.join(',')].concat(sortedChrono().map(function(t){return [calDate(t),t.ticker,t.side,t.setup,t.qty,t.entry,t.exit,t.stop==null?'':t.stop,t.mult,t.plan,mistakesOf(t).join('; ')||'None',t.notes,t.time||'',t.xtime||'',t.xdate||'',t.target>0?t.target:'',+feeOf(t).toFixed(2),condsOf(t).join('; '),t.egrade||'',grpById(tradeGrp(t)).name].map(q).join(',')})).join('\n');
+  return [cols.join(',')].concat(sortedChrono().map(function(t){return [calDate(t),t.ticker,t.side,t.setup,t.qty,t.entry,t.exit,t.stop==null?'':t.stop,t.mult,t.plan,mistakesOf(t).join('; ')||'None',t.notes,t.time||'',t.xtime||'',t.xdate||'',t.target>0?t.target:'',+feeOf(t).toFixed(2),condsOf(t).join('; '),t.egrade||'',grpById(tradeGrp(t)).name,t.acct&&acctById(t.acct)?acctById(t.acct).name:''].map(q).join(',')})).join('\n');
 }
 function parseCSV(text){
   var rows=[],row=[],f='',inq=false;
@@ -2245,10 +2270,13 @@ function importCSV(text){
     var tk=ix(r,'ticker').toUpperCase(),qty=parseFloat(ix(r,'qty'));
     /* a group column matches a group by name; otherwise the trade goes to the import group */
     var gn=ix(r,'group').toLowerCase(),gm=state.settings.groups.filter(function(g){return g.name.toLowerCase()===gn})[0],tg0=gm?gm.id:impGrp();
-    var t={id:uid(),grp:tg0,lm:leaderMult(tg0),date:ix(r,'date'),ticker:tk,side:/^s/i.test(ix(r,'side'))?'Short':'Long',setup:ix(r,'setup'),
+    var t={id:uid(),date:ix(r,'date'),ticker:tk,side:/^s/i.test(ix(r,'side'))?'Short':'Long',setup:ix(r,'setup'),
       qty:qty,entry:parseFloat(ix(r,'entry')),exit:parseFloat(ix(r,'exit')),stop:ix(r,'stop')===''?null:parseFloat(ix(r,'stop')),
       mult:parseFloat(ix(r,'multiplier'))||pointValue(tk)||0,plan:/^n/i.test(ix(r,'plan'))?'No':'Yes',mistake:ix(r,'mistake'),notes:ix(r,'notes'),time:/^\d{1,2}:\d{2}/.test(ix(r,'time'))?ix(r,'time').slice(0,5).padStart(5,'0'):''};
     if(!/^\d{4}-\d{2}-\d{2}$/.test(t.date)||!t.ticker||!(t.qty>0)||!(t.entry>0)||isNaN(t.exit)||!(t.mult>0)){bad++;return}
+    /* an account column matches an account in that group by name (for groups with no leader) */
+    var an=ix(r,'account').toLowerCase(),am=grpAccts(tg0).filter(function(a){return a.name.toLowerCase()===an})[0];
+    placeTrade(t,tg0,am?am.id:tg0===impGrp()?impAcct():null);
     if(t.setup&&state.settings.setups.indexOf(t.setup)<0)state.settings.setups.push(t.setup);
     var xd=ix(r,'exit date');if(/^\d{4}-\d{2}-\d{2}$/.test(xd)&&xd>t.date)t.xdate=xd;var xt=ix(r,'exit time'),tg=parseFloat(ix(r,'target'));if(/^\d{1,2}:\d{2}/.test(xt))t.xtime=xt.slice(0,5).padStart(5,'0');if(tg>0)t.target=tg;
     var eg=ix(r,'grade');if(eg)t.egrade=eg.slice(0,12);var cn=ix(r,'conditions');if(cn){t.conds=cn.split(';').map(function(x){return x.trim()}).filter(Boolean);t.conds.forEach(function(m){if(state.settings.conditions.indexOf(m)<0)state.settings.conditions.push(m)})}
@@ -2277,17 +2305,19 @@ function renderData(){
     '<p><b>Max drawdown.</b> Fixed puts the limit at starting balance minus the max drawdown and never moves it. Trailing starts the same way, then moves up each time a trading day closes at a new end-of-day high, and never moves down. Tick the box if your firm stops trailing once the limit reaches the starting balance plus a set amount, usually $100. Change the amount if your firm uses a different one. If the account already had a higher end-of-day balance before this journal, enter it as the known EOD high. <b>Balance.</b> The current balance is start plus P&amp;L. If your broker shows something different, type the right number and it is kept as an adjustment, so later trades still add to it. The limit uses closed days only, so intraday dips are not tracked.</p>'+
     '<p><b>Prop firm.</b> Set the stage to Evaluation or Funded and the Dashboard tracks your profit target, trading days and consistency rule. The consistency rule is the most your best day may be, as a percent of total profit (for example 50). Leave a box blank if your firm has no such rule. Record payouts on the Dashboard: they come off the balance, and the drawdown limit stays where it was. Check your firm&#39;s exact rules, since they differ.</p>'+
     '<p><b>Account groups.</b> Not every account has to follow one leader. Add a group for each set of accounts you trade together, for example your evaluations in one and a personal account in another. Each group has its own leader and followers, and you pick the group on each trade, so a trade only counts for the accounts in its group. Move a follower to another group with its Group box. Optionally, a group can follow the leader of another group with its Follows box: every trade in that group then also counts for this one, at this leader&#39;s size compared with that leader, while trades logged in this group stay in this group only.</p>'+
+    '<p><b>No leader.</b> Tick No leader when the accounts in a group don&#39;t copy each other. Each trade then counts only for the account you pick on the Add trade form, at the P&amp;L you logged. Trades logged before you switched keep counting the way they were logged. A group with no leader can&#39;t follow, or be followed by, another group.</p>'+
     '</details>'+
     (multiGrp()?s.groups.map(function(g,gi){
       return '<div class="grp-block"><div class="grp-top"><div style="flex:1 1 200px"><label>Group name</label><input class="g-name" data-g="'+esc(g.id)+'" type="text" aria-label="Group name" value="'+esc(g.name)+'"></div>'+
-        '<div style="flex:1 1 220px"><label>Follows</label><select class="g-follow" data-g="'+esc(g.id)+'" aria-label="Follow the leader of another group"><option value="">Its own leader only</option>'+
-          s.groups.filter(function(x){return x.id!==g.id&&!grpGets(x.id,g.id)}).map(function(x){var ld=grpLeader(x.id);return '<option value="'+esc(x.id)+'"'+(grpFollow(g.id)===x.id?' selected':'')+'>'+esc(x.name)+(ld?' leader ('+esc(ld.name)+')':' leader')+'</option>'}).join('')+'</select></div>'+
+        (g.solo?'':'<div style="flex:1 1 220px"><label>Follows</label><select class="g-follow" data-g="'+esc(g.id)+'" aria-label="Follow the leader of another group"><option value="">Its own leader only</option>'+
+          s.groups.filter(function(x){return x.id!==g.id&&!x.solo&&!grpGets(x.id,g.id)}).map(function(x){var ld=grpLeader(x.id);return '<option value="'+esc(x.id)+'"'+(grpFollow(g.id)===x.id?' selected':'')+'>'+esc(x.name)+(ld?' leader ('+esc(ld.name)+')':' leader')+'</option>'}).join('')+'</select></div>')+
+        soloChk(g)+
         '<span class="muted" style="font-size:12px">'+grpAccts(g.id).length+(grpAccts(g.id).length===1?' account':' accounts')+', '+state.trades.filter(function(t){return tradeGrp(t)===g.id}).length+' trades</span>'+
         (gi?'<button class="btn small danger" type="button" data-grp-del="'+esc(g.id)+'">Remove group</button>':'')+'</div>'+
         s.accounts.map(function(a,i){return a.grp===g.id?acctRowHTML(a,i):''}).join('')+
-        '<div class="actions" style="margin-top:0"><button class="btn" type="button" data-acct-add="'+esc(g.id)+'">Add follower to '+esc(g.name)+'</button></div></div>'}).join(''):
-      s.accounts.map(acctRowHTML).join(''))+
-    '<div class="actions" style="margin-top:0">'+(multiGrp()?'':'<button class="btn" type="button" data-acct-add>Add follower account</button>')+'<button class="btn" type="button" data-grp-add>Add account group</button></div>');
+        '<div class="actions" style="margin-top:0"><button class="btn" type="button" data-acct-add="'+esc(g.id)+'">Add '+(g.solo?'account':'follower')+' to '+esc(g.name)+'</button></div></div>'}).join(''):
+      '<div class="grp-top">'+soloChk(s.groups[0])+'</div>'+s.accounts.map(acctRowHTML).join(''))+
+    '<div class="actions" style="margin-top:0">'+(multiGrp()?'':'<button class="btn" type="button" data-acct-add>Add '+(s.groups[0].solo?'account':'follower account')+'</button>')+'<button class="btn" type="button" data-grp-add>Add account group</button></div>');
   var trading=sec('trading','<h2>Trading</h2>'+
     '<h2 class="sub">Risk and position size</h2>'+
     '<label for="s-risk">Most I risk on one trade, $</label><input id="s-risk" type="number" min="0" step="any" value="'+esc(s.riskPerTrade>0?s.riskPerTrade:'')+'" placeholder="e.g. 200" style="max-width:160px">'+note('Powers the position size calculator on the Add trade and Premarket tabs, and warns you when a trade risks more. Leave blank to turn the warning off.')+
@@ -3630,7 +3660,7 @@ document.addEventListener('click',function(e){
 });
 
 /* ---------- settings only: download them, or load them into another browser ---------- */
-var SET_SKIP=['pin','pinEmail','lastGrp'];
+var SET_SKIP=['pin','pinEmail','lastGrp','lastAcct'];
 function settingsOut(){var o=JSON.parse(JSON.stringify(state.settings));SET_SKIP.forEach(function(k){delete o[k]});return o}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
   if(b.id==='setDl'){saveOut('trade-journal-settings-'+ymd(new Date())+'.json',JSON.stringify({app:'dayTradeLedger',kind:'settings',version:1,saved:new Date().toISOString(),settings:settingsOut()}),'application/json').then(function(p){if(p)toast('Settings file saved')});return}
@@ -4826,7 +4856,9 @@ document.addEventListener('click',function(e){
     mv.forEach(function(a){a.grp=state.settings.groups[0].id});state.settings.groups=state.settings.groups.filter(function(g){return g.id!==dg});state.settings.groups.forEach(function(g){if(g.follow===dg)delete g.follow});state.settings.accounts=keepA.concat(mv);sortAccts();
     save();renderData();renderAcctCard();toast(dgo.name+' removed'+(mv.length?'. Its accounts moved to '+state.settings.groups[0].name+' as followers':''));return}
   if(b.dataset.acctAdjclear!==undefined){collectAccounts();var ai=parseInt(b.dataset.acctAdjclear,10);if(state.settings.accounts[ai])state.settings.accounts[ai].adj=0;save();renderData();renderAcctCard();toast('Balance reset to calculated');return}
-  if(b.dataset.acctDel){collectAccounts();state.settings.accounts.splice(parseInt(b.dataset.acctDel,10),1);save();renderData();renderAcctCard();toast('Account removed');return}
+  if(b.dataset.acctDel){var da=state.settings.accounts[parseInt(b.dataset.acctDel,10)],dt=da?soloTrades(da):0;
+    if(dt){toast(da.name+' still has '+dt+(dt===1?' trade':' trades')+'. Move them to another account first: edit each one and change its Account.');return}
+    collectAccounts();state.settings.accounts.splice(parseInt(b.dataset.acctDel,10),1);save();renderData();renderAcctCard();toast('Account removed');return}
   if(b.id==='sideToggle'){toggleSide();return}
   if(b.id==='ttReset'){state.settings.titles={main:DEF_TITLES.main,side:DEF_TITLES.side};save();applyTitles();renderSettings();return}
   if(b.dataset.lookmode){var lm=b.dataset.lookmode;
@@ -4918,10 +4950,13 @@ document.addEventListener('submit',function(e){
   if(!(t.qty>0)||!(t.entry>0)||t.exit==null||!(t.exit>=0)){err.textContent='Contracts and entry must be above zero, and exit must be filled in.';return}
   if(!(t.mult>0)){err.textContent='Enter the point value, the dollars per full point for this contract.';return}
   if(ui.editId){var i=state.trades.findIndex(function(x){return x.id===ui.editId});var keep=state.trades[i];if(t.notes===undefined)t.notes=keep.notes||'';if(t.rules===undefined&&off('rules')&&keep.rules)t.rules=keep.rules;
-    /* moving a trade to another group sizes it for that group's leader */
-    if(t.grp===undefined)t.grp=keep.grp;var gch=tradeGrp(t)!==tradeGrp(keep);if(t.grp===undefined)delete t.grp;
-    state.trades[i]=Object.assign({},t,{id:keep.id,ex:keep.ex,lm:gch?leaderMult(tradeGrp(t)):keep.lm});ui.editId=null;toast('Trade updated')}
-  else{if(t.notes===undefined)t.notes='';t.id=ui.draftId||uid();ui.draftId=null;t.grp=t.grp&&grpById(t.grp)?t.grp:curGrp();state.settings.lastGrp=t.grp;t.lm=leaderMult(t.grp);state.trades.push(t);toast('Trade added'+(multiGrp()?' to '+grpById(t.grp).name:''))}
+    /* moving a trade to another group (or account) sizes it for there; otherwise it keeps the size it was logged at */
+    if(t.grp===undefined)t.grp=keep.grp;var gch=tradeGrp(t)!==tradeGrp(keep)||(t.acct||'')!==(keep.acct||'');if(t.grp===undefined)delete t.grp;
+    var nt=Object.assign({},t,{id:keep.id,ex:keep.ex,lm:keep.lm});if(!t.acct)delete nt.acct;
+    if(gch){placeTrade(nt,tradeGrp(t),t.acct);if(t.grp===undefined&&!multiGrp())delete nt.grp}
+    state.trades[i]=nt;ui.editId=null;toast('Trade updated')}
+  else{if(t.notes===undefined)t.notes='';t.id=ui.draftId||uid();ui.draftId=null;placeTrade(t,t.grp&&grpById(t.grp)?t.grp:curGrp(),t.acct);if(!t.acct)delete t.acct;state.settings.lastGrp=t.grp;if(t.acct)state.settings.lastAcct=t.acct;state.trades.push(t);
+    toast('Trade added'+(t.acct?' to '+acctById(t.acct).name:multiGrp()?' to '+grpById(t.grp).name:''))}
   save();ui.tab=ui.backTo||'trades';ui.backTo=null;ui.addDate=null;
   if(ui.tab==='cal'){ui.calMonth=t.date.slice(0,7);ui.calSel=t.date;ui.calWeek=false;if(ui.calMode==='weekly')ui.calMode='all'}
   ui.sortKey='date';ui.sortDir=-1;renderAll();window.scrollTo(0,0);
@@ -5905,11 +5940,14 @@ function importDone(out,name,extra){
   return {ok:out.length,bad:0,msg:parts.join(' '),warn:!!(extra.filter(Boolean).length||!out.length)}}
 /* imports go to the group picked on the trade form, or the last one used */
 function impGrp(){var s=$('#f-grp');return s&&grpById(s.value)?s.value:curGrp()}
+/* in a group with no leader, imports go to the account picked on the form, or the one last used */
+function impAcct(){var b=$('#f-acctBox');return b&&!b.hidden&&$('#f-acct').value||(grpSolo(impGrp())?state.settings.lastAcct:null)||null}
 /* imported trades are named by market (MGC), whether the file says MGC1! or MGCZ2026, so the trade list reads the same
    throughout; the exact contract stays in the trade's note, and duplicate checks still use it */
 function impTicker(sym){return contractOf(sym)?rootOf(sym):sym}
 function impContractNote(t,sym){if(t.ticker!==sym)t.notes+=' · contract '+sym}
-function newImported(o,name){var fr=feeRate(o.ticker),g=impGrp();var t=Object.assign({id:uid(),grp:g,lm:leaderMult(g),setup:'',stop:null,plan:'Yes',mistake:'',notes:'Imported from '+name,src:'tv',srcName:name},o);
+function newImported(o,name){var fr=feeRate(o.ticker);var t=Object.assign({id:uid(),setup:'',stop:null,plan:'Yes',mistake:'',notes:'Imported from '+name,src:'tv',srcName:name},o);
+  placeTrade(t,impGrp(),impAcct());
   if(t.fee==null&&fr>0)t.fee=+(fr*t.qty).toFixed(2);return t}
 /* filled orders, matched into trades from the first fill until you are flat again */
 function importFills(rows,h,name){
@@ -6273,7 +6311,7 @@ document.addEventListener('change',function(e){var el=e.target,id=el.id;
   else if(id==='bkPlan')bulkApply(function(t){t.plan=v},'Followed plan set on {n}');
   else if(id==='bkGrade')bulkApply(function(t){t.egrade=v==='__clear'?'':v},'Grade set on {n}');
   /* a trade moved to another group is sized for that group's leader */
-  else if(id==='bkGrp'&&grpById(v))bulkApply(function(t){if(tradeGrp(t)!==v)t.lm=leaderMult(v);t.grp=v},'Moved {n} to '+grpById(v).name);
+  else if(id==='bkGrp'&&grpById(v))bulkApply(function(t){if(tradeGrp(t)!==v)placeTrade(t,v,null);t.grp=v},'Moved {n} to '+grpById(v).name);
 });
 document.addEventListener('click',function(e){var id=e.target.id;
   if(id==='bkStopGo'){var p=parseFloat(($('#bkStop')||{}).value);if(!(p>0)){toast('Enter the stop distance in points');return}
@@ -6428,7 +6466,7 @@ function quickSave(){quickRead();var q=quickState(),en=parseFloat(q.entry),ex=pa
   if(!q.ticker){toast('Pick a contract');return}if(!(en>0)||!(ex>0)){toast('Enter the entry and exit prices');return}if(!(m>0)){toast('Enter the point value for '+q.ticker);return}
   var t={date:ymd(n),time:String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'),ticker:q.ticker,side:q.side,setup:q.setup||'',qty:q.qty,entry:en,exit:ex,stop:st>0?st:null,mult:m,plan:'Yes',mistake:'None',notes:''};
   var fr=feeRate(t.ticker);if(fr>0)t.fee=+(fr*t.qty).toFixed(2);
-  t.id=uid();t.grp=curGrp();t.lm=leaderMult(t.grp);state.trades.push(t);save();
+  t.id=uid();placeTrade(t,curGrp(),grpSolo(curGrp())?state.settings.lastAcct:null);state.trades.push(t);save();
   var c=calc(t);q.done='Saved: '+esc(t.ticker)+' '+t.side.toLowerCase()+' ×'+t.qty+', <b class="'+cls(c.net)+'">'+money(c.net,true)+'</b>. Ready for the next one.';q.entry='';q.exit='';q.stop='';
   renderAll();toast('Trade saved')}
 /* on a phone, opening Add trade goes straight to the form instead of leaving it below the menu and banners */
@@ -7592,6 +7630,21 @@ Version 80  (Oct 26, 2026)  (Update history: 2.211)
   on wider screens
 - Pages no longer scroll a little past the bottom of the sidebar
 - TradeVault desktop app updated to 2.21.1
+Version 81  (Oct 26, 2026)  (Update history: 2.22)
+--------------------------
+- Account groups can have no leader: tick "No leader: each account trades
+  on its own" in Setup & data, Accounts. The accounts in that group then
+  don't copy each other
+- In a group with no leader, the Add trade form has an Account box, and
+  each trade counts only for the account you pick, at the P&L you logged.
+  Imports and quick log go to the account picked or last used
+- Trades logged before you switch keep counting the way they were logged,
+  so balances don't change when you switch either way
+- The Trades list shows each trade's account, and CSV export and import
+  have an Account column
+- An account with its own trades can't be removed until they're moved to
+  another account
+- TradeVault desktop app updated to 2.22.0
 
 </script>
 </body></html>
