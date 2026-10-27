@@ -706,6 +706,20 @@ kbd{font-family:var(--font-body);font-size:12px;border:1px solid var(--line);bor
 #dropHint[hidden]{display:none}
 #dropHint div{max-width:440px;text-align:center;font-size:16px;font-weight:600;color:var(--fg);background:var(--surface);border:2px dashed var(--accent);border-radius:16px;padding:28px 32px}
 #kbdHelp[hidden]{display:none}
+/* ---------- the welcome tour: a dimmed page with a lit-up spot and a card next to it ---------- */
+#tour{position:fixed;inset:0;z-index:80}
+#tour[hidden]{display:none}
+.tour-spot{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.6);outline:2px solid var(--accent);outline-offset:2px;pointer-events:none;transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease}
+.tour-spot.none{left:50%;top:45%;width:1px;height:1px;outline:none}
+#tour .tour-card{position:fixed;max-width:400px;width:calc(100vw - 24px);box-sizing:border-box;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.tour-card h2{margin:0 26px 8px 0;font-size:18px}
+.tour-card p,.tour-card li{font-size:14px;line-height:1.5}
+.tour-card p{margin:0 0 8px}
+.tour-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tour-n{font-size:12px;color:var(--muted);margin-right:auto}
+.tour-x{position:absolute;top:10px;right:10px;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.tour-x:hover{color:var(--fg);background:var(--bg)}
+@media (prefers-reduced-motion:reduce){.tour-spot{transition:none}}
 .kbd-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;max-width:440px;width:100%;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 /* ---------- v39: more filters on the Trades tab ---------- */
 .tf-panel{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px}
@@ -4684,7 +4698,7 @@ function calExport(){
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-calexport]');if(b)calExport()});
 
 /* ---------- settings: Setup & data, Dashboard and Customize live together under the gear ---------- */
-function setSeg(){return '<div class="panel set-seg"><div class="seg-row"><button class="btn'+(ui.tab==='data'?' primary':'')+'" type="button" data-tab="data">Setup &amp; data</button><button class="btn'+(ui.tab==='dashset'?' primary':'')+'" type="button" data-tab="dashset">Dashboard</button><button class="btn'+(ui.tab==='custom'?' primary':'')+'" type="button" data-tab="custom">Customize</button><button class="btn'+(ui.tab==='history'?' primary':'')+'" type="button" data-tab="history">Update history</button></div></div>'}
+function setSeg(){return '<div class="panel set-seg"><div class="seg-row"><button class="btn'+(ui.tab==='data'?' primary':'')+'" type="button" data-tab="data">Setup &amp; data</button><button class="btn'+(ui.tab==='dashset'?' primary':'')+'" type="button" data-tab="dashset">Dashboard</button><button class="btn'+(ui.tab==='custom'?' primary':'')+'" type="button" data-tab="custom">Customize</button><button class="btn'+(ui.tab==='history'?' primary':'')+'" type="button" data-tab="history">Update history</button><button class="btn" type="button" data-tour="start" style="margin-left:auto" title="A two-minute walk through every page">Take the tour</button></div></div>'}
 /* ---------- update history: read from the histData block near the end of this file, newest version first ---------- */
 /* updates in the text file are grouped into releases (1.0, 1.1, ... 1.9, 2.0, ...) by the "(Update history: x.y)" on each heading */
 function historyList(){var el=document.getElementById('histData'),txt=el?el.textContent:(historyList.text||''),rel={},out=[],cur=null;
@@ -6951,13 +6965,97 @@ if(APP){
     if(t.id==='appAutoUpd'){appS.cfg.autoUpdate=t.checked;appCfgSave().then(function(){toast(t.checked?'TradeVault will check for updates when it opens':'Automatic update checks are off; use Check for updates')});return}
     if(t.name==='appTray'){appS.cfg.tray=t.value;appCfgSave().then(function(){toast(t.value==='min'?'Minimize now sends it to the tray':t.value==='close'?'The X now sends it to the tray':'Minimize and X work as usual')})}});
 }else if(picFilesDone)picFilesDone(null);
+
+/* ---------- welcome tour: a short walk through every page, on the first run and from Settings ---------- */
+/* each step: the page it opens (none keeps the current one), what to light up (the first one on screen wins), a title and the text */
+var TOUR=[
+  {h:function(){return 'Welcome to '+esc(($('#siteTitle')||{}).textContent||'your journal')},
+    p:function(){return '<p>This short tour shows you where everything is. It takes about two minutes, and you can leave it any time.</p><p>The journal starts with example trades, reviews and plans, so every page has something to show. You clear them before logging your own.</p>'+
+      (APP?'<p class="muted" style="font-size:13px">Already used the journal in a browser? Save a backup file there, then restore it here in Settings, Setup &amp; data, Backup &amp; data.</p>':'')}},
+  {tab:'dash',sel:['#nav'],h:'Your pages',p:'<p>Every page of the journal is in this list. Hide the ones you don&#39;t use, rename them or change the order in Settings, Customize.</p>'},
+  {sel:['.side-add'],h:'Log a trade',p:'<p>Press <b>+ Add trade</b> after each trade. Quick log needs just the contract, side, size and prices. The full form adds your setup, stop, rules, mistakes, notes and chart pictures.</p>'},
+  {tab:'add',sel:['.add-import','#qlFull','#tab-add .panel'],h:'Or import your trades',p:function(){return '<p>Bring trades in from a TradingView, NinjaTrader, Tradovate or Rithmic export, or drop the file anywhere on the window. Name your accounts the way your platform does and each trade lands in the right one.</p>'+
+    ($('.add-import')?'':'<p>The import button is on the full form: press <b>Full form</b>.</p>')+
+    (APP?'<p class="muted" style="font-size:13px">TradeVault can also watch the folder your platform exports to and import new files by itself: Settings, Setup &amp; data, TradeVault app.</p>':'')}},
+  {tab:'dash',sel:['#tab-dash .strip','#tab-dash .panel'],h:function(){return esc(tabName('dash'))},p:'<p>Your results at a glance: net P&amp;L, win rate, equity curve, daily P&amp;L, accounts and prop firm progress. The filters narrow it to one account, setup or date range.</p><p>Move, shrink or hide any box in Settings, Dashboard.</p>'},
+  {sel:['#acctCard'],h:'Your balance',p:'<p>This card shows your balance and the drawdown room left on your tightest account. Click it to switch between the total balance, profit above your start, and each group.</p>'},
+  {sel:['#boxPlus'],h:'Add your own boxes',p:'<p>The + at the top of a page adds your own text box or multiple-choice question to it, for anything the journal doesn&#39;t ask yet.</p>'},
+  {tab:'cal',sel:['#tab-cal .cal-ctl','#tab-cal .panel'],h:function(){return esc(tabName('cal'))},p:'<p>Each day shows its P&amp;L and number of trades. Click a day to see its trades, plan and review in one place. These buttons switch the calendar to premarket plans, reviews or the life journal.</p>'},
+  {tab:'plan',sel:['#tab-plan .panel'],h:function(){return esc(tabName('plan'))},p:'<p>Write your plan before the session: bias, key levels, news to watch and your checklist. Plan the whole day, or each session (Asia, London, New York) on its own.</p>'},
+  {tab:'trades',sel:['#tab-trades .filters','#tab-trades .panel'],h:function(){return esc(tabName('trades'))},p:'<p>Every trade in one list. Search, filter and sort, click a trade to see it in full, or tick several to change them together.</p>'},
+  {tab:'review',sel:['#tab-review .panel'],h:function(){return esc(tabName('review'))},p:'<p>A daily review after each session and a weekly review at the end of the week. The report card and the monthly and yearly reports add it all up.</p>'},
+  {tab:'rules',sel:['#tab-rules .strip','#tab-rules .panel'],h:function(){return esc(tabName('rules'))},p:'<p>Write down your trading rules. The ones you check on every trade appear on the Add trade form, and this page shows how often you keep them.</p>'},
+  {tab:'playbook',sel:['#tab-playbook .pb-card:not(.pb-auto)','#tab-playbook .panel'],h:function(){return esc(tabName('playbook'))},p:'<p>A card for each of your setups. Open one to write down how you trade it and see its own stats, so you can tell which setups really pay.</p>'},
+  {tab:'gallery',sel:['#tab-gallery .panel'],h:function(){return esc(tabName('gallery'))},p:'<p>Every chart and picture you add, from trades, reviews, plans and the life journal, in one place you can search.</p>'},
+  {tab:'life',sel:['#tab-life .panel'],h:function(){return esc(tabName('life'))},p:'<p>Track sleep, mood and habits each day, and see how they line up with your trading.</p>'},
+  {tab:'goals',sel:['#tab-goals .strip','#tab-goals .panel'],h:function(){return esc(tabName('goals'))},p:'<p>Set goals, give them a due date and track your progress toward them.</p>'},
+  {sel:['#gearBtn'],h:'Settings',p:'<p>The gear opens Settings. Start with <b>Setup &amp; data, Accounts</b>: add each account with its starting balance and any prop firm rules, like the drawdown, daily loss limit, profit target and payouts. Your commission rates go in <b>Trading</b>.</p>'},
+  {tab:'data',sub:'accounts',sel:['.set-seg'],h:'Make it yours',p:'<p><b>Customize</b> changes the colors, background, fonts, tab names and keyboard shortcuts. <b>Dashboard</b> picks the boxes it shows and their order.</p>'},
+  {tab:'data',sel:function(){return APP?['[data-dsub="app"]','[data-dsub="backup"]']:['[data-dsub="backup"]']},h:'Keep a backup',
+    p:function(){return APP?'<p>TradeVault saves your journal on this computer and makes backups by itself. Choose a backup folder of your own, ideally on another drive, in <b>TradeVault app</b>. Backup &amp; data saves or restores a backup file.</p>':
+      '<p>Your journal is stored in this browser only, so clearing the browser&#39;s data would erase it. Save a backup file now and then from <b>Backup &amp; data</b>, where you can also pick a folder it backs up to by itself.</p>'}},
+  {tab:'dash',sel:['#exBanner'],h:'You&#39;re all set',p:function(){return '<p>To get started:</p><ol class="blist">'+(exAny()?'<li>Clear the example data with <b>Clear examples</b>.</li>':'')+
+    '<li>Add your accounts in Settings, Setup &amp; data, Accounts.</li><li>Log or import your first trade.</li></ol><p class="muted" style="font-size:13px">Take this tour again any time from Settings.</p>'},
+    extra:'<button class="btn small" type="button" data-tour="accts">Set up my accounts</button>'}
+];
+function tourVal(v){return typeof v==='function'?v():v||''}
+function tourSteps(){return TOUR.filter(function(s){return !s.tab||s.tab==='data'||s.tab==='add'||!off(s.tab)})}
+function tourStart(){
+  var el=$('#tour');if(!el){el=document.createElement('div');el.id='tour';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','tourH');document.body.appendChild(el)}
+  ui.tour={i:0,s:tourSteps(),from:ui.tab,tg:null};el.innerHTML='<div class="tour-spot none"></div><div class="tour-card kbd-card"></div>';el.hidden=false;tourShow()}
+/* leaving the tour, finished or skipped, marks it seen so it doesn't open by itself again */
+function tourEnd(to){var T=ui.tour,el=$('#tour');if(el){el.hidden=true;el.innerHTML=''}ui.tour=null;
+  if(!state.settings.tourDone){state.settings.tourDone=true;save()}
+  if(to==='accts'){ui.dataSub='accounts';go('data')}else go(T&&T.from&&T.from!=='add'?T.from:'dash')}
+function tourFind(){var s=ui.tour.s[ui.tour.i],tg=null;
+  (tourVal(s.sel)||[]).some(function(q){var x=document.querySelector(q);if(x&&x.offsetWidth&&x.getClientRects().length){tg=x;return true}});return tg}
+function tourShow(){var T=ui.tour;if(!T)return;var s=T.s[T.i],el=$('#tour'),last=T.i===T.s.length-1;
+  if(s.tab==='data'&&s.sub)ui.dataSub=s.sub;
+  if(s.tab&&(ui.tab!==s.tab||s.sub))go(s.tab);
+  var card=el.querySelector('.tour-card');
+  card.innerHTML=(T.i?'<button class="tour-x" type="button" data-tour="skip" aria-label="Close the tour">×</button>':'')+'<h2 id="tourH">'+tourVal(s.h)+'</h2>'+tourVal(s.p)+
+    '<div class="tour-foot"><span class="tour-n">'+(T.i+1)+' of '+T.s.length+'</span>'+
+    (T.i?'<button class="btn small" type="button" data-tour="back">Back</button>':'<button class="btn small" type="button" data-tour="skip">Skip the tour</button>')+
+    (last?(s.extra||'')+'<button class="btn small primary" type="button" data-tour="done">Finish</button>':'<button class="btn small primary" type="button" data-tour="next">'+(T.i?'Next':'Start the tour')+'</button>')+'</div>';
+  /* centred when the card fits beside it; a tall element goes to the top of the screen so the card fits below */
+  T.tg=tourFind();if(T.tg){var H=window.innerHeight,ch=card.offsetHeight,th=T.tg.getBoundingClientRect().height;
+    if((H-th)/2<ch+24&&th+ch+40<=H){T.tg.scrollIntoView({block:'start'});window.scrollBy(0,-16)}else T.tg.scrollIntoView({block:'center'})}
+  tourPlace();
+  var f=card.querySelector('[data-tour="next"],[data-tour="done"]');if(f)f.focus({preventScroll:true})}
+/* light up the step's element and put the card below it, above it or beside it, whichever fits */
+function tourPlace(){var T=ui.tour,el=$('#tour');if(!T||!el||el.hidden)return;
+  if(T.tg&&!T.tg.isConnected)T.tg=tourFind();
+  var sp=el.querySelector('.tour-spot'),cd=el.querySelector('.tour-card'),W=window.innerWidth,H=window.innerHeight,m=12,cw=cd.offsetWidth,ch=cd.offsetHeight,x,y;
+  var r=T.tg?T.tg.getBoundingClientRect():null;
+  if(!r||!r.width){sp.className='tour-spot none';sp.removeAttribute('style');x=(W-cw)/2;y=(H-ch)/2}
+  else{var L=Math.max(4,r.left-6),Tp=Math.max(4,r.top-6),R=Math.min(W-4,r.right+6),B=Math.min(H-4,r.bottom+6);
+    sp.className='tour-spot';sp.style.cssText='left:'+L+'px;top:'+Tp+'px;width:'+Math.max(0,R-L)+'px;height:'+Math.max(0,B-Tp)+'px';
+    if(B+m+ch<=H){y=B+m;x=L}else if(Tp-m-ch>=0){y=Tp-m-ch;x=L}else if(R+m+cw<=W){x=R+m;y=Tp}else if(L-m-cw>=0){x=L-m-cw;y=Tp}else{x=(W-cw)/2;y=H-ch-m}}
+  cd.style.left=Math.max(m,Math.min(x,W-cw-m))+'px';cd.style.top=Math.max(m,Math.min(y,H-ch-m))+'px'}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-tour]');
+  if(b&&ui.tour){var a=b.dataset.tour,T=ui.tour;
+    if(a==='next'&&T.i<T.s.length-1){T.i++;tourShow()}else if(a==='back'&&T.i>0){T.i--;tourShow()}else if(a==='skip'||a==='done'||a==='accts')tourEnd(a);return}
+  if(b&&b.dataset.tour==='start')tourStart()});
+/* while the tour is open the keys move it: arrows step, Escape closes, Tab stays inside the card */
+document.addEventListener('keydown',function(e){if(!ui.tour)return;var T=ui.tour;
+  if(e.key==='Escape'){e.preventDefault();tourEnd('skip')}
+  else if(e.key==='ArrowRight'&&T.i<T.s.length-1){e.preventDefault();T.i++;tourShow()}
+  else if(e.key==='ArrowLeft'&&T.i>0){e.preventDefault();T.i--;tourShow()}
+  else if(e.key==='Tab'){var f=[].slice.call(document.querySelectorAll('#tour button'));if(f.length){var k=f.indexOf(document.activeElement);e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus()}}
+  else if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key.length===1&&e.key!==' '){e.preventDefault()}
+  else return;e.stopImmediatePropagation()},true);
+window.addEventListener('resize',function(){if(ui.tour)tourPlace()});
+document.addEventListener('scroll',function(){if(ui.tour&&!tourPlace.f){tourPlace.f=requestAnimationFrame(function(){tourPlace.f=0;tourPlace()})}},true);
+/* opens by itself once, for a new journal: only example data, no PIN, and (in TradeVault) after the journal file has loaded */
+function tourAuto(){var n=0;(function chk(){if(APP&&!appS.ready&&!appS.err&&n++<40){setTimeout(chk,500);return}
+  var st=state.settings;if(st.tourDone||st.pin||ui.tour||(APP&&appS.err)||state.trades.some(function(t){return !t.ex}))return;tourStart()})()}
 load();
 ui.planDate=tday();
 (function(){var ex=Object.keys(state.reviews.daily).filter(function(k){return state.reviews.daily[k].ex}).sort().pop();
   if(ex){ui.revDate=ex;ui.revWeek=weekStart(ex);ui.planDate=ex;if(state.life&&state.life[ex])ui.lifeDate=ex}})();
 /* open on the page chosen in Customize, Tabs in the sidebar */
 (function(){var t=state.settings.startTab;if(t==='add'||(t&&TAB_LIST.some(function(x){return x[0]===t})&&!off(t)))ui.tab=t;else if(off('dash'))ui.tab=firstTab()})();
-renderAll();applyLook();applyTitles();initSide();lockShow();if(APP)appInit();
+renderAll();applyLook();applyTitles();initSide();lockShow();if(APP)appInit();setTimeout(tourAuto,700);
 /* in a browser, ask for the journal's storage to be kept for good, so the browser (Safari on an iPhone especially) does not clear it to save space */
 if(!APP)try{navigator.storage.persisted().then(function(p){if(!p)return navigator.storage.persist()}).catch(function(){})}catch(e){}
 ready.then(function(){return picMeta()}).then(function(list){
@@ -7806,6 +7904,20 @@ Version 83  (Oct 26, 2026)  (Update history: 2.231)
   and consistency start again after each payout
 - Business money in counts your share of each payout after the split
 - TradeVault desktop app updated to 2.23.1
+Version 84  (Oct 27, 2026)  (Update history: 2.24)
+--------------------------
+- Welcome tour: a two-minute walk through every page that opens by
+  itself the first time someone uses a new journal. Each step lights up
+  one part of the page with a short note; Back, Next and Skip, or the
+  arrow keys and Escape. It ends with the first steps to take and a Set
+  up my accounts button
+- Take the tour again any time from the Take the tour button in Settings
+- The tour skips pages you've hidden, uses your own tab names, and fits
+  a phone screen
+- A Getting started page on GitHub walks new users through their first
+  day: installing, setting up accounts and prop firm rules, logging and
+  importing trades, a daily routine, every page, and keeping backups
+- TradeVault desktop app updated to 2.24.0
 
 </script>
 </body></html>
