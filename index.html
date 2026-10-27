@@ -987,6 +987,9 @@ var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){r
 var CONTRACTS={ES:[50,0.25],MES:[5,0.25],NQ:[20,0.25],MNQ:[2,0.25],YM:[5,1],MYM:[0.5,1],RTY:[50,0.1],M2K:[5,0.1],
   CL:[1000,0.01],MCL:[100,0.01],GC:[100,0.1],MGC:[10,0.1],SI:[5000,0.005],NG:[10000,0.001],ZB:[1000,1/32],ZN:[1000,1/64],'6E':[125000,0.00005]};
 var ROOTS=Object.keys(CONTRACTS).sort(function(a,b){return b.length-a.length});
+/* micro contracts count as a tenth of a full-size one in prop firm size limits */
+var MICROS=['MES','MNQ','MYM','M2K','MCL','MGC','SIL','MBT','MET','M6E','M6A','M6B'];
+function isMicro(sym){sym=String(sym||'').toUpperCase().replace(/^\//,'');return MICROS.some(function(m){return sym.indexOf(m)===0})}
 /* fee boxes in Setup & data: each full-size contract sits next to its micro, nine to a row so no pair splits */
 var FEE_ORDER=['ES','MES','NQ','MNQ','YM','MYM','RTY','M2K','SI','CL','MCL','GC','MGC','NG','ZB','ZN','6E'];
 function contractOf(sym){sym=String(sym||'').toUpperCase().replace(/^\//,'');for(var i=0;i<ROOTS.length;i++)if(sym.indexOf(ROOTS[i])===0)return CONTRACTS[ROOTS[i]];return null}
@@ -1025,10 +1028,11 @@ function migrate(){
   var st=state.settings;
   if(!Array.isArray(st.accounts)||!st.accounts.length)st.accounts=[{id:'leader',name:'Leader account',start:st.startBalance==null?25000:st.startBalance,mult:1,since:''}];
   st.accounts.forEach(function(a){if(!(a.mult>0))a.mult=1;
-    if(['none','fixed','trail'].indexOf(a.ddType)<0)a.ddType='none';
+    if(['none','fixed','trail','trailid'].indexOf(a.ddType)<0)a.ddType='none';
+    ['dll','maxQty','safety','payDays','payDayAmt','payMin','payMax'].forEach(function(k){a[k]=a[k]>0?+a[k]:0});a.split=a.split>0&&a.split<=100?+a.split:100;
     a.dd=a.dd>0?+a.dd:0;a.lock=!!a.lock;a.lockAdd=isFinite(a.lockAdd)&&a.lockAdd!==null&&a.lockAdd!==''?Math.max(0,+a.lockAdd):100;a.hi=a.hi>0?+a.hi:null;a.adj=isFinite(a.adj)?+a.adj:0;
     if(['none','eval','funded'].indexOf(a.prop)<0)a.prop='none';a.target=a.target>0?+a.target:0;a.minDays=a.minDays>0?+a.minDays:0;a.cons=a.cons>0?+a.cons:0;
-    if(!Array.isArray(a.payouts))a.payouts=[]});
+    if(!Array.isArray(a.payouts))a.payouts=[];if(!/^\d{4}-\d{2}-\d{2}$/.test(a.until||''))delete a.until});
   if(!(st.backupDays>=0))st.backupDays=7;
   if(!st.feeRates||typeof st.feeRates!=='object'||Array.isArray(st.feeRates))st.feeRates={};
   /* account groups: each group has its own leader (its first account) and followers; older journals become one group */
@@ -1104,11 +1108,12 @@ function isLead(a){return grpLeader(a.grp)===a}
 function acctById(id){return state.settings.accounts.filter(function(a){return a.id===id})[0]||null}
 /* puts a trade in a group (and, in a group with no leader, on one of its accounts), sized so its P&L is what was logged */
 function placeTrade(t,g,aid){t.grp=g;
-  var a=acctById(aid);if(!a||a.grp!==g)a=grpSolo(g)?grpAccts(g)[0]||null:null;
+  var a=acctById(aid);if(!a||a.grp!==g)a=grpSolo(g)?grpAccts(g).filter(function(x){return !acctClosed(x)})[0]||grpAccts(g)[0]||null:null;
   if(a){t.acct=a.id;t.lm=a.mult>0?a.mult:1}else{delete t.acct;t.lm=leaderMult(g)}}
 /* the Account box on the trade form lists the group's accounts, starting on the one last used */
 /* "all" adds a choice for every account in the group, for trades logged while it still had a leader */
-function acctOpts(g,cur,all){var as=grpAccts(g),pick=as.filter(function(a){return a.id===cur})[0]||(all?null:as.filter(function(a){return a.id===state.settings.lastAcct})[0]||as[0]);
+function acctOpts(g,cur,all){var as=grpAccts(g).filter(function(a){return a.id===cur||!acctClosed(a)});if(!as.length)as=grpAccts(g);
+  var pick=as.filter(function(a){return a.id===cur})[0]||(all?null:as.filter(function(a){return a.id===state.settings.lastAcct})[0]||as[0]);
   return (all?'<option value=""'+(pick?'':' selected')+'>Every account in the group</option>':'')+as.map(function(a){return '<option value="'+esc(a.id)+'"'+(a===pick?' selected':'')+'>'+esc(a.name)+'</option>'}).join('')}
 document.addEventListener('change',function(e){if(e.target.id!=='f-grp')return;var g=e.target.value,box=$('#f-acctBox');if(!box)return;
   box.hidden=!grpSolo(g);$('#f-acct').innerHTML=acctOpts(g,$('#f-acct').value,false)});
@@ -1122,7 +1127,9 @@ function sortAccts(){var st=state.settings,gi={};st.groups.forEach(function(g,i)
 function grpFollow(g){var o=grpById(g);return o&&!o.solo&&o.follow&&o.follow!==g&&grpById(o.follow)&&!grpSolo(o.follow)?o.follow:null}
 function grpGets(g,src){var seen={};while(g&&!seen[g]){if(g===src)return true;seen[g]=1;g=grpFollow(g)}return false}
 /* an account counts a trade when the trade is in its group (or a group it follows) and on or after its start date */
-function acctHas(a,t){var own=t.acct&&acctById(t.acct);return (own?own===a:grpGets(a.grp,tradeGrp(t)))&&!(a.since&&t.date<a.since)}
+function acctHas(a,t){var own=t.acct&&acctById(t.acct);return (own?own===a:grpGets(a.grp,tradeGrp(t)))&&!(a.since&&t.date<a.since)&&!(a.until&&t.date>a.until)}
+/* an account with an end date that has passed is closed: it keeps its history but takes no new trades */
+function acctClosed(a){return !!(a.until&&a.until<tday())}
 function leaderMult(g){g=g||state.settings.groups[0].id;if(grpSolo(g))return 1;var a=grpLeader(g)||state.settings.accounts[0];return a&&a.mult>0?a.mult:1}
 /* a leader's size is against the leader it follows; everyone else's is against their own group's leader */
 function relBase(a){return isLead(a)?(grpFollow(a.grp)?leaderMult(grpFollow(a.grp)):a.mult>0?a.mult:1):leaderMult(a.grp)}
@@ -1134,19 +1141,31 @@ function acctRows(){
   return state.settings.accounts.map(function(a,i){
     /* every trade remembers the leader size it was logged at (t.lm), so changing leader never rewrites history */
     var net=0,n=0,am=a.mult>0?a.mult:1,adj=isFinite(a.adj)?+a.adj:0,base=a.start+adj,hwm=Math.max(base,a.hi>0?+a.hi:0),day=null;
+    var intra=a.ddType==='trailid'&&a.dd>0,ddv=a.dd>0?+a.dd:0,hit=false,dn={},maxQ=0,overQ=0;
+    var fl=function(){var f=hwm-ddv;if(a.lock&&f>=lockLevel(a))f=lockLevel(a);return f};
     /* a new end-of-day high is only set when a trading day closes above the old one */
-    var closeDay=function(){if(day!==null&&base+net>hwm)hwm=base+net};
+    var closeDay=function(){if(!intra&&day!==null&&base+net>hwm)hwm=base+net};
     tr.forEach(function(t){if(!acctHas(a,t))return;
       if(t.date!==day){closeDay();day=t.date}
-      n++;net+=calcRaw(t).net*am/(t.lm>0?t.lm:1)});
+      var sc=am/(t.lm>0?t.lm:1),pv=t.qty*(t.mult||1)*sc,before=base+net,v=calcRaw(t).net*sc;
+      /* intraday trailing follows the highest balance during each trade: open profit from the MFE you logged, or the closed result.
+         The MAE you logged shows how low it went, so touching the limit mid-trade counts as a breach */
+      if(intra){if(t.mae>0&&before-t.mae*pv<=fl())hit=true;if(t.mfe>0)hwm=Math.max(hwm,before+t.mfe*pv)}
+      n++;net+=v;dn[t.date]=(dn[t.date]||0)+v;
+      if(intra){if(base+net<=fl())hit=true;hwm=Math.max(hwm,base+net)}
+      /* position size in full-size contracts (a micro is a tenth), for the max contracts rule */
+      var q=t.qty*sc*(isMicro(t.ticker)?.1:1);if(q>maxQ)maxQ=q;if(a.maxQty>0&&q>a.maxQty+1e-9)overQ++});
     closeDay();
     /* payouts leave the account, so the balance drops while the drawdown limit stays where it was */
     var paid=(a.payouts||[]).reduce(function(s,p){return s+(+p.amt||0)},0);
-    var equity=base+net-paid,dd=a.dd>0?+a.dd:0,type=dd>0&&(a.ddType==='fixed'||a.ddType==='trail')?a.ddType:'none',floor=null,locked=false;
+    var equity=base+net-paid,dd=a.dd>0?+a.dd:0,type=dd>0&&(a.ddType==='fixed'||a.ddType==='trail'||a.ddType==='trailid')?a.ddType:'none',floor=null,locked=false;
     if(type==='fixed')floor=a.start-dd;
-    else if(type==='trail'){floor=hwm-dd;var lk=lockLevel(a);if(a.lock&&floor>=lk){floor=lk;locked=true}}
+    else if(type==='trail'||type==='trailid'){floor=hwm-dd;var lk=lockLevel(a);if(a.lock&&floor>=lk){floor=lk;locked=true}}
+    /* the firm's daily loss limit: today's result on this account, and the trading days it was hit */
+    var dll=a.dll>0?+a.dll:0,today=dn[tday()]||0,dllDays=dll?Object.keys(dn).filter(function(d){return dn[d]<=-dll+1e-9}).sort():[];
     return {a:a,i:i,net:net,adj:adj,equity:equity,ret:a.start?net/a.start:null,n:n,type:type,dd:dd,hwm:hwm,floor:floor,locked:locked,
-      room:floor==null?null:equity-floor,breached:floor!=null&&equity<=floor};
+      room:floor==null?null:equity-floor,breached:floor!=null&&(equity<=floor||hit),days:dn,
+      dll:dll,today:today,dllLeft:dll?dll+today:null,dllHit:dll>0&&today<=-dll+1e-9,dllDays:dllDays,maxQ:maxQ,overQ:overQ};
   });
 }
 function renderAcctCard(){
@@ -1174,6 +1193,8 @@ document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' '
 /* changing who a group follows saves straight away, so the leader's size box can switch on */
 document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('g-follow'))return;var gid=el.dataset.g;
   collectAccounts();save();renderData();renderAcctCard();var g=grpById(gid),f=grpFollow(gid);if(g)toast(f?g.name+' now follows the '+grpById(f).name+' leader. Set its size in the leader row.':g.name+' follows its own leader only')});
+/* the payout rules appear as soon as an account's stage is set to Funded */
+document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('a-prop'))return;var row=el.closest('.acct-row'),pr=row&&row.querySelector('.a-payrow');if(pr)pr.hidden=el.value!=='funded'});
 function soloChk(g){return '<label class="chk" style="margin:0;flex:1 1 260px" title="Each account in this group has its own trades, and none copies another"><input class="g-solo" data-g="'+esc(g.id)+'" type="checkbox"'+(g.solo?' checked':'')+'> No leader: each account trades on its own</label>'}
 /* switching a group to no leader (or back) saves straight away; trades already logged keep counting the way they were logged */
 document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('g-solo'))return;
@@ -1191,10 +1212,14 @@ function acctPanel(){
     /* with more than one group, each group gets a heading row with its own totals */
     var gh=mg&&(k===0||rows[k-1].a.grp!==r.a.grp)?(function(){var g=grpById(r.a.grp),s=gsum[r.a.grp];var fl=grpFollow(g.id);return '<tr class="grp-head"><td colspan="3"><b>'+esc(g.name)+'</b> <span class="muted">'+s.n+(s.n===1?' account':' accounts')+(fl?', follows '+esc(grpById(fl).name):'')+(g.solo?', no leader':'')+'</span></td><td class="num '+cls(s.net)+'">'+money(s.net,true)+'</td><td class="num">'+money(s.eq)+'</td><td colspan="3"></td></tr>'})():'';
     if(r.floor!=null){
-      lim='<b>'+money(r.floor)+'</b><div class="muted" style="font-size:11px">'+(r.type==='fixed'?'fixed, '+money(r.dd):'trailing, '+money(r.dd)+(r.locked?' (locked)':''))+'</div>';
+      lim='<b>'+money(r.floor)+'</b><div class="muted" style="font-size:11px">'+(r.type==='fixed'?'fixed, '+money(r.dd):(r.type==='trailid'?'intraday trailing, ':'trailing, ')+money(r.dd)+(r.locked?' (locked)':''))+'</div>';
       room=r.breached?'<b class="loss">Breached</b><div class="muted" style="font-size:11px">'+money(r.room)+'</div>':'<b class="'+(r.room<r.dd*ddWarnPct()/100?'loss':'gain')+'">'+money(r.room)+'</b>';
     }
+    /* the daily loss limit and max contracts show under the room left */
+    if(r.dll&&!acctClosed(r.a))room+='<div class="'+(r.dllHit?'loss':'muted')+'" style="font-size:11px">'+(r.dllHit?'daily limit hit':money(Math.max(0,r.dllLeft))+' left today')+'</div>';
+    if(r.overQ)room+='<div class="loss" style="font-size:11px" title="Trades bigger than this account&#39;s max contracts (10 micros count as 1)">'+r.overQ+(r.overQ===1?' trade':' trades')+' over max size</div>';
     return gh+'<tr><td><b>'+esc(r.a.name)+'</b> <span class="tag'+(lead?' ok':'')+'">'+(solo?'own trades':lead?'leader':'follower')+'</span>'+(r.a.since?' <span class="tag" title="Account start date: trades before it are not counted for this account">since '+esc(pd(r.a.since).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</span>':'')+
+      (r.a.until?' <span class="tag" title="Account end date: trades after it are not counted for this account">'+(acctClosed(r.a)?'closed ':'until ')+esc(pd(r.a.until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</span>':'')+
       (r.adj?' <span class="tag" title="Balance manually adjusted by '+money(r.adj,true)+'">adjusted</span>':'')+'</td>'+
       '<td class="num">'+(solo?'\u2013':'\u00D7'+rel(r.a))+'</td><td class="num">'+money(r.a.start)+'</td><td class="num '+cls(r.net)+'">'+money(r.net,true)+'</td>'+
       '<td class="num"><b>'+money(r.equity)+'</b></td><td class="num '+cls(r.net)+'">'+(r.ret==null?'\u2013':(r.ret>0?'+':'')+pct(r.ret,2))+'</td>'+
@@ -1214,11 +1239,13 @@ function collectAccounts(){
     var old=state.settings.accounts[i]||{},m=parseFloat(r.querySelector('.a-mult').value),sv=r.querySelector('.a-since').value,lead=old.grp?isLead(old):!i,lm=leaderMult(old.grp);
     var gs=r.querySelector('.a-grp'),grp=gs&&grpById(gs.value)?gs.value:(old.grp||state.settings.groups[0].id);
     var dd=parseFloat(r.querySelector('.a-dd').value),hi=parseFloat(r.querySelector('.a-hi').value),bal=r.querySelector('.a-bal'),bv=parseFloat(bal.value);
+    var pos=function(c){var e=r.querySelector(c),v=e?parseFloat(e.value):NaN;return v>0?v:0};
     out.push({id:old.id||uid(),name:r.querySelector('.a-name').value.trim()||(lead?'Leader account':'Account '+(i+1)),start:parseFloat(r.querySelector('.a-start').value)||0,grp:grp,
-      mult:lead?(grpFollow(grp)&&m>0?(oldFl[grp]===grpFollow(grp)?m*leaderMult(grpFollow(grp)):old.mult>0?old.mult:lm):(old.mult>0?old.mult:lm)):(m>0?m*lm:lm),since:/^\d{4}-\d{2}-\d{2}$/.test(sv)?sv:'',
+      mult:lead?(grpFollow(grp)&&m>0?(oldFl[grp]===grpFollow(grp)?m*leaderMult(grpFollow(grp)):old.mult>0?old.mult:lm):(old.mult>0?old.mult:lm)):(m>0?m*lm:lm),since:/^\d{4}-\d{2}-\d{2}$/.test(sv)?sv:'',until:(function(u){return /^\d{4}-\d{2}-\d{2}$/.test(u)?u:''})(r.querySelector('.a-until').value),
       ddType:r.querySelector('.a-ddtype').value,dd:dd>0?dd:0,lock:r.querySelector('.a-lock').checked,lockAdd:(function(){var v=parseFloat(r.querySelector('.a-lockadd').value);return v>=0?v:100})(),hi:hi>0?hi:null,adj:isFinite(old.adj)?+old.adj:0,
       prop:r.querySelector('.a-prop').value,target:Math.max(0,parseFloat(r.querySelector('.a-target').value)||0),minDays:Math.max(0,parseInt(r.querySelector('.a-mindays').value,10)||0),
-      cons:Math.min(100,Math.max(0,parseFloat(r.querySelector('.a-cons').value)||0)),payouts:Array.isArray(old.payouts)?old.payouts:[]});
+      cons:Math.min(100,Math.max(0,parseFloat(r.querySelector('.a-cons').value)||0)),payouts:Array.isArray(old.payouts)?old.payouts:[],
+      dll:pos('.a-dll'),maxQty:pos('.a-maxqty'),split:Math.min(100,pos('.a-split'))||100,safety:pos('.a-safety'),payDays:Math.round(pos('.a-paydays')),payDayAmt:pos('.a-paydayamt'),payMin:pos('.a-paymin'),payMax:pos('.a-paymax')});
     bals.push(bal.value!==bal.dataset.orig&&isFinite(bv)&&bal.value!==''?bv:null);
     if(old.grp&&grp!==old.grp)moved.push(out[out.length-1]);
   });
@@ -1235,21 +1262,24 @@ function collectAccounts(){
 }
 function acctRowHTML(a,i){
   var r=acctRows()[i],fl='flex:1 1 150px';
-  var typeSel='<select class="a-ddtype" aria-label="Drawdown type">'+[['none','No limit'],['fixed','Fixed (start minus max)'],['trail','Trailing (follows EOD high)']].map(function(o){return '<option value="'+o[0]+'"'+((a.ddType||'none')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>';
+  var typeSel='<select class="a-ddtype" aria-label="Drawdown type">'+[['none','No limit'],['fixed','Fixed (start minus max)'],['trail','Trailing (follows EOD high)'],['trailid','Trailing (intraday high)']].map(function(o){return '<option value="'+o[0]+'"'+((a.ddType||'none')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>';
   var calcBal=r.equity.toFixed(2),lead=isLead(a),solo=grpSolo(a.grp);
   var grpSel=!lead&&multiGrp()?'<div style="flex:1 1 140px"><label>Group</label><select class="a-grp" aria-label="Account group">'+state.settings.groups.map(function(g){return '<option value="'+esc(g.id)+'"'+(g.id===a.grp?' selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></div>':'';
   return '<div class="acct-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:10px;padding:10px;border:1px solid var(--line);border-radius:12px">'+
-    '<div style="flex:2 1 160px"><label>'+(solo?'Account name':lead?'Leader account name':'Follower name')+'</label><input class="a-name" type="text" aria-label="Account name" value="'+esc(a.name)+'"></div>'+
+    '<div style="flex:2 1 160px"><label>'+(solo?'Account name':lead?'Leader account name':'Follower name')+'</label><input class="a-name" type="text" aria-label="Account name" title="Use the account name or number from your platform, like APEX-123456-03, and imported trades go to this account" placeholder="e.g. APEX-123456-03" value="'+esc(a.name)+'"></div>'+
     '<div style="flex:1 1 120px"><label>Starting balance, $</label><input class="a-start" type="number" step="any" min="0" aria-label="Starting balance" value="'+a.start+'"></div>'+
     /* with no leader there is nothing to size against, so the size box is kept but not shown */
     (solo?'<input class="a-mult" type="hidden" value="'+rel(a)+'">':(function(){var fl=lead?grpFollow(a.grp):null,fn=fl&&grpLeader(fl)?grpLeader(fl).name:'';
       return '<div style="flex:1 1 110px"><label>'+(fl?'Size vs '+esc(fn):'Size vs leader')+'</label><input class="a-mult" type="number" step="any" min="0" aria-label="'+(fl?'Size compared with '+esc(fn):'Size compared with the leader')+'" value="'+rel(a)+'"'+(lead&&!fl?' disabled':'')+'></div>'})())+
-    '<div style="flex:1 1 140px"><label>Account start date, optional</label><input class="a-since" type="date" aria-label="Account start date: only trades from this date on count for this account" value="'+esc(a.since||'')+'"></div>'+grpSel+
+    '<div style="flex:1 1 140px"><label>Account start date, optional</label><input class="a-since" type="date" aria-label="Account start date: only trades from this date on count for this account" value="'+esc(a.since||'')+'"></div>'+
+    '<div style="flex:1 1 140px"><label>Account end date, optional</label><input class="a-until" type="date" aria-label="Account end date: trades after this date are not counted for this account, and its history stays" title="The day you passed, closed or stopped trading it. Trades after it don&#39;t count for this account; everything before it stays." value="'+esc(a.until||'')+'"></div>'+grpSel+
     (lead?'<span class="tag ok">leader</span>':(solo?'':'<button class="btn small" type="button" data-acct-lead="'+i+'">Make leader</button>')+(solo&&grpAccts(a.grp).length<2?'':'<button class="btn small danger" type="button" data-acct-del="'+i+'">Remove</button>'))+
     '<div style="flex-basis:100%;height:0"></div>'+
     '<div style="flex:2 1 200px"><label>Max drawdown rule</label>'+typeSel+'</div>'+
     '<div style="'+fl+'"><label>Max drawdown, $</label><input class="a-dd" type="number" step="any" min="0" aria-label="Max drawdown in dollars" value="'+(a.dd>0?a.dd:'')+'" placeholder="e.g. 2000"></div>'+
-    '<div style="'+fl+'"><label>Known EOD high, optional</label><input class="a-hi" type="number" step="any" min="0" aria-label="Highest end of day balance, if it was set before your journal" value="'+(a.hi>0?a.hi:'')+'" placeholder="auto"></div>'+
+    '<div style="'+fl+'"><label>Known high, optional</label><input class="a-hi" type="number" step="any" min="0" aria-label="Highest balance the limit trails from, if it was set before your journal" title="The highest end-of-day balance (or, for intraday trailing, the highest balance) before you started this journal" value="'+(a.hi>0?a.hi:'')+'" placeholder="auto"></div>'+
+    '<div style="'+fl+'"><label>Daily loss limit, $</label><input class="a-dll" type="number" step="any" min="0" aria-label="The firm&#39;s daily loss limit for this account" title="Your firm&#39;s daily loss limit for this account, at its own size. Leave blank if there is none." value="'+(a.dll>0?a.dll:'')+'" placeholder="none"></div>'+
+    '<div style="'+fl+'"><label>Max contracts</label><input class="a-maxqty" type="number" step="any" min="0" aria-label="Most contracts this account may hold, in full-size contracts" title="In full-size contracts: 10 micros count as 1. Leave blank if there is no limit." value="'+(a.maxQty>0?a.maxQty:'')+'" placeholder="none"></div>'+
     '<div style="flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px"><label class="chk" style="margin:0"><input class="a-lock" type="checkbox"'+(a.lock?' checked':'')+'> Stop trailing once the limit reaches the starting balance plus</label>'+
       '<span style="display:inline-flex;align-items:center;gap:4px">$<input class="a-lockadd" type="number" step="any" min="0" aria-label="Amount above the starting balance where the limit stops trailing" value="'+(isFinite(a.lockAdd)&&a.lockAdd!==null?+a.lockAdd:100)+'" style="width:90px"></span>'+
       '<span class="muted" style="font-size:12px">'+(a.start>0?'Stops at '+money(lockLevel(a))+'.':'')+'</span></div>'+
@@ -1258,6 +1288,14 @@ function acctRowHTML(a,i){
     '<div style="'+fl+'"><label>Profit target, $</label><input class="a-target" type="number" step="any" min="0" aria-label="Profit target in dollars" value="'+(a.target>0?a.target:'')+'" placeholder="e.g. 3000"></div>'+
     '<div style="'+fl+'"><label>Minimum trading days</label><input class="a-mindays" type="number" step="1" min="0" aria-label="Minimum trading days" value="'+(a.minDays>0?a.minDays:'')+'" placeholder="e.g. 5"></div>'+
     '<div style="'+fl+'"><label>Consistency rule, %</label><input class="a-cons" type="number" step="any" min="0" max="100" aria-label="Best day may be at most this percent of total profit" value="'+(a.cons>0?a.cons:'')+'" placeholder="e.g. 50"></div>'+
+    /* payout rules show for funded accounts only; they stay in the row (hidden) so switching the stage keeps them */
+    '<div class="a-payrow" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end"'+(a.prop==='funded'?'':' hidden')+'>'+
+      '<div style="'+fl+'"><label>Your profit split, %</label><input class="a-split" type="number" step="any" min="0" max="100" aria-label="Your share of each payout, in percent" title="The share of each payout you keep, like 90. The firm keeps the rest." value="'+(a.split>0&&a.split<100?a.split:'')+'" placeholder="100"></div>'+
+      '<div style="'+fl+'"><label>Safety net balance, $</label><input class="a-safety" type="number" step="any" min="0" aria-label="The balance that must stay in the account after a payout" title="The balance that must stay after a payout (often start + drawdown + $100). Leave blank if none." value="'+(a.safety>0?a.safety:'')+'" placeholder="none"></div>'+
+      '<div style="'+fl+'"><label>Winning days needed</label><input class="a-paydays" type="number" step="1" min="0" aria-label="Winning days needed since the last payout" title="Winning days needed since the last payout (or since funded)" value="'+(a.payDays>0?a.payDays:'')+'" placeholder="none"></div>'+
+      '<div style="'+fl+'"><label>Winning day, at least $</label><input class="a-paydayamt" type="number" step="any" min="0" aria-label="Smallest profit that counts as a winning day" value="'+(a.payDayAmt>0?a.payDayAmt:'')+'" placeholder="any profit"></div>'+
+      '<div style="'+fl+'"><label>Minimum payout, $</label><input class="a-paymin" type="number" step="any" min="0" aria-label="Smallest payout the firm allows" value="'+(a.payMin>0?a.payMin:'')+'" placeholder="none"></div>'+
+      '<div style="'+fl+'"><label>Maximum payout, $</label><input class="a-paymax" type="number" step="any" min="0" aria-label="Largest single payout the firm allows" value="'+(a.payMax>0?a.payMax:'')+'" placeholder="none"></div></div>'+
     '<div style="flex-basis:100%;height:0"></div>'+
     '<div style="flex:1 1 200px"><label>Current balance, $</label><input class="a-bal" type="number" step="any" aria-label="Current balance" value="'+calcBal+'" data-orig="'+calcBal+'"></div>'+
     '<div style="flex:2 1 220px" class="help">Calculated from start + P&amp;L'+(r.adj?', with a manual adjustment of '+money(r.adj,true):'')+'. Type a different number to correct it.'+
@@ -2304,9 +2342,12 @@ function renderData(){
   var nav='<div class="panel dsub-nav"><div class="seg">'+DATA_SUBS.map(function(x){return '<button class="btn'+(x[0]===sub?' primary':'')+'" type="button" data-dsub="'+x[0]+'">'+esc(x[1])+'</button>'}).join('')+'</div></div>';
   var accounts=sec('accounts','<h2>Accounts</h2>'+
     '<details class="guide"><summary>How accounts, drawdown rules, prop firms and groups work</summary>'+
-    '<p>The first account in a group is its leader. Log every trade on the leader, and each follower copies it at its size multiple: 1 is the same size, 0.5 is half, 2 is double. Press Make leader on a follower to switch. Past trades keep the size they were logged at, so each account&#39;s equity, your equity curve and your daily P&amp;L stay exactly as they were. Leave Account start date blank to include every trade, or set the day the account opened so only trades from then on count for it. The date shows next to the account&#39;s name in the Accounts table on the Dashboard.</p>'+
-    '<p><b>Max drawdown.</b> Fixed puts the limit at starting balance minus the max drawdown and never moves it. Trailing starts the same way, then moves up each time a trading day closes at a new end-of-day high, and never moves down. Tick the box if your firm stops trailing once the limit reaches the starting balance plus a set amount, usually $100. Change the amount if your firm uses a different one. If the account already had a higher end-of-day balance before this journal, enter it as the known EOD high. <b>Balance.</b> The current balance is start plus P&amp;L. If your broker shows something different, type the right number and it is kept as an adjustment, so later trades still add to it. The limit uses closed days only, so intraday dips are not tracked.</p>'+
+    '<p>The first account in a group is its leader. Log every trade on the leader, and each follower copies it at its size multiple: 1 is the same size, 0.5 is half, 2 is double. Press Make leader on a follower to switch. Past trades keep the size they were logged at, so each account&#39;s equity, your equity curve and your daily P&amp;L stay exactly as they were. Leave Account start date blank to include every trade, or set the day the account opened so only trades from then on count for it. The date shows next to the account&#39;s name in the Accounts table on the Dashboard. When you pass an evaluation, close an account or stop trading it, set its Account end date: trades after that day no longer count for it, while its balance, stats and Prop firm card stay as they were. Add the funded account as a new account with that day as its start date.</p>'+
+    '<p><b>Max drawdown.</b> Fixed puts the limit at starting balance minus the max drawdown and never moves it. Trailing starts the same way, then moves up each time a trading day closes at a new end-of-day high, and never moves down. Tick the box if your firm stops trailing once the limit reaches the starting balance plus a set amount, usually $100. Change the amount if your firm uses a different one. If the account already had a higher balance before this journal, enter it as the known high. The Trailing rule uses closed days only. <b>Trailing (intraday high)</b> is for firms whose limit follows your highest balance during a trade, like Apex: it moves up with your open profit (from the Most in your favor points you log, or the closed result), and a trade whose Most against you points reach the limit counts as a breach. Without MAE and MFE it can only follow closed trades, so log them for an accurate limit. <b>Balance.</b> The current balance is start plus P&amp;L. If your broker shows something different, type the right number and it is kept as an adjustment, so later trades still add to it.</p>'+
+    '<p><b>Daily loss limit and max contracts.</b> Enter your firm&#39;s daily loss limit and the Dashboard shows how much room is left today, the days it was hit, and warns you when a logged trade goes past it. Max contracts is the most full-size contracts the account may hold; 10 micros count as 1, so 20 MNQ is 2. Trades bigger than that are counted and flagged, at each account&#39;s own size.</p>'+
     '<p><b>Prop firm.</b> Set the stage to Evaluation or Funded and the Dashboard tracks your profit target, trading days and consistency rule. The consistency rule is the most your best day may be, as a percent of total profit (for example 50). Leave a box blank if your firm has no such rule. Record payouts on the Dashboard: they come off the balance, and the drawdown limit stays where it was. Check your firm&#39;s exact rules, since they differ.</p>'+
+    '<p><b>Payout rules.</b> On a funded account, fill in your split (the share you keep, like 90), the safety net (the balance that must stay after a payout), the winning days needed and how much makes a winning day, and the minimum and maximum payout. The Prop firm card then shows what you can request and says Ready for a payout once every rule is met. Winning days and the consistency rule count again from the day after each recorded payout. Record the full amount taken out; money in under Business uses your share after the split.</p>'+
+    '<p><b>Importing to the right account.</b> Name each account the way your platform does, like APEX-123456-03 (the end of the number is enough if it is unique). When an import file has an Account column, each trade goes to the account with that name. In a group with a leader only the leader&#39;s fills are imported, since followers already copy it, and the followers&#39; fills are skipped. Fills from accounts with no match are skipped and listed when the file has more than one account; a file with just one account goes to the account picked for imports.</p>'+
     '<p><b>Account groups.</b> Not every account has to follow one leader. Add a group for each set of accounts you trade together, for example your evaluations in one and a personal account in another. Each group has its own leader and followers, and you pick the group on each trade, so a trade only counts for the accounts in its group. Move a follower to another group with its Group box. Optionally, a group can follow the leader of another group with its Follows box: every trade in that group then also counts for this one, at this leader&#39;s size compared with that leader, while trades logged in this group stay in this group only.</p>'+
     '<p><b>No leader.</b> Tick No leader when the accounts in a group don&#39;t copy each other. Each trade then counts only for the account you pick on the Add trade form, at the P&amp;L you logged. Trades logged before you switched keep counting the way they were logged. A group with no leader can&#39;t follow, or be followed by, another group.</p>'+
     '</details>'+
@@ -2396,7 +2437,12 @@ function exAny(){
     Object.keys(state.life||{}).some(function(k){return state.life[k].ex})||
     (state.goals||[]).some(function(g){return g.ex});
 }
-function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(function(){t.hidden=true},2200)}
+function toast(msg,ms){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(function(){t.hidden=true},ms||2200)}
+/* after logging a trade: say so if it puts an account past its daily loss limit or over its max contracts */
+function ruleWarn(t){var w=[];acctRows().forEach(function(r){var a=r.a;if(!acctHas(a,t)||acctClosed(a))return;
+    if(r.dll&&(r.days[t.date]||0)<=-r.dll+1e-9)w.push(a.name+' is past its '+money(r.dll)+' daily loss limit');
+    var q=t.qty*(a.mult>0?a.mult:1)/(t.lm>0?t.lm:1)*(isMicro(t.ticker)?.1:1);if(a.maxQty>0&&q>a.maxQty+1e-9)w.push(a.name+' is over its '+(+a.maxQty)+' contract limit')});
+  return w.length?'. Careful: '+w.join('; ')+'.':''}
 /* ---------- calendar views ---------- */
 var CAL_MODES=[['all','Everything'],['trades','Trades'],['plan','Premarket'],['daily','Daily reviews'],['weekly','Weekly reviews'],['life','Life journal']];
 var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -4365,7 +4411,8 @@ function bizRange(){var k=ui.bizRange||'year',n=new Date(),y=n.getFullYear(),m=S
   return k==='month'?{k:k,from:y+'-'+m+'-01',to:'9999',label:'this month'}:k==='all'?{k:k,from:'0000',to:'9999',label:'all time'}:{k:'year',from:y+'-01-01',to:'9999',label:'this year'}}
 function bizHTML(){var R=bizRange(),inR=function(d){return d>=R.from&&d<=R.to},exp=(state.expenses||[]).filter(function(x){return inR(x.d)});
   var pays=0,npay=0,own=0;state.settings.accounts.forEach(function(a){
-    (a.payouts||[]).forEach(function(p){if(inR(p.d)){pays+=+p.amt||0;npay++}});
+    /* money in is your share of each payout, after the firm's split */
+    var sp=a.split>0&&a.split<100?a.split/100:1;(a.payouts||[]).forEach(function(p){if(inR(p.d)){pays+=(+p.amt||0)*sp;npay++}});
     if(a.prop==='none'||!a.prop){var am=a.mult>0?a.mult:1;allChrono().forEach(function(t){if(!t.ex&&inR(t.date)&&acctHas(a,t))own+=calcRaw(t).net*am/(t.lm>0?t.lm:1)})}});
   var out=exp.reduce(function(s,x){return s+(+x.amt||0)},0),propOut=exp.filter(function(x){return EXP_PROP.indexOf(x.cat)>=0}).reduce(function(s,x){return s+(+x.amt||0)},0),net=pays+own-out;
   var byCat={};exp.forEach(function(x){byCat[x.cat]=(byCat[x.cat]||0)+(+x.amt||0)});
@@ -4446,10 +4493,12 @@ function remList(){
   if(!off('goals')&&remOn('Goals')){var lim=addDays(today,remGoalDays());
     (state.goals||[]).filter(function(g){return g.status!=='done'&&g.due&&g.due<=lim&&goalPct(g)<1}).forEach(function(g){
       L.push(['goal:'+g.id,'Goal <b>'+esc(g.title||'Untitled')+'</b> is '+(g.due<today?'overdue':g.due===today?'due today':'due '+esc(shortDate(g.due)))+' and '+pct(goalPct(g),0)+' done.'+btn('goals','Open goals')])})}
-  if(remOn('Prop'))acctRows().filter(function(r){return r.a.prop==='eval'||r.a.prop==='funded'}).forEach(function(r){var a=r.a,p=propStats(r),w=[];
+  if(remOn('Prop'))acctRows().filter(function(r){return (r.a.prop==='eval'||r.a.prop==='funded')&&!acctClosed(r.a)}).forEach(function(r){var a=r.a,p=propStats(r),w=[];
     if(r.breached)w.push('has breached its drawdown limit');else if(r.floor!=null&&r.dd>0&&r.room<r.dd*ddWarnPct()/100)w.push('has '+money(r.room)+' of drawdown room left ('+pct(r.room/r.dd,0)+')');
-    if(p.cons&&!p.consOk&&p.profit>0)w.push('is outside its consistency rule');
+    if(p.cons&&!p.consOk&&p.cyc>0)w.push('is outside its consistency rule');
     if(a.prop==='eval'&&a.minDays>0&&p.days<a.minDays)w.push('needs '+(a.minDays-p.days)+' more trading '+(a.minDays-p.days===1?'day':'days'));
+    if(r.dllHit)w.push('hit its '+money(r.dll)+' daily loss limit today');else if(r.dll&&r.dllLeft<r.dll*ddWarnPct()/100)w.push('has '+money(Math.max(0,r.dllLeft))+' left of its daily loss limit today');
+    if(r.overQ)w.push('has '+r.overQ+(r.overQ===1?' trade':' trades')+' over its '+(+a.maxQty)+' contract limit');
     if(w.length)L.push(['prop:'+a.id,'<b>'+esc(a.name)+'</b> '+w.join(', ')+'.'])});
   if(remOn('Custom'))(st.customRem||[]).forEach(function(c){if(c.text&&Array.isArray(c.days)&&c.days.indexOf(dow)>=0)L.push(['custom:'+c.id,esc(c.text)])});
   return L}
@@ -4957,9 +5006,9 @@ document.addEventListener('submit',function(e){
     if(t.grp===undefined)t.grp=keep.grp;var gch=tradeGrp(t)!==tradeGrp(keep)||(t.acct||'')!==(keep.acct||'');if(t.grp===undefined)delete t.grp;
     var nt=Object.assign({},t,{id:keep.id,ex:keep.ex,lm:keep.lm});if(!t.acct)delete nt.acct;
     if(gch){placeTrade(nt,tradeGrp(t),t.acct);if(t.grp===undefined&&!multiGrp())delete nt.grp}
-    state.trades[i]=nt;ui.editId=null;toast('Trade updated')}
+    state.trades[i]=nt;ui.editId=null;var rw=ruleWarn(nt);toast('Trade updated'+rw,rw?6000:0)}
   else{if(t.notes===undefined)t.notes='';t.id=ui.draftId||uid();ui.draftId=null;placeTrade(t,t.grp&&grpById(t.grp)?t.grp:curGrp(),t.acct);if(!t.acct)delete t.acct;state.settings.lastGrp=t.grp;if(t.acct)state.settings.lastAcct=t.acct;state.trades.push(t);
-    toast('Trade added'+(t.acct?' to '+acctById(t.acct).name:multiGrp()?' to '+grpById(t.grp).name:''))}
+    var rw2=ruleWarn(t);toast('Trade added'+(t.acct?' to '+acctById(t.acct).name:multiGrp()?' to '+grpById(t.grp).name:'')+rw2,rw2?6000:0)}
   save();ui.tab=ui.backTo||'trades';ui.backTo=null;ui.addDate=null;
   if(ui.tab==='cal'){ui.calMonth=t.date.slice(0,7);ui.calSel=t.date;ui.calWeek=false;if(ui.calMode==='weekly')ui.calMode='all'}
   ui.sortKey='date';ui.sortDir=-1;renderAll();window.scrollTo(0,0);
@@ -5080,31 +5129,48 @@ function rollingHTML(){
 
 /* ---------- prop firm: evaluation progress, consistency and payouts ---------- */
 function propStats(r){
-  var a=r.a,am=a.mult>0?a.mult:1,days={};
-  allChrono().forEach(function(t){if(!acctHas(a,t))return;days[t.date]=(days[t.date]||0)+calcRaw(t).net*am/(t.lm>0?t.lm:1)});
-  var ks=Object.keys(days),best=0,bestD='';ks.forEach(function(k){if(days[k]>best){best=days[k];bestD=k}});
-  var profit=r.net,cons=a.cons>0?a.cons/100:0,consOk=true,need=0;
-  if(cons&&best>0){consOk=profit>0&&best<=cons*profit+1e-9;if(!consOk)need=best/cons-profit}
-  return {days:ks.length,profit:profit,best:best,bestD:bestD,cons:cons,consOk:consOk,need:need};
+  var a=r.a,days=r.days||{},all=Object.keys(days);
+  /* on a funded account the payout rules (winning days, consistency) start again after each payout */
+  var last=a.prop==='funded'?(a.payouts||[]).reduce(function(m,p){return p.d>m?p.d:m},''):'';
+  var ks=all.filter(function(k){return !last||k>last}),best=0,bestD='',cyc=last?0:r.net;
+  ks.forEach(function(k){if(last)cyc+=days[k];if(days[k]>best){best=days[k];bestD=k}});
+  var cons=a.cons>0?a.cons/100:0,consOk=true,need=0;
+  if(cons&&best>0){consOk=cyc>0&&best<=cons*cyc+1e-9;if(!consOk)need=best/cons-cyc}
+  var win=a.payDayAmt>0?+a.payDayAmt:0.005,wdays=ks.filter(function(k){return days[k]>=win-1e-9}).length;
+  /* what can be asked for: the balance above the safety net (or above the start), capped by the firm's largest payout */
+  var avail=r.equity-(a.safety>0?+a.safety:a.start);if(a.payMax>0)avail=Math.min(avail,+a.payMax);
+  return {days:all.length,profit:r.net,cyc:cyc,last:last,best:best,bestD:bestD,cons:cons,consOk:consOk,need:need,wdays:wdays,avail:Math.max(0,avail)};
 }
 function pbar(frac,ok){return '<div class="pbar"><i class="'+(ok?'ok':'')+'" style="width:'+Math.round(Math.max(0,Math.min(1,frac))*100)+'%"></i></div>'}
 function propPanelHTML(){
   var rows=acctRows().filter(function(r){return r.a.prop==='eval'||r.a.prop==='funded'});if(!rows.length)return '';
   return '<div class="panel"><h2>Prop firm</h2><div class="prop-grid">'+rows.map(function(r){
-    var a=r.a,p=propStats(r),i=r.i,h='<div class="prop-card"><div class="prop-head"><b>'+esc(a.name)+'</b> <span class="tag'+(a.prop==='funded'?' ok':'')+'">'+(a.prop==='funded'?'funded':'evaluation')+'</span></div>';
+    var a=r.a,p=propStats(r),i=r.i,cl=acctClosed(a),h='<div class="prop-card"><div class="prop-head"><b>'+esc(a.name)+'</b> <span class="tag'+(a.prop==='funded'?' ok':'')+'">'+(a.prop==='funded'?'funded':'evaluation')+'</span>'+(cl?' <span class="tag">closed '+esc(shortDate(a.until))+'</span>':'')+'</div>';
     var checks=[];
     if(a.target>0)h+='<div class="prop-row"><span>Profit target</span><span class="num"><b class="'+cls(p.profit)+'">'+money(p.profit,true)+'</b> of '+money(a.target)+'</span></div>'+pbar(p.profit/a.target,p.profit>=a.target),checks.push(p.profit>=a.target);
     if(a.minDays>0)h+='<div class="prop-row"><span>Trading days</span><span class="num"><b>'+p.days+'</b> of '+a.minDays+'</span></div>'+pbar(p.days/a.minDays,p.days>=a.minDays),checks.push(p.days>=a.minDays);
-    if(p.cons){h+='<div class="prop-row"><span>Consistency, best day at most '+(+(p.cons*100).toFixed(1))+'%</span><span class="num '+(p.consOk?'gain':'loss')+'">'+(p.profit>0&&p.best>0?pct(p.best/p.profit,0)+' of profit':'–')+'</span></div>'+
+    if(p.cons){h+='<div class="prop-row"><span>Consistency, best day at most '+(+(p.cons*100).toFixed(1))+'%'+(p.last?' since your last payout':'')+'</span><span class="num '+(p.consOk?'gain':'loss')+'">'+(p.cyc>0&&p.best>0?pct(p.best/p.cyc,0)+' of profit':'–')+'</span></div>'+
       (p.best>0?'<p class="muted" style="font-size:12px;margin:2px 0 8px">Best day '+money(p.best)+(p.bestD?' on '+esc(shortDate(p.bestD)):'')+'. '+(p.consOk?'Within the rule.':'You need about '+money(p.need)+' more total profit, without a bigger day, to meet it.')+'</p>':'');checks.push(p.consOk)}
     if(r.floor!=null)h+='<div class="prop-row"><span>Drawdown room</span><span class="num '+(r.breached?'loss':r.room<r.dd*ddWarnPct()/100?'loss':'gain')+'">'+(r.breached?'Breached':money(r.room))+'</span></div>'+pbar(r.dd>0?r.room/r.dd:0,!r.breached&&r.room>=r.dd*ddWarnPct()/100),checks.push(!r.breached);
-    if(!checks.length)h+='<p class="muted" style="font-size:13px;margin:0">Add a profit target, minimum days or a consistency rule for this account in Setup &amp; data.</p>';
-    else if(a.prop==='eval')h+='<p class="prop-status '+(r.breached?'loss':checks.every(Boolean)?'gain':'')+'">'+(r.breached?'Drawdown limit breached.':checks.every(Boolean)?'Every rule here is met. Check with your firm that the evaluation passed.':'Not passed yet.')+'</p>';
-    if(a.prop==='eval'&&checks.length)h+=propOddsHTML(r,p);
-    if(a.prop==='funded'){var pays=(a.payouts||[]).slice().sort(function(x,y){return x.d<y.d?1:-1}),tot=pays.reduce(function(s,x){return s+(+x.amt||0)},0);
+    if(r.dll){var dl=Math.max(0,r.dllLeft),dd2=r.dllDays;
+      h+='<div class="prop-row"><span>Daily loss limit, today</span><span class="num '+(r.dllHit?'loss':dl<r.dll*ddWarnPct()/100?'loss':'gain')+'">'+(r.dllHit?'Hit today':money(dl)+' left')+'</span></div>'+pbar(dl/r.dll,!r.dllHit&&dl>=r.dll*ddWarnPct()/100)+
+        (dd2.length?'<p class="muted" style="font-size:12px;margin:2px 0 8px">The '+money(r.dll)+' limit was hit on '+dd2.length+(dd2.length===1?' trading day':' trading days')+', last on '+esc(shortDate(dd2[dd2.length-1]))+'.</p>':'')}
+    if(a.maxQty>0)h+='<div class="prop-row"><span>Largest position, max '+(+a.maxQty)+'</span><span class="num '+(r.overQ?'loss':'gain')+'">'+(+r.maxQ.toFixed(1))+(r.overQ?', '+r.overQ+(r.overQ===1?' trade':' trades')+' over':'')+'</span></div>';
+    if(!checks.length&&a.prop==='eval')h+='<p class="muted" style="font-size:13px;margin:0">Add a profit target, minimum days or a consistency rule for this account in Setup &amp; data.</p>';
+    else if(a.prop==='eval')h+='<p class="prop-status '+(r.breached?'loss':checks.every(Boolean)?'gain':'')+'">'+(r.breached?'Drawdown limit breached.':checks.every(Boolean)?(cl?'Every rule here was met.':'Every rule here is met. Check with your firm that the evaluation passed.'):cl?'Closed before every rule here was met.':'Not passed yet.')+'</p>';
+    if(a.prop==='eval'&&checks.length&&!cl)h+=propOddsHTML(r,p);
+    if(a.prop==='funded'){var pays=(a.payouts||[]).slice().sort(function(x,y){return x.d<y.d?1:-1}),tot=pays.reduce(function(s,x){return s+(+x.amt||0)},0),sp=a.split>0&&a.split<100?+a.split:100;
+      /* next payout: winning days, what can be asked for, and whether every rule set here is met */
+      var ready=[!r.breached,p.consOk];
+      if(a.payDays>0)h+='<div class="prop-row"><span>Winning days'+(a.payDayAmt>0?' of '+money(a.payDayAmt)+' or more':'')+(p.last?' since '+esc(shortDate(p.last)):'')+'</span><span class="num"><b>'+p.wdays+'</b> of '+a.payDays+'</span></div>'+pbar(p.wdays/a.payDays,p.wdays>=a.payDays),ready.push(p.wdays>=a.payDays);
+      h+='<div class="prop-row"><span>You can request'+(a.safety>0?', above the '+money(a.safety)+' safety net':', profit above the start')+'</span><span class="num"><b class="'+(p.avail>0?'gain':'')+'">'+money(p.avail)+'</b>'+(a.payMin>0?' (min '+money(a.payMin)+')':'')+'</span></div>';
+      ready.push(a.payMin>0?p.avail>=a.payMin:p.avail>0);
+      if(!cl)h+='<p class="prop-status '+(r.breached?'loss':ready.every(Boolean)?'gain':'')+'">'+(r.breached?'Drawdown limit breached.':ready.every(Boolean)?'Ready for a payout of up to '+money(p.avail)+(sp<100?' (you keep '+money(p.avail*sp/100)+')':'')+'. Check with your firm before requesting.':'Not ready for a payout yet.')+'</p>';
+      if(!(a.payDays>0||a.safety>0||a.payMin>0||a.payMax>0||a.cons>0))h+='<p class="muted" style="font-size:12px;margin:2px 0 8px">Add your firm&#39;s payout rules for this account in Setup &amp; data (winning days, safety net, minimum and maximum payout) to see when a payout is ready.</p>';
       h+='<div class="prop-row" style="margin-top:8px"><span>Paid out</span><span class="num"><b class="gain">'+money(tot)+'</b>'+(pays.length?' in '+pays.length+(pays.length===1?' payout':' payouts'):'')+'</span></div>'+
+        (sp<100&&tot>0?'<div class="prop-row"><span>You received ('+sp+'% split)</span><span class="num"><b class="gain">'+money(tot*sp/100)+'</b></span></div>':'')+
         (pays.length?'<div class="pay-list">'+pays.map(function(x){return '<div class="pay-row"><span>'+esc(shortDate(x.d))+'</span><span class="num">'+money(+x.amt)+'</span><button class="btn small" type="button" data-paydel="'+i+'|'+esc(x.id)+'" aria-label="Remove this payout">×</button></div>'}).join('')+'</div>':'')+
-        '<div class="pay-add"><input id="pay-d-'+i+'" type="date" aria-label="Payout date" value="'+ymd(new Date())+'"><input id="pay-a-'+i+'" type="number" step="any" min="0" placeholder="Amount, $" aria-label="Payout amount"><button class="btn small" type="button" data-payadd="'+i+'">Record payout</button></div>'}
+        '<div class="pay-add"><input id="pay-d-'+i+'" type="date" aria-label="Payout date" value="'+ymd(new Date())+'"><input id="pay-a-'+i+'" type="number" step="any" min="0" placeholder="Amount, $" aria-label="Payout amount, before the profit split" title="The amount taken out of the account, before the firm&#39;s split"><button class="btn small" type="button" data-payadd="'+i+'">Record payout</button></div>'}
     return h+'</div>'}).join('')+'</div></div>';
 }
 
@@ -5941,7 +6007,8 @@ document.addEventListener('keydown',function(e){var D=ui.lb&&ui.lb.draw;if(!D)re
 /* ---------- one importer for TradingView, NinjaTrader, Tradovate and Rithmic files ---------- */
 var FILL_COLS={side:['side','b/s','buy/sell','action'],qty:['filled qty','filledqty','qty filled','filled quantity','fill qty','quantity','qty'],
   price:['avg fill price','avgprice','avg price','average fill price','avg. fill price','fill price','price'],sym:['symbol','contract','instrument','ticker','product'],
-  time:['fill time','closing time','update time','time','timestamp','create time','placing time','date'],status:['status'],id:['order id','orderid','order number','execution id','id'],comm:['commission','commissions','fee','fees']};
+  time:['fill time','closing time','update time','time','timestamp','create time','placing time','date'],status:['status'],id:['order id','orderid','order number','execution id','id'],comm:['commission','commissions','fee','fees'],
+  acc:['account','account name','account id','account number','acct']};
 function hcol(h,names){for(var i=0;i<names.length;i++){var k=h.indexOf(names[i]);if(k>=0)return k}return -1}
 function p2(n){return String(n).padStart(2,'0')}
 /* every platform writes contracts its own way: CME_MINI:ES1!, ES 12-26, ESZ6, ESZ2026 */
@@ -5978,8 +6045,24 @@ function impAcct(){var b=$('#f-acctBox');return b&&!b.hidden&&$('#f-acct').value
    throughout; the exact contract stays in the trade's note, and duplicate checks still use it */
 function impTicker(sym){return contractOf(sym)?rootOf(sym):sym}
 function impContractNote(t,sym){if(t.ticker!==sym)t.notes+=' · contract '+sym}
-function newImported(o,name){var fr=feeRate(o.ticker);var t=Object.assign({id:uid(),setup:'',stop:null,plan:'Yes',mistake:'',notes:'Imported from '+name,src:'tv',srcName:name},o);
-  placeTrade(t,impGrp(),impAcct());
+/* ---- which journal account a platform account is: the journal account whose name is the platform's account name or number,
+   or contains it (or is contained in it), ignoring case, spaces and dashes. The closest match wins ---- */
+function normAcct(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function acctByPlatform(name){var n=normAcct(name),best=null,bs=-1;if(!n)return null;
+  state.settings.accounts.forEach(function(a){var m=normAcct(a.name);if(!m)return;
+    var s=m===n?1e6:((m.length>=5&&n.indexOf(m)>=0)||(n.length>=5&&m.indexOf(n)>=0))?Math.min(m.length,n.length):-1;if(s>bs){bs=s;best=a}});
+  return bs>=0?best:null}
+/* where a platform account's trades go: its own account in a group with no leader, the group of a leader, and nothing for a follower,
+   whose fills are copies of the leader's. A file holding a single account that matches nothing goes where imports always went */
+function impWhere(name,many){if(!name)return null;var a=acctByPlatform(name);
+  if(!a)return many?{skip:'unk'}:null;
+  if(grpSolo(a.grp))return {grp:a.grp,acct:a.id};
+  return isLead(a)?{grp:a.grp}:{skip:'copy'}}
+function impSkipNotes(copy,unk){var u=Object.keys(unk);
+  return [copy?copy+(copy===1?' trade':' trades')+' on follower accounts skipped: followers copy their leader’s trades.':'',
+    u.length?u.map(function(k){return unk[k]+' from '+k}).join(', ')+' skipped: no journal account has that name. Name an account after it in Setup & data, Accounts, then import again.':'']}
+function newImported(o,name,where){var fr=feeRate(o.ticker);var t=Object.assign({id:uid(),setup:'',stop:null,plan:'Yes',mistake:'',notes:'Imported from '+name,src:'tv',srcName:name},o);
+  if(where)placeTrade(t,where.grp,where.acct||null);else placeTrade(t,impGrp(),impAcct());
   if(t.fee==null&&fr>0)t.fee=+(fr*t.qty).toFixed(2);return t}
 /* filled orders, matched into trades from the first fill until you are flat again */
 function importFills(rows,h,name){
@@ -5987,42 +6070,47 @@ function importFills(rows,h,name){
   if(c.sym<0||c.side<0||c.qty<0||c.price<0)return {ok:0,bad:0,err:'This '+name+' file is missing a symbol, side, quantity or fill price column. Export it with all columns turned on.'};
   /* order details used to find each trade's bracket: the order type, its limit and stop prices, and when it was placed */
   var oc={type:hcol(h,['type','order type']),lim:hcol(h,['limit price','limit']),stp:hcol(h,['stop price']),tp:hcol(h,['take profit']),sl:hcol(h,['stop loss']),placed:hcol(h,['placing time','placed time','create time','submit time'])};
-  var fills=[],orders=[],bad=0,oldIds={};
+  var fills=[],orders=[],bad=0,oldIds={},accs={};
   rows.slice(1).forEach(function(r){
     var sd=String(r[c.side]||'').trim().toLowerCase(),dir=/^b/.test(sd)?1:/^s/.test(sd)?-1:0,sym=normSym(r[c.sym]),dt=parseDT(c.time<0?'':r[c.time]);
     var st=c.status>=0?String(r[c.status]||'').trim().toLowerCase():'fill',filled=st.indexOf('fill')===0||st.indexOf('execut')===0||st.indexOf('complet')===0;
     /* every order, filled or cancelled, is kept for the bracket search; only filled ones make trades */
     if(oc.type>=0&&sym&&dir){var pl=oc.placed>=0?parseDT(r[oc.placed]):null,num=function(i){var v=i>=0?tvNum(r[i]):NaN;return v>0?v:null};
-      orders.push({sym:sym,dir:dir,type:String(r[oc.type]||'').trim().toLowerCase(),lim:num(oc.lim),stp:num(oc.stp),tp:num(oc.tp),sl:num(oc.sl),placed:pl?pl.ts:null,done:dt?dt.ts:null,filled:filled,id:c.id>=0?String(r[c.id]||'').trim():''})}
+      orders.push({sym:sym,dir:dir,type:String(r[oc.type]||'').trim().toLowerCase(),lim:num(oc.lim),stp:num(oc.stp),tp:num(oc.tp),sl:num(oc.sl),placed:pl?pl.ts:null,done:dt?dt.ts:null,filled:filled,id:c.id>=0?String(r[c.id]||'').trim():'',acc:c.acc>=0?String(r[c.acc]||'').trim():''})}
     if(!filled)return;
     var qty=tvNum(r[c.qty]),pr=tvNum(r[c.price]);
     if(!(qty>0))return;
     if(!dir||!(pr>0)||!dt||!sym){bad++;return}
+    var acc=c.acc>=0?String(r[c.acc]||'').trim():'';if(acc)accs[acc]=1;
     var oid=c.id>=0&&String(r[c.id]||'').trim()?name.toLowerCase()+':'+String(r[c.id]).trim():name.toLowerCase()+':'+sym+'|'+dt.ts+'|'+sd+'|'+qty+'|'+pr;
+    /* without order numbers, a copied fill looks the same on every account, so the account is part of its id (the old id still counts) */
+    if(acc&&!(c.id>=0&&String(r[c.id]||'').trim())){var o0=oid;oid=name.toLowerCase()+':'+acc+'|'+oid.slice(name.length+1);oldIds[oid]=o0}
     if(name==='TradingView'&&c.id>=0&&String(r[c.id]||'').trim())oid=String(r[c.id]).trim();
     /* Tradovate Orders files used to be read as TradingView, which kept the bare order number; that still counts as already imported */
     else if(c.id>=0&&String(r[c.id]||'').trim())oldIds[oid]=String(r[c.id]).trim();
     /* a commission counts only when the file gives a number; a blank cell leaves your own per-contract rate in charge */
     var cm=c.comm>=0?tvNum(r[c.comm]):NaN,od=orders.length&&oc.type>=0?orders[orders.length-1]:null;
-    fills.push({sym:sym,dir:dir,qty:qty,price:pr,ts:dt.ts,date:dt.date,time:dt.time,id:oid,n:fills.length,comm:isFinite(cm)?Math.abs(cm):0,hasComm:isFinite(cm),order:od})});
+    fills.push({sym:sym,acc:acc,dir:dir,qty:qty,price:pr,ts:dt.ts,date:dt.date,time:dt.time,id:oid,n:fills.length,comm:isFinite(cm)?Math.abs(cm):0,hasComm:isFinite(cm),order:od})});
   orders.sort(function(a,b){return (a.placed!=null?a.placed:a.done||0)-(b.placed!=null?b.placed:b.done||0)});
   var seen={};state.trades.forEach(function(t){(t.oids||[]).forEach(function(i){seen[i]=1})});
-  var bySym={};fills.forEach(function(f){(bySym[f.sym]=bySym[f.sym]||[]).push(f)});
-  var out=[],open=0,dup=0,unk={},bracketed=0;
-  Object.keys(bySym).forEach(function(sym){
-    var list=bySym[sym].sort(function(a,b){return a.ts-b.ts||a.n-b.n}),pos=0,cur=null;
+  /* each account's fills are matched on their own, so copies on several accounts never add up to one bigger trade */
+  var bySym={};fills.forEach(function(f){var k=f.acc+'\u0001'+f.sym;(bySym[k]=bySym[k]||[]).push(f)});
+  var out=[],open=0,dup=0,unk={},bracketed=0,many=Object.keys(accs).length>1,skCopy=0,skUnk={};
+  Object.keys(bySym).forEach(function(key){
+    var list=bySym[key].sort(function(a,b){return a.ts-b.ts||a.n-b.n}),sym=list[0].sym,acc=list[0].acc,where=impWhere(acc,many),pos=0,cur=null;
     var finish=function(){var k=cur;cur=null;
       if(k.ids.every(function(i){return seen[i]||seen[oldIds[i]]})){dup++;return}
+      if(where&&where.skip){if(where.skip==='copy')skCopy++;else skUnk[acc]=(skUnk[acc]||0)+1;return}
       var mult=pointValue(sym);if(!mult){unk[sym]=1;return}
       var entry=+(k.ec/k.eq).toFixed(6),exit=+(k.xc/k.xq).toFixed(6);
-      var t=newImported({date:k.date,time:k.time||'',xtime:k.xtime||'',xdate:k.xdate&&k.xdate>k.date?k.xdate:'',ticker:impTicker(sym),side:k.dir>0?'Long':'Short',qty:k.eq,entry:entry,exit:exit,mult:mult,oids:k.ids},name);
+      var t=newImported({date:k.date,time:k.time||'',xtime:k.xtime||'',xdate:k.xdate&&k.xdate>k.date?k.xdate:'',ticker:impTicker(sym),side:k.dir>0?'Long':'Short',qty:k.eq,entry:entry,exit:exit,mult:mult,oids:k.ids},name,where);
       impContractNote(t,sym);if(k.hasComm)t.fee=+k.comm.toFixed(2);
       if(oc.type>=0){var br=bracketOf(k,sym,entry,orders);if(br.stop!=null)t.stop=br.stop;if(br.target!=null)t.target=br.target;if(br.how)t.exitHow=br.how;
         if(br.stop!=null||br.target!=null){bracketed++;t.notes+=' · stop and target from the bracket orders'}}
       out.push(t)};
     list.forEach(function(f){var rem=f.qty;
       while(rem>1e-9){
-        if(Math.abs(pos)<1e-9){pos=0;cur={dir:f.dir,eq:0,ec:0,xq:0,xc:0,comm:0,hasComm:false,date:f.date,time:f.time,ids:[],start:f.ts,placed:f.order&&f.order.placed!=null?f.order.placed:f.ts,first:f.order,exits:[]}}
+        if(Math.abs(pos)<1e-9){pos=0;cur={dir:f.dir,acc:f.acc,eq:0,ec:0,xq:0,xc:0,comm:0,hasComm:false,date:f.date,time:f.time,ids:[],start:f.ts,placed:f.order&&f.order.placed!=null?f.order.placed:f.ts,first:f.order,exits:[]}}
         if(cur.ids.indexOf(f.id)<0)cur.ids.push(f.id);if(f.hasComm)cur.hasComm=true;
         if(Math.sign(pos)===f.dir||pos===0){cur.eq+=rem;cur.ec+=rem*f.price;cur.comm+=f.comm*rem/f.qty;pos+=f.dir*rem;rem=0}
         else{var cq=Math.min(rem,Math.abs(pos));cur.xq+=cq;cur.xc+=cq*f.price;cur.comm+=f.comm*cq/f.qty;cur.xtime=f.time;cur.xdate=f.date;cur.end=f.ts;if(f.order&&cur.exits.indexOf(f.order)<0)cur.exits.push(f.order);pos+=f.dir*cq;rem-=cq;
@@ -6030,7 +6118,7 @@ function importFills(rows,h,name){
     if(cur&&Math.abs(pos)>1e-9)open++;
   });
   var uk=Object.keys(unk);
-  return importDone(out,name,[dup?dup+' already in your journal, skipped.':'',open?open+' still open, not imported yet.':'',bracketed?bracketed+(bracketed===1?' trade got its':' trades got their')+' stop or target from your bracket orders.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':''])}
+  return importDone(out,name,impSkipNotes(skCopy,skUnk).concat([dup?dup+' already in your journal, skipped.':'',open?open+' still open, not imported yet.':'',bracketed?bracketed+(bracketed===1?' trade got its':' trades got their')+' stop or target from your bracket orders.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':'']))}
 /* a trade's bracket: the first stop order on the exit side (below a long's entry, above a short's), and a take-profit, or a limit
    placed with the entry (within 3 seconds, as brackets are), or the limit that closed the trade, on the winning side. Tradovate can also
    put the bracket on the entry order itself (its Take Profit and Stop Loss columns). Also how the trade ended: target, stop or by hand */
@@ -6038,7 +6126,7 @@ function importFills(rows,h,name){
 var EXIT_HOW={target:'hit target',stop:'stopped out',manual:'closed by hand'};
 function bracketOf(k,sym,entry,orders){
   var ex=-k.dir,lo=k.start-2000,hi=(k.end||k.start)+5000,stop=null,target=null,win=function(px){return k.dir>0?px>entry:px<entry};
-  orders.forEach(function(o){if(o.sym!==sym||o.dir!==ex)return;var at=o.placed!=null?o.placed:o.done;if(at==null||at<lo||at>hi)return;
+  orders.forEach(function(o){if(o.sym!==sym||o.dir!==ex||(o.acc||'')!==(k.acc||''))return;var at=o.placed!=null?o.placed:o.done;if(at==null||at<lo||at>hi)return;
     if(/stop/.test(o.type)){var sp=o.stp||o.sl||o.lim;if(sp&&stop==null&&!win(sp))stop=sp;return}
     var px=o.lim||o.tp;if(!px||target!=null||!win(px))return;
     var withEntry=o.placed!=null&&Math.abs(o.placed-k.placed)<=3000,closed=k.exits.indexOf(o)>=0;
@@ -6054,21 +6142,26 @@ function importTrips(rows,h,name){
   var cS=col(['instrument','symbol','contract']),cQ=col(['qty','quantity']),cId=col(['trade number','trade #','id']);
   var cPos=col(['market pos.','market pos']),cEP=col(['entry price']),cXP=col(['exit price']),cET=col(['entry time']),cXT=col(['exit time']),cC=col(['commission']),cMae=col(['mae']),cMfe=col(['mfe']);
   var cBP=col(['buyprice','buy price']),cSP=col(['sellprice','sell price']),cBT=col(['boughttimestamp','bought timestamp']),cST=col(['soldtimestamp','sold timestamp']),cBF=col(['buyfillid','buy fill id']),cSF=col(['sellfillid','sell fill id']);
+  var cA=col(FILL_COLS.acc),accs={},skCopy=0,skUnk={};if(cA>=0)rows.slice(1).forEach(function(r){var v=String(r[cA]||'').trim();if(v)accs[v]=1});var many=Object.keys(accs).length>1;
   rows.slice(1).forEach(function(r,i){
-    var sym=normSym(r[cS]),qty=tvNum(r[cQ]),side,entry,exit,a,b,key;
+    var sym=normSym(r[cS]),qty=tvNum(r[cQ]),side,entry,exit,a,b,key,acc=cA>=0?String(r[cA]||'').trim():'';
     if(nt){side=/^s/i.test(String(r[cPos]||'').trim())?'Short':'Long';entry=tvNum(r[cEP]);exit=tvNum(r[cXP]);a=parseDT(r[cET]);b=parseDT(r[cXT]);key='ninjatrader:'+(cId>=0&&r[cId]?String(r[cId]).trim()+'|':'')+sym+'|'+(a&&a.ts)+'|'+qty}
     else{var bt=parseDT(r[cBT]),st=parseDT(r[cST]),bp=tvNum(r[cBP]),sp=tvNum(r[cSP]);if(!bt||!st){bad++;return}var lng=bt.ts<=st.ts;side=lng?'Long':'Short';entry=lng?bp:sp;exit=lng?sp:bp;a=lng?bt:st;b=lng?st:bt;
       key='tradovate:'+(cBF>=0&&cSF>=0&&r[cBF]?String(r[cBF]).trim()+'|'+String(r[cSF]).trim():sym+'|'+a.ts+'|'+qty)}
     if(!sym||!(qty>0)||!(entry>0)||!(exit>0)||!a){bad++;return}
-    if(seen[key]){dup++;return}var mult=pointValue(sym);if(!mult){unk[sym]=1;return}
-    var t=newImported({date:a.date,time:a.time,xtime:b?b.time:'',xdate:b&&b.date>a.date?b.date:'',ticker:impTicker(sym),side:side,qty:qty,entry:entry,exit:exit,mult:mult,oids:[key]},name);
+    /* the same trade copied on several accounts has the same time and size, so the account is part of its key (the old key still counts) */
+    var key0=key;if(acc)key=key.replace(':',':'+acc+'|');
+    if(seen[key]||seen[key0]){dup++;return}
+    var where=impWhere(acc,many);if(where&&where.skip){if(where.skip==='copy')skCopy++;else skUnk[acc]=(skUnk[acc]||0)+1;return}
+    var mult=pointValue(sym);if(!mult){unk[sym]=1;return}
+    var t=newImported({date:a.date,time:a.time,xtime:b?b.time:'',xdate:b&&b.date>a.date?b.date:'',ticker:impTicker(sym),side:side,qty:qty,entry:entry,exit:exit,mult:mult,oids:[key]},name,where);
     impContractNote(t,sym);if(cC>=0&&isFinite(tvNum(r[cC])))t.fee=Math.abs(tvNum(r[cC]));
     /* NinjaTrader lists MAE and MFE in dollars; the journal keeps them in points */
     if(cMae>=0&&isFinite(tvNum(r[cMae])))t.mae=+(Math.abs(tvNum(r[cMae]))/(mult*qty)).toFixed(4);
     if(cMfe>=0&&isFinite(tvNum(r[cMfe])))t.mfe=+(Math.abs(tvNum(r[cMfe]))/(mult*qty)).toFixed(4);
     out.push(t)});
   var uk=Object.keys(unk);
-  return importDone(out,name,[dup?dup+' already in your journal, skipped.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':''])}
+  return importDone(out,name,impSkipNotes(skCopy,skUnk).concat([dup?dup+' already in your journal, skipped.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':'']))}
 
 /* ---------- keyboard shortcuts ---------- */
 /* the built-in shortcuts can be changed in Customize, Pages, and you can add your own there; arrows and Esc stay fixed.
@@ -6500,7 +6593,7 @@ function quickSave(){quickRead();var q=quickState(),en=parseFloat(q.entry),ex=pa
   var fr=feeRate(t.ticker);if(fr>0)t.fee=+(fr*t.qty).toFixed(2);
   t.id=uid();placeTrade(t,curGrp(),grpSolo(curGrp())?state.settings.lastAcct:null);state.trades.push(t);save();
   var c=calc(t);q.done='Saved: '+esc(t.ticker)+' '+t.side.toLowerCase()+' ×'+t.qty+', <b class="'+cls(c.net)+'">'+money(c.net,true)+'</b>. Ready for the next one.';q.entry='';q.exit='';q.stop='';
-  renderAll();toast('Trade saved')}
+  var rw=ruleWarn(t);renderAll();toast('Trade saved'+rw,rw?6000:0)}
 /* on a phone, opening Add trade goes straight to the form instead of leaving it below the menu and banners */
 var _goQuick=go;go=function(tab){_goQuick(tab);if(tab==='add')try{if(window.matchMedia('(max-width:900px)').matches){var a=$('#tab-add');if(a)a.scrollIntoView({block:'start'})}}catch(e){}};
 var _renderAddQuick=renderAdd;renderAdd=function(){if(quickMode()){renderQuick();return}_renderAddQuick();
@@ -7687,6 +7780,32 @@ Version 82  (Oct 26, 2026)  (Update history: 2.23)
   loss and warning colors switch to match (your own profit and loss
   colors are kept). Text on the background is unchanged
 - TradeVault desktop app updated to 2.23.0
+Version 83  (Oct 26, 2026)  (Update history: 2.231)
+--------------------------
+- Account end date: set it when you pass an evaluation, close an account
+  or stop trading it. Trades after that day no longer count for the
+  account, while its balance, stats and Prop firm card stay as they were
+- Closed accounts show "closed" with the date in the Accounts table and
+  on the Prop firm card, drop out of the Account box on Add trade, and no
+  longer get drawdown or prop firm reminders. A passed evaluation shows
+  that every rule was met, without the passing odds
+- Imports go to the right account: name an account the way your platform
+  does (like APEX-123456-03) and fills from that account go to it. In a
+  group with a leader only the leader's fills come in, since followers
+  copy it. Fills from accounts with no match are skipped and listed
+- New drawdown rule, Trailing (intraday high), for firms whose limit
+  follows your highest open profit. It uses the MAE and MFE you log, and
+  a trade that dipped to the limit counts as a breach
+- Daily loss limit per account: the Dashboard shows the room left today
+  and the days it was hit, and logging a trade past it warns you
+- Max contracts per account (10 micros count as 1): trades over it are
+  counted, flagged in the Accounts table and warned about when logged
+- Payout rules for funded accounts: profit split, safety net, winning
+  days needed, minimum and maximum payout. The Prop firm card shows what
+  you can request and when you're ready for a payout, and winning days
+  and consistency start again after each payout
+- Business money in counts your share of each payout after the split
+- TradeVault desktop app updated to 2.23.1
 
 </script>
 </body></html>

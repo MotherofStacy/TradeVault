@@ -1,7 +1,7 @@
 // Lets the iPhone version open with no internet connection. make-phone-site.ps1 copies this file into the site and fills in
-// 20261026-180632, so each new upload is seen as a new version.
+// 20261026-203208, so each new upload is seen as a new version.
 // It only keeps a copy of the page, icons and fonts; your journal stays in Safari's storage and is never touched here.
-const CACHE = 'tradevault-20261026-180632';
+const CACHE = 'tradevault-20261026-203208';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 const FONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
 // with a weak signal, wait this long for GitHub before opening the saved copy instead
