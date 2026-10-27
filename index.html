@@ -1126,12 +1126,14 @@ function placeTrade(t,g,aid){t.grp=g;
   var a=acctById(aid);if(!a||a.grp!==g)a=grpSolo(g)?grpAccts(g).filter(function(x){return !acctClosed(x)})[0]||grpAccts(g)[0]||null:null;
   if(a){t.acct=a.id;t.lm=a.mult>0?a.mult:1}else{delete t.acct;t.lm=leaderMult(g)}}
 /* the Account box on the trade form lists the group's accounts, starting on the one last used */
-/* "all" adds a choice for every account in the group, for trades logged while it still had a leader */
+/* "all" adds a choice for every account in the group: the usual pick in a group with a leader (the trade is copied to the
+   followers), and kept for trades logged while a group with no leader still had one. Picking one account logs it for that account only */
+function acctBoxOn(g,t){return grpSolo(g)||!!(t&&t.acct)||grpAccts(g).filter(function(a){return !a.arch&&!acctClosed(a)}).length>1}
 function acctOpts(g,cur,all){var as=grpAccts(g).filter(function(a){return a.id===cur||(!acctClosed(a)&&!a.arch)});if(!as.length)as=grpAccts(g);
   var pick=as.filter(function(a){return a.id===cur})[0]||(all?null:as.filter(function(a){return a.id===state.settings.lastAcct})[0]||as[0]);
   return (all?'<option value=""'+(pick?'':' selected')+'>Every account in the group</option>':'')+as.map(function(a){return '<option value="'+esc(a.id)+'"'+(a===pick?' selected':'')+'>'+esc(a.name)+'</option>'}).join('')}
 document.addEventListener('change',function(e){if(e.target.id!=='f-grp')return;var g=e.target.value,box=$('#f-acctBox');if(!box)return;
-  box.hidden=!grpSolo(g);$('#f-acct').innerHTML=acctOpts(g,$('#f-acct').value,false)});
+  box.hidden=!acctBoxOn(g);$('#f-acct').innerHTML=acctOpts(g,$('#f-acct').value,!grpSolo(g))});
 function soloTrades(a){return state.trades.filter(function(t){return t.acct===a.id}).length}
 /* the group new trades and imports go to: the one last used */
 function curGrp(){var g=state.settings.lastGrp;return grpById(g)?g:state.settings.groups[0].id}
@@ -1747,7 +1749,7 @@ var TRADE_COLS=[['date','Date',0,1,1],['ticker','Contract',0,1,1],['side','Side'
 function tradeColCfg(){var st=state.settings,c=st.tradeCols;if(!c||typeof c!=='object'||Array.isArray(c))c=st.tradeCols={};
   if(!Array.isArray(c.order))c.order=[];if(!c.hidden||typeof c.hidden!=='object'){c.hidden={};TRADE_COLS.forEach(function(x){if(!x[4])c.hidden[x[0]]=1})}return c}
 function tradeColOrder(){return placeMissing(tradeColCfg().order.filter(function(k){return TRADE_COLS.some(function(x){return x[0]===k})}),TRADE_COLS.map(function(x){return x[0]}))}
-function tradeCols(){var cfg=tradeColCfg();return tradeColOrder().map(function(k){return TRADE_COLS.filter(function(x){return x[0]===k})[0]}).filter(function(c){return !cfg.hidden[c[0]]&&!(off('life')&&(c[0]==='mood'||c[0]==='sleep'))&&!(c[0]==='grp'&&!multiGrp()&&!grpSolo(state.settings.groups[0].id))}).map(function(c){return c[0]==='grp'&&!multiGrp()?['grp','Account'].concat(c.slice(2)):c})}
+function tradeCols(){var cfg=tradeColCfg();return tradeColOrder().map(function(k){return TRADE_COLS.filter(function(x){return x[0]===k})[0]}).filter(function(c){return !cfg.hidden[c[0]]&&!(off('life')&&(c[0]==='mood'||c[0]==='sleep'))&&!(c[0]==='grp'&&!multiGrp()&&!grpSolo(state.settings.groups[0].id)&&!state.trades.some(function(t){return t.acct}))}).map(function(c){return c[0]==='grp'&&!multiGrp()?['grp','Account'].concat(c.slice(2)):c})}
 function tradeCell(k,t,c){var dash='<span class="muted">–</span>';
   switch(k){
     case 'date':return '<td>'+esc(t.date)+(t.time?' <span class="muted"'+(t.cdate?' title="Placed '+esc(shortDate(t.cdate))+' at '+esc(t.time)+', so it counts toward the next trading day"':'')+'>'+(t.cdate?esc(t.cdate.slice(5))+' ':'')+esc(t.time)+'</span>':'')+(t.ex?' <span class="tag ex">example</span>':'')+(t.src==='tv'&&!t.setup?' <span class="tag ex" title="Imported from '+esc(t.srcName||'TradingView')+'. Open it to add the setup, stop and mistake.">needs tags</span>':'')+'</td>';
@@ -1796,7 +1798,7 @@ function renderAdd(){
   $('#tab-add').innerHTML='<div class="add-wrap"><form id="tradeForm" class="panel" novalidate><div class="add-head"><h2>'+(ui.editId?'Edit trade':'New trade')+'</h2>'+(ui.editId?'':tvHeadHTML())+'</div>'+'<p class="help">'+(multiGrp()?'Pick the account group this trade was taken in. Its leader logs it, the other accounts in that group copy it, and other groups are not affected. In a group with no leader, pick the account too: the trade counts only for it. Imports below go to the group'+(state.settings.groups.some(function(g){return g.solo})?' and account':'')+' picked here. ':grpSolo(fg)?'Pick the account this trade was taken on. It counts only for that account. ':ui.editId?'':'Logging on <b>'+esc(state.settings.accounts[0].name)+'</b>, your leader. Your other accounts copy it. ')+'MAE and MFE are optional: how many points price went against you and in your favor while you were in. They power the trade management stats on the Dashboard. Point value fills in when you type a known contract (ES 50, MES 5, NQ 20, MNQ 2, CL 1,000, GC 100 and others). Type your own for anything else. Entry time is optional and powers the time of day stats on the Dashboard. Add the exit time too and the Dashboard shows how long you hold winners and losers. Target price is optional and shows whether you reach your planned targets. Tick every mistake that applies, or none for a clean trade. Commissions and fees come off the P&amp;L: leave the box blank to use your per-contract rates from Setup &amp; data, or type the exact amount from your broker statement. Set Result to Breakeven for scratch trades: they still count toward P&amp;L, but not as a win or a loss, so they do not skew your win rate. With Result on Automatic, any trade within plus or minus '+money(isFinite(state.settings.beRange)?+state.settings.beRange:10)+' counts as breakeven (change the range on Setup &amp; data). Pick Win or loss to override it.</p>'+(ui.editId?'':'<div class="err" id="tvMsg" role="status"></div>')+
     '<div class="form-grid">'+
     (multiGrp()?'<div><label for="f-grp" title="The accounts this trade counts for">Account group</label><select id="f-grp">'+(function(cg){return state.settings.groups.map(function(g){var ld=grpLeader(g.id);return '<option value="'+esc(g.id)+'"'+(g.id===cg?' selected':'')+'>'+esc(g.name)+(ld?' ('+esc(ld.name)+')':'')+'</option>'}).join('')})(fg)+'</select></div>':'')+
-    '<div id="f-acctBox"'+(grpSolo(fg)||t.acct?'':' hidden')+'><label for="f-acct" title="In a group with no leader, the one account this trade counts for">Account</label><select id="f-acct">'+acctOpts(fg,t.acct,!!ui.editId&&(!t.acct||!grpSolo(fg)))+'</select></div>'+
+    '<div id="f-acctBox"'+(acctBoxOn(fg,t)?'':' hidden')+'><label for="f-acct" title="The account this trade was taken on. Every account in the group copies it to the followers">Account</label><select id="f-acct">'+acctOpts(fg,t.acct,!grpSolo(fg)||!!ui.editId&&!t.acct)+'</select></div>'+
     '<div><label for="f-date"'+(tdStart()!=null?' title="The day you placed it. From '+esc(hhmm(tdStart()))+' on, a trade counts toward the next trading day."':'')+'>Date</label><input id="f-date" type="date" value="'+esc(calDate(t))+'"></div>'+
     '<div><label for="f-time">Entry time</label><input id="f-time" type="time" value="'+esc(t.time||'')+'"></div>'+
     '<div><label for="f-xtime" title="When you were fully out. With the entry time it gives the hold time.">Exit time</label><input id="f-xtime" type="time" value="'+esc(t.xtime||'')+'"></div>'+
@@ -2395,6 +2397,7 @@ function renderData(){
     '<p><b>Importing to the right account.</b> Name each account the way your platform does, like APEX-123456-03 (the end of the number is enough if it is unique). When an import file has an Account column, each trade goes to the account with that name. In a group with a leader only the leader&#39;s fills are imported, since followers already copy it, and the followers&#39; fills are skipped. Fills from accounts with no match are skipped and listed when the file has more than one account; a file with just one account goes to the account picked for imports.</p>'+
     '<p><b>Account groups.</b> Not every account has to follow one leader. Add a group for each set of accounts you trade together, for example your evaluations in one and a personal account in another. Each group has its own leader and followers, and you pick the group on each trade, so a trade only counts for the accounts in its group. Move a follower to another group with its Group box. Optionally, a group can follow the leader of another group with its Follows box: every trade in that group then also counts for this one, at this leader&#39;s size compared with that leader, while trades logged in this group stay in this group only.</p>'+
     '<p><b>No leader.</b> Tick No leader when the accounts in a group don&#39;t copy each other. Each trade then counts only for the account you pick on the Add trade form, at the P&amp;L you logged. Trades logged before you switched keep counting the way they were logged. A group with no leader can&#39;t follow, or be followed by, another group.</p>'+
+    '<p><b>One account only.</b> In a group with a leader, the Account box on the Add trade form starts on Every account in the group, so the trade is copied to the followers. Pick one account instead for a trade only that account took. It then counts for that account alone, at the P&amp;L you logged, and the Trades table shows its name.</p>'+
     '</details>'+
     (multiGrp()?s.groups.map(function(g,gi){
       return '<div class="grp-block"><div class="grp-top"><div style="flex:1 1 200px"><label>Group name</label><input class="g-name" data-g="'+esc(g.id)+'" type="text" aria-label="Group name" value="'+esc(g.name)+'"></div>'+
@@ -3037,7 +3040,7 @@ function runImport(text,m){
 /* the import button sits beside the New trade title; its help is behind the i next to it */
 function tvHeadHTML(){
   return '<div class="add-import"><label class="btn primary" style="margin:0;cursor:pointer">Choose TradingView file<input id="tvFile" type="file" accept=".csv,text/csv" hidden></label>'+
-    '<span class="info" tabindex="0" aria-label="About importing trades"><span class="info-i" aria-hidden="true">i</span><p class="info-tip" role="tooltip" data-info="1">This button reads exports from TradingView, NinjaTrader, Tradovate and Rithmic, and works out which one it is by itself. It also reads a trades CSV downloaded from Setup &amp; data, Backup &amp; data. Trades you already imported from a platform are skipped, so you can repeat it any time.<br><br><b>Where to get the file:</b><br><b>TradingView:</b> Paper Trading (or your broker) panel, Order History tab, turn on every column, then download Order history.<br><b>NinjaTrader:</b> Trade Performance, Trades tab, right-click and export to CSV. The Executions tab works too.<br><b>Tradovate:</b> Reports, Performance or Orders, then download the CSV.<br><b>Rithmic (R|Trader Pro):</b> Order History, export the completed orders to CSV.<br><br>Filled orders on the same contract are matched into trades from the first fill until you are flat again, and scaling in or out is averaged. Stop price, setup and mistake are not in these exports, so imported trades are marked needs tags on the Trades tab until you fill those in.</p></span></div>';
+    '<span class="info" tabindex="0" aria-label="About importing trades"><span class="info-i" aria-hidden="true">i</span><p class="info-tip" role="tooltip" data-info="1">This button reads exports from TradingView, NinjaTrader, Tradovate and Rithmic, and works out which one it is by itself. It also reads a trades CSV downloaded from Setup &amp; data, Backup &amp; data. Trades you already imported from a platform are skipped, so you can repeat it any time.<br><br><b>Where to get the file:</b><br><b>TradingView:</b> Paper Trading (or your broker) panel, Order History tab, turn on every column, then download Order history.<br><b>NinjaTrader:</b> Trade Performance, Trades tab, right-click and export to CSV. The Executions tab works too, and so does the Orders grid (right-click, Export): each row goes to the account in its Account display name column, and the target comes from the limit order left working during the trade.<br><b>Tradovate:</b> Reports, Performance or Orders, then download the CSV.<br><b>Rithmic (R|Trader Pro):</b> Order History, export the completed orders to CSV.<br><br>Filled orders on the same contract are matched into trades from the first fill until you are flat again, and scaling in or out is averaged. Stop price, setup and mistake are not in these exports, so imported trades are marked needs tags on the Trades tab until you fill those in.</p></span></div>';
 }szApply();
 
 /* ---------- info icons: explanatory text lives behind a small i ---------- */
@@ -6061,10 +6064,10 @@ document.addEventListener('change',function(e){var D=ui.lb&&ui.lb.draw;if(D&&e.t
 document.addEventListener('keydown',function(e){var D=ui.lb&&ui.lb.draw;if(!D)return;e.stopImmediatePropagation();if(e.key==='Escape'){ui.lb.draw=null;lbRender()}},true);
 
 /* ---------- one importer for TradingView, NinjaTrader, Tradovate and Rithmic files ---------- */
-var FILL_COLS={side:['side','b/s','buy/sell','action'],qty:['filled qty','filledqty','qty filled','filled quantity','fill qty','quantity','qty'],
-  price:['avg fill price','avgprice','avg price','average fill price','avg. fill price','fill price','price'],sym:['symbol','contract','instrument','ticker','product'],
-  time:['fill time','closing time','update time','time','timestamp','create time','placing time','date'],status:['status'],id:['order id','orderid','order number','execution id','id'],comm:['commission','commissions','fee','fees'],
-  acc:['account','account name','account id','account number','acct']};
+var FILL_COLS={side:['side','b/s','buy/sell','action'],qty:['filled qty','filledqty','qty filled','filled quantity','fill qty','filled','quantity','qty'],
+  price:['avg fill price','avgprice','avg price','average fill price','avg. fill price','avg. price','fill price','price'],sym:['symbol','contract','instrument','ticker','product'],
+  time:['fill time','closing time','update time','time','timestamp','create time','placing time','date'],status:['status','state'],id:['order id','orderid','order number','execution id','id'],comm:['commission','commissions','fee','fees'],
+  acc:['account','account name','account id','account number','acct','account display name']};
 function hcol(h,names){for(var i=0;i<names.length;i++){var k=h.indexOf(names[i]);if(k>=0)return k}return -1}
 function p2(n){return String(n).padStart(2,'0')}
 /* every platform writes contracts its own way: CME_MINI:ES1!, ES 12-26, ESZ6, ESZ2026 */
@@ -6125,11 +6128,15 @@ function importFills(rows,h,name){
   var c={};Object.keys(FILL_COLS).forEach(function(k){c[k]=hcol(h,FILL_COLS[k])});
   if(c.sym<0||c.side<0||c.qty<0||c.price<0)return {ok:0,bad:0,err:'This '+name+' file is missing a symbol, side, quantity or fill price column. Export it with all columns turned on.'};
   /* order details used to find each trade's bracket: the order type, its limit and stop prices, and when it was placed */
-  var oc={type:hcol(h,['type','order type']),lim:hcol(h,['limit price','limit']),stp:hcol(h,['stop price']),tp:hcol(h,['take profit']),sl:hcol(h,['stop loss']),placed:hcol(h,['placing time','placed time','create time','submit time'])};
+  var oc={type:hcol(h,['type','order type']),lim:hcol(h,['limit price','limit']),stp:hcol(h,['stop price','stop']),tp:hcol(h,['take profit']),sl:hcol(h,['stop loss']),placed:hcol(h,['placing time','placed time','create time','submit time'])};
+  /* NinjaTrader's Orders grid shows one time per order (not when it was placed), so its bracket is the exit-side orders left working during the trade */
+  var loose=name==='NinjaTrader'&&oc.placed<0,partCol=c.qty>=0&&h[c.qty]==='filled';
   var fills=[],orders=[],bad=0,oldIds={},accs={};
   rows.slice(1).forEach(function(r){
     var sd=String(r[c.side]||'').trim().toLowerCase(),dir=/^b/.test(sd)?1:/^s/.test(sd)?-1:0,sym=normSym(r[c.sym]),dt=parseDT(c.time<0?'':r[c.time]);
     var st=c.status>=0?String(r[c.status]||'').trim().toLowerCase():'fill',filled=st.indexOf('fill')===0||st.indexOf('execut')===0||st.indexOf('complet')===0;
+    /* a NinjaTrader order cancelled after part of it filled still says Cancelled, with the filled part in its Filled column */
+    if(!filled&&partCol&&tvNum(r[c.qty])>0)filled=true;
     /* every order, filled or cancelled, is kept for the bracket search; only filled ones make trades */
     if(oc.type>=0&&sym&&dir){var pl=oc.placed>=0?parseDT(r[oc.placed]):null,num=function(i){var v=i>=0?tvNum(r[i]):NaN;return v>0?v:null};
       orders.push({sym:sym,dir:dir,type:String(r[oc.type]||'').trim().toLowerCase(),lim:num(oc.lim),stp:num(oc.stp),tp:num(oc.tp),sl:num(oc.sl),placed:pl?pl.ts:null,done:dt?dt.ts:null,filled:filled,id:c.id>=0?String(r[c.id]||'').trim():'',acc:c.acc>=0?String(r[c.acc]||'').trim():''})}
@@ -6161,7 +6168,7 @@ function importFills(rows,h,name){
       var entry=+(k.ec/k.eq).toFixed(6),exit=+(k.xc/k.xq).toFixed(6);
       var t=newImported({date:k.date,time:k.time||'',xtime:k.xtime||'',xdate:k.xdate&&k.xdate>k.date?k.xdate:'',ticker:impTicker(sym),side:k.dir>0?'Long':'Short',qty:k.eq,entry:entry,exit:exit,mult:mult,oids:k.ids},name,where);
       impContractNote(t,sym);if(k.hasComm)t.fee=+k.comm.toFixed(2);
-      if(oc.type>=0){var br=bracketOf(k,sym,entry,orders);if(br.stop!=null)t.stop=br.stop;if(br.target!=null)t.target=br.target;if(br.how)t.exitHow=br.how;
+      if(oc.type>=0){var br=bracketOf(k,sym,entry,orders,loose);if(br.stop!=null)t.stop=br.stop;if(br.target!=null)t.target=br.target;if(br.how)t.exitHow=br.how;
         if(br.stop!=null||br.target!=null){bracketed++;t.notes+=' · stop and target from the bracket orders'}}
       out.push(t)};
     list.forEach(function(f){var rem=f.qty;
@@ -6180,13 +6187,13 @@ function importFills(rows,h,name){
    put the bracket on the entry order itself (its Take Profit and Stop Loss columns). Also how the trade ended: target, stop or by hand */
 /* how an imported trade ended, from the type of the order that closed it */
 var EXIT_HOW={target:'hit target',stop:'stopped out',manual:'closed by hand'};
-function bracketOf(k,sym,entry,orders){
+function bracketOf(k,sym,entry,orders,loose){
   var ex=-k.dir,lo=k.start-2000,hi=(k.end||k.start)+5000,stop=null,target=null,win=function(px){return k.dir>0?px>entry:px<entry};
   orders.forEach(function(o){if(o.sym!==sym||o.dir!==ex||(o.acc||'')!==(k.acc||''))return;var at=o.placed!=null?o.placed:o.done;if(at==null||at<lo||at>hi)return;
     if(/stop/.test(o.type)){var sp=o.stp||o.sl||o.lim;if(sp&&stop==null&&!win(sp))stop=sp;return}
     var px=o.lim||o.tp;if(!px||target!=null||!win(px))return;
     var withEntry=o.placed!=null&&Math.abs(o.placed-k.placed)<=3000,closed=k.exits.indexOf(o)>=0;
-    if(/take profit/.test(o.type)||(/limit/.test(o.type)&&(withEntry||closed)))target=px});
+    if(/take profit/.test(o.type)||(/limit/.test(o.type)&&(withEntry||closed||(loose&&!o.filled))))target=px});
   var f=k.first;if(f){if(target==null&&f.tp&&win(f.tp))target=f.tp;if(stop==null&&f.sl&&!win(f.sl))stop=f.sl}
   /* a limit that closed the trade at a loss was a manual exit, not a target */
   var last=k.exits[k.exits.length-1],ty=last?last.type:'',how='',xp=k.xq?k.xc/k.xq:entry;
@@ -7976,6 +7983,21 @@ Version 85  (Oct 27, 2026)  (Update history: 2.25)
 - Archived accounts can still be picked in the Dashboard's account
   filter, and their payouts still count in Business
 - TradeVault desktop app updated to 2.25.0
+Version 86  (Oct 27, 2026)  (Update history: 2.251)
+--------------------------
+- Import reads NinjaTrader's Orders grid export (right-click the Orders
+  grid, Export). Each row goes to the account named in its Account
+  display name column, so a copier group imports the leader's trades,
+  and a group with no leader gives each account its own trades
+- An imported NinjaTrader trade gets its target from the limit order
+  left working during the trade, and its stop from the stop order
+- An order cancelled after part of it filled still counts the part
+  that filled
+- Pick the account a trade was taken on in any group: the Account box on
+  Add trade now also shows in a group with a leader. It starts on Every
+  account in the group (copied to the followers); pick one account for a
+  trade only that account took, and the Trades table shows its name
+- TradeVault desktop app updated to 2.25.1
 
 </script>
 </body></html>
