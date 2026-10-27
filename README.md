@@ -6,6 +6,7 @@ TradeVault keeps your whole trading life in one place: trades, premarket plans, 
 
 - **Windows app:** [download the latest version](https://github.com/motherofstacy/TradeVault/releases/latest) (`TradeVault_…_x64-setup.exe`)
 - **iPhone:** open [motherofstacy.github.io/TradeVault](https://motherofstacy.github.io/TradeVault/) in Safari, then tap Share, then Add to Home Screen
+- **New here?** Read [Getting started](Getting-started.md), a walkthrough of your first day
 - **Moving data between them:** see [Phone and PC: backups, merging and updates](Phone-and-PC.md)
 
 ---
@@ -26,7 +27,8 @@ TradeVault keeps your whole trading life in one place: trades, premarket plans, 
 
 ### Run your accounts like a business
 - Multiple accounts and account groups, with a leader and followers for copy trading
-- **Prop firm tracking:** evaluation and funded accounts, drawdown limits (fixed or trailing), profit targets, minimum days, consistency rules, payouts and certificates
+- **Prop firm tracking:** evaluation and funded accounts, drawdown limits (fixed, trailing, or trailing intraday), daily loss limits, max contracts, profit targets, minimum days, consistency rules, and payouts with your split, safety net and winning days, plus payout certificates
+- Imports go to the right account when your account names match your platform's
 - **Odds of passing:** a simulation of your chances of passing an evaluation at different sizes
 
 ### Build the habits that make a trader
