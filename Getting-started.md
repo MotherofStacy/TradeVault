@@ -112,7 +112,7 @@ There are three ways to get trades in.
 
 The extra detail is what makes the reports useful, so fill in what you can.
 
-**Import from your platform.** Export your fills or trades from **TradingView, NinjaTrader, Tradovate or Rithmic**. Then press the import button on Add trade, or drop the file anywhere on the window. Trades you already have are skipped, so importing the same file twice is safe.
+**Import from your platform.** Export your fills or trades from **TradingView, NinjaTrader, Tradovate or Rithmic**. Then press the import button on Add trade, or drop the file anywhere on the window. Trades you already have are skipped, so importing the same file twice is safe. From NinjaTrader you can import the Orders grid, the Trades tab, or both: the second one fills in the trades the first one made (stop and target from the Orders grid; MAE, MFE and commission from the Trades tab) instead of adding copies.
 
 In the Windows app, two extras help:
 

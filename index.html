@@ -3040,7 +3040,7 @@ function runImport(text,m){
 /* the import button sits beside the New trade title; its help is behind the i next to it */
 function tvHeadHTML(){
   return '<div class="add-import"><label class="btn primary" style="margin:0;cursor:pointer">Choose TradingView file<input id="tvFile" type="file" accept=".csv,text/csv" hidden></label>'+
-    '<span class="info" tabindex="0" aria-label="About importing trades"><span class="info-i" aria-hidden="true">i</span><p class="info-tip" role="tooltip" data-info="1">This button reads exports from TradingView, NinjaTrader, Tradovate and Rithmic, and works out which one it is by itself. It also reads a trades CSV downloaded from Setup &amp; data, Backup &amp; data. Trades you already imported from a platform are skipped, so you can repeat it any time.<br><br><b>Where to get the file:</b><br><b>TradingView:</b> Paper Trading (or your broker) panel, Order History tab, turn on every column, then download Order history.<br><b>NinjaTrader:</b> Trade Performance, Trades tab, right-click and export to CSV. The Executions tab works too, and so does the Orders grid (right-click, Export): each row goes to the account in its Account display name column, and the target comes from the limit order left working during the trade.<br><b>Tradovate:</b> Reports, Performance or Orders, then download the CSV.<br><b>Rithmic (R|Trader Pro):</b> Order History, export the completed orders to CSV.<br><br>Filled orders on the same contract are matched into trades from the first fill until you are flat again, and scaling in or out is averaged. Stop price, setup and mistake are not in these exports, so imported trades are marked needs tags on the Trades tab until you fill those in.</p></span></div>';
+    '<span class="info" tabindex="0" aria-label="About importing trades"><span class="info-i" aria-hidden="true">i</span><p class="info-tip" role="tooltip" data-info="1">This button reads exports from TradingView, NinjaTrader, Tradovate and Rithmic, and works out which one it is by itself. It also reads a trades CSV downloaded from Setup &amp; data, Backup &amp; data. Trades you already imported from a platform are skipped, so you can repeat it any time.<br><br><b>Where to get the file:</b><br><b>TradingView:</b> Paper Trading (or your broker) panel, Order History tab, turn on every column, then download Order history.<br><b>NinjaTrader:</b> Trade Performance, Trades tab, right-click and export to CSV. The Executions tab works too, and so does the Orders grid (right-click, Export): each row goes to the account in its Account display name column, and the target comes from the limit order left working during the trade. Import either one, both, or neither: when you import both, in any order, the second one fills in the trades the first one made (stop, target and how it ended from the Orders grid; MAE, MFE and commission from the Trades tab) instead of adding copies, and never changes anything already there.<br><b>Tradovate:</b> Reports, Performance or Orders, then download the CSV.<br><b>Rithmic (R|Trader Pro):</b> Order History, export the completed orders to CSV.<br><br>Filled orders on the same contract are matched into trades from the first fill until you are flat again, and scaling in or out is averaged. Stop price, setup and mistake are not in these exports, so imported trades are marked needs tags on the Trades tab until you fill those in.</p></span></div>';
 }szApply();
 
 /* ---------- info icons: explanatory text lives behind a small i ---------- */
@@ -5061,6 +5061,8 @@ document.addEventListener('submit',function(e){
     /* moving a trade to another group (or account) sizes it for there; otherwise it keeps the size it was logged at */
     if(t.grp===undefined)t.grp=keep.grp;var gch=tradeGrp(t)!==tradeGrp(keep)||(t.acct||'')!==(keep.acct||'');if(t.grp===undefined)delete t.grp;
     var nt=Object.assign({},t,{id:keep.id,ex:keep.ex,lm:keep.lm});if(!t.acct)delete nt.acct;
+    /* an imported trade keeps what ties it to its file, so importing the file again still finds it */
+    ['oids','src','srcName','exitHow','ets','xts','nt'].forEach(function(k){if(keep[k]!==undefined)nt[k]=keep[k]});
     if(gch){placeTrade(nt,tradeGrp(t),t.acct);if(t.grp===undefined&&!multiGrp())delete nt.grp}
     state.trades[i]=nt;ui.editId=null;var rw=ruleWarn(nt);toast('Trade updated'+rw,rw?6000:0)}
   else{if(t.notes===undefined)t.notes='';t.id=ui.draftId||uid();ui.draftId=null;placeTrade(t,t.grp&&grpById(t.grp)?t.grp:curGrp(),t.acct);if(!t.acct)delete t.acct;state.settings.lastGrp=t.grp;if(t.acct)state.settings.lastAcct=t.acct;state.trades.push(t);
@@ -6123,6 +6125,28 @@ function impSkipNotes(copy,unk){var u=Object.keys(unk);
 function newImported(o,name,where){var fr=feeRate(o.ticker);var t=Object.assign({id:uid(),setup:'',stop:null,plan:'Yes',mistake:'',notes:'Imported from '+name,src:'tv',srcName:name},o);
   if(where)placeTrade(t,where.grp,where.acct||null);else placeTrade(t,impGrp(),impAcct());
   if(t.fee==null&&fr>0)t.fee=+(fr*t.qty).toFixed(2);return t}
+/* ---- NinjaTrader's two kinds of file fill each other in: fills (the Orders grid or Executions) know the stop, target and how the trade
+   ended; the Trades tab knows MAE, MFE and commission. Importing the second kind finds the trades the first one made (same group and account,
+   contract and side, entered and closed within a few seconds) and adds only what they are missing; nothing already there is changed ---- */
+/* when a trade was entered and closed: to the second for imports since 2.26, else from its minutes */
+function ntSpan(t){if(t.ets>0)return {e:t.ets,x:t.xts>0?t.xts:t.ets,exact:true};if(!t.time)return null;
+  var a=parseDT(calDate(t)+' '+t.time),b=t.xtime?parseDT((t.xdate||calDate(t))+' '+t.xtime):null;return a?{e:a.ts,x:b?b.ts:a.ts,exact:false}:null}
+/* whether a trade already has that kind of file in it (older imports tell by their ids: Trades tab ids have a | in them) */
+function ntHas(t,kind){if(t.nt)return !!t.nt[kind];return (t.oids||[]).some(function(i){return /^ninjatrader:/.test(i)&&(kind==='trips')===(i.indexOf('|')>=0)})}
+function ntMatch(o,where,kind){var g=where?where.grp:impGrp(),ac=where?where.acct||'':null;
+  return state.trades.filter(function(t){
+    if(t.srcName!=='NinjaTrader'||ntHas(t,kind)||t.ticker!==o.ticker||t.side!==o.side||tradeGrp(t)!==g||(ac!==null&&(t.acct||'')!==ac))return false;
+    /* one may hold the other: NinjaTrader's Trades tab splits a position scaled into in parts into a row per part */
+    var s=ntSpan(t);if(!s)return false;var sl=s.exact?3000:61000,inside=function(A,B){return B.e>=A.e-sl&&B.x<=A.x+sl};
+    if(!inside(s,o)&&!inside(o,s))return false;
+    /* older imports only know the minute, so their prices must match too */
+    return s.exact||(Math.abs(t.entry-o.entry)<1e-6&&Math.abs(t.exit-o.exit)<1e-6)})}
+function ntFill(t,f){if(!t.nt){var had={};if(ntHas(t,'fills'))had.fills=1;if(ntHas(t,'trips'))had.trips=1;t.nt=had}t.nt[f.kind]=1;
+  t.oids=t.oids||[];f.ids.forEach(function(i){if(t.oids.indexOf(i)<0)t.oids.push(i)});
+  if(t.stop==null&&f.stop!=null)t.stop=f.stop;if(!(t.target>0)&&f.target!=null)t.target=f.target;if(!t.exitHow&&f.how)t.exitHow=f.how;
+  if(!(t.mae>0)&&f.mae>0)t.mae=f.mae;if(!(t.mfe>0)&&f.mfe>0)t.mfe=f.mfe;if(t.fee==null&&f.fee!=null)t.fee=f.fee;
+  if(!(t.ets>0)&&f.e)t.ets=f.e;if(!(t.xts>0)&&f.x)t.xts=f.x}
+function ntFillNote(n){return n?n+(n===1?' trade':' trades')+' already in your journal filled in with details from this file.':''}
 /* filled orders, matched into trades from the first fill until you are flat again */
 function importFills(rows,h,name){
   var c={};Object.keys(FILL_COLS).forEach(function(k){c[k]=hcol(h,FILL_COLS[k])});
@@ -6158,15 +6182,20 @@ function importFills(rows,h,name){
   var seen={};state.trades.forEach(function(t){(t.oids||[]).forEach(function(i){seen[i]=1})});
   /* each account's fills are matched on their own, so copies on several accounts never add up to one bigger trade */
   var bySym={};fills.forEach(function(f){var k=f.acc+'\u0001'+f.sym;(bySym[k]=bySym[k]||[]).push(f)});
-  var out=[],open=0,dup=0,unk={},bracketed=0,many=Object.keys(accs).length>1,skCopy=0,skUnk={};
+  var out=[],open=0,dup=0,unk={},bracketed=0,many=Object.keys(accs).length>1,skCopy=0,skUnk={},filled=0;
   Object.keys(bySym).forEach(function(key){
     var list=bySym[key].sort(function(a,b){return a.ts-b.ts||a.n-b.n}),sym=list[0].sym,acc=list[0].acc,where=impWhere(acc,many),pos=0,cur=null;
     var finish=function(){var k=cur;cur=null;
       if(k.ids.every(function(i){return seen[i]||seen[oldIds[i]]})){dup++;return}
       if(where&&where.skip){if(where.skip==='copy')skCopy++;else skUnk[acc]=(skUnk[acc]||0)+1;return}
       var mult=pointValue(sym);if(!mult){unk[sym]=1;return}
-      var entry=+(k.ec/k.eq).toFixed(6),exit=+(k.xc/k.xq).toFixed(6);
-      var t=newImported({date:k.date,time:k.time||'',xtime:k.xtime||'',xdate:k.xdate&&k.xdate>k.date?k.xdate:'',ticker:impTicker(sym),side:k.dir>0?'Long':'Short',qty:k.eq,entry:entry,exit:exit,mult:mult,oids:k.ids},name,where);
+      var entry=+(k.ec/k.eq).toFixed(6),exit=+(k.xc/k.xq).toFixed(6),side=k.dir>0?'Long':'Short',xt=k.end||k.start;
+      /* a trade already brought in from NinjaTrader's Trades tab gets this file's stop, target and how it ended, instead of a copy */
+      if(name==='NinjaTrader'){var hit=ntMatch({ticker:impTicker(sym),side:side,e:k.start,x:xt,qty:k.eq,entry:entry,exit:exit},where,'fills');
+        if(hit.length){var b0=oc.type>=0?bracketOf(k,sym,entry,orders,loose):{};
+          hit.forEach(function(t){ntFill(t,{kind:'fills',ids:k.ids,stop:b0.stop,target:b0.target,how:b0.how,fee:k.hasComm&&hit.length===1?+k.comm.toFixed(2):null,e:k.start,x:xt})});filled++;return}}
+      var t=newImported({date:k.date,time:k.time||'',xtime:k.xtime||'',xdate:k.xdate&&k.xdate>k.date?k.xdate:'',ticker:impTicker(sym),side:side,qty:k.eq,entry:entry,exit:exit,mult:mult,oids:k.ids},name,where);
+      if(name==='NinjaTrader'){t.ets=k.start;t.xts=xt;t.nt={fills:1}}
       impContractNote(t,sym);if(k.hasComm)t.fee=+k.comm.toFixed(2);
       if(oc.type>=0){var br=bracketOf(k,sym,entry,orders,loose);if(br.stop!=null)t.stop=br.stop;if(br.target!=null)t.target=br.target;if(br.how)t.exitHow=br.how;
         if(br.stop!=null||br.target!=null){bracketed++;t.notes+=' · stop and target from the bracket orders'}}
@@ -6181,7 +6210,7 @@ function importFills(rows,h,name){
     if(cur&&Math.abs(pos)>1e-9)open++;
   });
   var uk=Object.keys(unk);
-  return importDone(out,name,impSkipNotes(skCopy,skUnk).concat([dup?dup+' already in your journal, skipped.':'',open?open+' still open, not imported yet.':'',bracketed?bracketed+(bracketed===1?' trade got its':' trades got their')+' stop or target from your bracket orders.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':'']))}
+  return importDone(out,name,[ntFillNote(filled)].concat(impSkipNotes(skCopy,skUnk),[dup?dup+' already in your journal, skipped.':'',open?open+' still open, not imported yet.':'',bracketed?bracketed+(bracketed===1?' trade got its':' trades got their')+' stop or target from your bracket orders.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':'']))}
 /* a trade's bracket: the first stop order on the exit side (below a long's entry, above a short's), and a take-profit, or a limit
    placed with the entry (within 3 seconds, as brackets are), or the limit that closed the trade, on the winning side. Tradovate can also
    put the bracket on the entry order itself (its Take Profit and Stop Loss columns). Also how the trade ended: target, stop or by hand */
@@ -6201,7 +6230,7 @@ function bracketOf(k,sym,entry,orders,loose){
   return {stop:stop,target:target,how:how}}/* files that already list finished trades: NinjaTrader trade lists and Tradovate performance reports */
 function importTrips(rows,h,name){
   var seen={};state.trades.forEach(function(t){(t.oids||[]).forEach(function(i){seen[i]=1})});
-  var out=[],dup=0,bad=0,unk={},nt=name==='NinjaTrader',col=function(n){return hcol(h,n)};
+  var out=[],dup=0,bad=0,unk={},merged={},nt=name==='NinjaTrader',col=function(n){return hcol(h,n)};
   var cS=col(['instrument','symbol','contract']),cQ=col(['qty','quantity']),cId=col(['trade number','trade #','id']);
   var cPos=col(['market pos.','market pos']),cEP=col(['entry price']),cXP=col(['exit price']),cET=col(['entry time']),cXT=col(['exit time']),cC=col(['commission']),cMae=col(['mae']),cMfe=col(['mfe']);
   var cBP=col(['buyprice','buy price']),cSP=col(['sellprice','sell price']),cBT=col(['boughttimestamp','bought timestamp']),cST=col(['soldtimestamp','sold timestamp']),cBF=col(['buyfillid','buy fill id']),cSF=col(['sellfillid','sell fill id']);
@@ -6217,14 +6246,23 @@ function importTrips(rows,h,name){
     if(seen[key]||seen[key0]){dup++;return}
     var where=impWhere(acc,many);if(where&&where.skip){if(where.skip==='copy')skCopy++;else skUnk[acc]=(skUnk[acc]||0)+1;return}
     var mult=pointValue(sym);if(!mult){unk[sym]=1;return}
-    var t=newImported({date:a.date,time:a.time,xtime:b?b.time:'',xdate:b&&b.date>a.date?b.date:'',ticker:impTicker(sym),side:side,qty:qty,entry:entry,exit:exit,mult:mult,oids:[key]},name,where);
-    impContractNote(t,sym);if(cC>=0&&isFinite(tvNum(r[cC])))t.fee=Math.abs(tvNum(r[cC]));
     /* NinjaTrader lists MAE and MFE in dollars; the journal keeps them in points */
-    if(cMae>=0&&isFinite(tvNum(r[cMae])))t.mae=+(Math.abs(tvNum(r[cMae]))/(mult*qty)).toFixed(4);
-    if(cMfe>=0&&isFinite(tvNum(r[cMfe])))t.mfe=+(Math.abs(tvNum(r[cMfe]))/(mult*qty)).toFixed(4);
+    var pts=function(c){return c>=0&&isFinite(tvNum(r[c]))?+(Math.abs(tvNum(r[c]))/(mult*qty)).toFixed(4):null},fee=cC>=0&&isFinite(tvNum(r[cC]))?Math.abs(tvNum(r[cC])):null;
+    var xt=b?b.ts:a.ts;
+    /* a trade already brought in from NinjaTrader's Orders grid or Executions gets this row's MAE, MFE and commission, instead of a copy.
+       A position scaled into in parts has a row per part here and one trade there, so the rows are added up first */
+    if(nt){var hit=ntMatch({ticker:impTicker(sym),side:side,e:a.ts,x:xt,qty:qty,entry:entry,exit:exit},where,'trips');
+      if(hit.length){var m=merged[hit[0].id]||(merged[hit[0].id]={t:hit[0],mae:0,mfe:0,fee:0,feeOk:true,ids:[],e:a.ts,x:xt});
+        m.mae=Math.max(m.mae,pts(cMae)||0);m.mfe=Math.max(m.mfe,pts(cMfe)||0);if(fee==null)m.feeOk=false;else m.fee+=fee;m.ids.push(key);m.e=Math.min(m.e,a.ts);m.x=Math.max(m.x,xt);return}}
+    var t=newImported({date:a.date,time:a.time,xtime:b?b.time:'',xdate:b&&b.date>a.date?b.date:'',ticker:impTicker(sym),side:side,qty:qty,entry:entry,exit:exit,mult:mult,oids:[key]},name,where);
+    if(nt){t.ets=a.ts;t.xts=xt;t.nt={trips:1}}
+    impContractNote(t,sym);if(fee!=null)t.fee=fee;
+    if(pts(cMae)!=null)t.mae=pts(cMae);if(pts(cMfe)!=null)t.mfe=pts(cMfe);
     out.push(t)});
+  var filled=Object.keys(merged).length;
+  Object.keys(merged).forEach(function(id){var m=merged[id];ntFill(m.t,{kind:'trips',ids:m.ids,mae:m.mae,mfe:m.mfe,fee:m.feeOk?+m.fee.toFixed(2):null,e:m.e,x:m.x})});
   var uk=Object.keys(unk);
-  return importDone(out,name,impSkipNotes(skCopy,skUnk).concat([dup?dup+' already in your journal, skipped.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':'']))}
+  return importDone(out,name,[ntFillNote(filled)].concat(impSkipNotes(skCopy,skUnk),[dup?dup+' already in your journal, skipped.':'',uk.length?'No point value known for '+uk.join(', ')+', skipped. Add it under Setup & data, Trading, Contracts.':'',bad?bad+' rows were unreadable.':'']))}
 
 /* ---------- keyboard shortcuts ---------- */
 /* the built-in shortcuts can be changed in Customize, Pages, and you can add your own there; arrows and Esc stay fixed.
@@ -7998,6 +8036,20 @@ Version 86  (Oct 27, 2026)  (Update history: 2.251)
   account in the group (copied to the followers); pick one account for a
   trade only that account took, and the Trades table shows its name
 - TradeVault desktop app updated to 2.25.1
+Version 87  (Oct 27, 2026)  (Update history: 2.26)
+--------------------------
+- NinjaTrader's Orders grid and Trades tab exports now fill each other
+  in. Import either one, both, or neither: when you import both, in
+  any order, the second one finds the trades the first one made and
+  adds what they are missing instead of adding copies
+- The Orders grid adds the stop, target and how the trade ended; the
+  Trades tab adds MAE, MFE and commission. Anything already on a trade,
+  like a stop you typed or your own commission rate, is never changed
+- A position you scaled into, which the Trades tab splits into a row
+  per part, fills in the one trade it belongs to
+- Editing an imported trade no longer makes the journal forget where
+  it came from, so importing the same file again still skips it
+- TradeVault desktop app updated to 2.26.0
 
 </script>
 </body></html>
