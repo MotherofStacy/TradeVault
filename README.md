@@ -40,7 +40,9 @@ TradeVault keeps your whole trading life in one place: trades, premarket plans, 
 - Reminders on the dashboard, and in the Windows app as Windows notifications
 
 ### Make it yours
-- Rename, reorder or hide any tab, and add your own text and choice boxes anywhere
+- Rename, reorder or hide any tab, and add your own boxes anywhere: text, choice, number, yes/no, rating, time or tags
+- **Arrange** any page: drag boxes anywhere, resize, rename or hide them, and save layouts to switch between
+- Plan and review **templates**, your own stat tiles, and a setup file to copy your layout to another device
 - Backgrounds (Blueprint, Chart paper with an optional moving chart, Dot grid, Topographic, Carbon fiber, your own color or picture), dark and light themes
 - Keyboard shortcuts you can change, plus your own (Back up now is Ctrl+B)
 - An optional PIN lock screen

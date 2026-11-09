@@ -11,7 +11,7 @@ A walkthrough for your first day: what to set up, how to log a trade, and where 
 4. [Log your trades](#4-log-your-trades)
 5. [A daily routine that works](#5-a-daily-routine-that-works)
 6. [Every page, in one line each](#6-every-page-in-one-line-each)
-7. [Make it yours](#7-make-it-yours)
+7. [Every setting, and what it does](#7-every-setting-and-what-it-does)
 8. [Keep your journal safe](#8-keep-your-journal-safe)
 9. [Questions people ask](#9-questions-people-ask)
 
@@ -145,19 +145,41 @@ Reminders on the Dashboard nudge you about a missing plan or review, drawdown or
 | **Goals** | Goals with milestones, due dates and progress |
 | **Settings** (gear) | Setup & data, the Dashboard layout, Customize, and the update history |
 
-The **balance card** at the top shows your balance and the drawdown room left on your tightest account. Click it to switch views. The **+** next to it adds your own text box or multiple-choice question to the page you're on.
+The **balance card** at the top shows your balance and the drawdown room left on your tightest account. Click it to switch views. The **+** next to it adds your own box to the page you're on: text, choice, number, yes/no, rating, time or tags. The grid button beside it turns on **Arrange** (on a computer or tablet): drag boxes anywhere, resize them from their edges, click a title to rename it, or hide a box with its x.
 
-## 7. Make it yours
+## 7. Every setting, and what it does
 
-Open **Settings → Customize**:
+The gear opens **Settings**. Everything in it is optional: leave it alone and the journal works out of the box. It has four parts along the top.
 
-- **Look:** a background (Blueprint, Chart paper, Dot grid, Topographic, Carbon fiber, a solid color or your own picture), separate button and box colors, and fonts
-- **Tabs:** hide pages you don't use, rename them, change their order, and choose which page the journal opens on
-- **Keyboard shortcuts:** change them or add your own
-- **Groupings:** the hold-time, R and time-of-day groups in the stats, your market sessions, and when a trading day starts (6 PM by default, when the futures session opens)
+### Setup & data
 
-**Settings → Dashboard** picks which boxes the Dashboard shows, and in what order.
+| Section | What's in it |
+|---|---|
+| **Accounts** | Each account's starting balance, start and end dates, and prop firm rules: max drawdown (fixed or trailing), daily loss limit, max contracts, profit target, minimum days, consistency rule and payout rules. Groups copy trades from a leader account to followers at their own size |
+| **Trading** | The most you risk on one trade and the position size calculator, the breakeven range, your own round-trip commission per contract, each contract's point value and tick size, and what the Add trade form starts with |
+| **Lists** | The choices you pick from: setups, mistake tags, premarket checklist, market conditions, habits, bias, state of mind, rule and goal categories, life journal prompts and execution grades |
+| **Alerts & reminders** | Tilt warning after a run of losses, daily limits with a stop banner, when your session ends, which reminders the Dashboard shows, and celebrations |
+| **Backup & data** | Save or restore a backup file, an automatic backup folder, a backup password, Check my journal, and Reset |
+| **Privacy** | An optional PIN lock, with a recovery email |
+| **TradeVault app** | (Windows app only) Your backup folder, auto import from your platform's export folder, quick log and updates |
 
+### Dashboard
+
+Tick the boxes the Dashboard shows and put them in order. **Summary numbers** picks the numbers in the row at the top. **Your own numbers** makes new ones from any slice of your trades, like your win rate when you followed your plan, or your P&L on Mondays in the last 30 days.
+
+### Customize
+
+| Section | What's in it |
+|---|---|
+| **Look** | The site title, background (Blueprint, Chart paper, Dot grid, Topographic, Carbon fiber, a solid color or your own picture), dark or light theme, colors for profit, loss, buttons and boxes, and fonts |
+| **Pages** | Hide, rename and reorder the tabs and pick the one the journal opens on, keyboard shortcuts (change them or add your own), how many trades the Trades tab shows, which Trades filters appear, the account card views, Gallery certificates, Playbook options and which Life journal features are on |
+| **Layout** | Everything you changed with Arrange, to undo any of it, and switches to turn the Arrange and + buttons off. **Templates**: more than one premarket plan, daily review or weekly review, each with its own boxes, picked per day or by weekday. **Saved layouts** to switch every page's look at once. A **setup file** that copies your setup to another device, without your trades or accounts |
+| **Stats** | How the stats group your trades (hold time, R, time of day, sleep, mood), your market sessions and plan sessions, when a trading day starts (6 PM by default, when the futures session opens), currency symbol and date style, the odds of passing test, and the rolling chart windows |
+| **Reports** | How the weekly report card grades you (grade cut-offs, points off for mistakes and loss limit days, what counts) and which sections the monthly and yearly reports show |
+
+### Update history
+
+What changed in each version. **Take the tour** on the right of this bar replays the walkthrough, which now steps through every one of these sections.
 ## 8. Keep your journal safe
 
 Your journal lives only on your own devices. Nothing is uploaded anywhere, which also means nobody else has a copy. Back it up.

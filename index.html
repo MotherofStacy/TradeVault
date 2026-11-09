@@ -230,7 +230,7 @@ tr.total td{font-weight:600;border-top:1px solid var(--line)}
 .plan-grid>.c2{grid-column:span 2}.plan-grid>.c3{grid-column:span 3}.plan-grid>.c5{grid-column:span 5}.plan-grid>.c6{grid-column:span 6}.plan-grid>.c7{grid-column:span 7}
 .plan-grid .wide{grid-column:1/-1}
 .plan-grid .chk-grid{grid-template-columns:1fr}
-@media (max-width:1000px){.plan-grid>.c2,.plan-grid>.c3{grid-column:span 4}.plan-grid>.c5,.plan-grid>.c6,.plan-grid>.c7{grid-column:1/-1}}
+@media (max-width:1000px){.plan-grid>.c2{grid-column:span 4}.plan-grid>.c3{grid-column:span 6}.plan-grid>.c5,.plan-grid>.c6,.plan-grid>.c7{grid-column:1/-1}}
 @media (max-width:560px){.plan-grid>*{grid-column:1/-1!important}}
 @media (max-width:900px){
   .shell{grid-template-columns:1fr;gap:14px;padding-top:12px}
@@ -394,7 +394,7 @@ tr.sec td{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var
 .add-import{display:flex;align-items:center;gap:8px}
 .add-wrap>*{min-width:0}
 #tradeForm .form-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));max-width:none;gap:12px 14px}
-#tradeForm .form-grid .wide,#tradeForm .form-grid .cbox{grid-column:1/-1}
+#tradeForm .form-grid .wide,#tradeForm .form-grid .cbox:is([data-btype=text],[data-btype=choice],[data-btype=tags]){grid-column:1/-1}
 #tradeForm textarea.prose.short{min-height:64px}
 #tradeForm .preview{margin-top:12px}
 #tradeForm .actions{margin-top:12px}
@@ -444,7 +444,11 @@ tr[data-trow]:hover td{background:rgba(255,255,255,.05)}
 .rv-pics{margin-top:16px}
 @media (max-width:760px){.rv-split{grid-template-columns:1fr}}
 #planForm .plan-grid{grid-auto-flow:row dense}
-.plan-sess{margin-top:12px}.plan-sess .ps-dot{color:var(--accent);font-weight:700}.btn.primary .ps-dot{color:inherit}
+.plan-sess{margin-bottom:16px}.plan-sess .ps-dot{color:var(--accent);font-weight:700}.btn.primary .ps-dot{color:inherit}
+/* the move handle sits at the end of each box's label row, so every label lines up with its box */
+#planForm .cbox-head .cbox-drag{order:3}
+.plan-daysum .pds{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;min-height:38px;padding:7px 10px;background:var(--bg);border:1px dashed var(--line);border-radius:6px}
+.plan-daysum .pds>span{white-space:nowrap}.plan-daysum .cbox-head .btn:not(.cbox-drag){padding:1px 8px;font-size:11px}
 tr.sess-row>td{background:rgba(127,127,127,.08);padding-top:10px;padding-bottom:10px}tr.sess-row .btn{margin-left:6px}
 .cbox-drag{flex:none;cursor:grab;padding:1px 5px;color:var(--muted);touch-action:none;line-height:1}
 .cbox-drag svg{display:block}
@@ -915,6 +919,72 @@ body.locked .shell{visibility:hidden}
   .shell.collapsed .nav-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .shell.collapsed .nav-ico{width:20px;height:20px}
 }
+/* your own layout: boxes placed on a 12-column grid with 8px rows */
+.free{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-auto-rows:8px!important;row-gap:0!important;column-gap:16px!important;grid-auto-flow:row!important;align-items:stretch!important}
+.free>[data-bk]:not([hidden]){display:flex;flex-direction:column;min-width:0;margin:0 0 16px;width:auto!important;justify-self:stretch!important;align-self:stretch!important}
+.free>[data-bk]>*{flex:0 0 auto}
+.free>[data-bk] :is(div,form):has(>textarea:not([hidden])),.free>.dbox>.panel,.free>.dbox>.strip{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.free>.dbox>.strip{display:grid}
+.free>[data-bk]>textarea,.free>[data-bk] :is(div,form)>textarea{flex:1 1 0;min-height:56px;height:auto!important;width:100%!important;resize:none}
+.free .cbox-drag{display:none}
+.box-off{display:none!important}
+@media (max-width:760px){.free{display:flex!important;flex-direction:column;gap:14px}.free>[data-bk]:not([hidden]),.free>*{margin:0!important;grid-row:auto!important;grid-column:auto!important}
+  .free>[data-bk] textarea{flex:none;height:auto!important;min-height:90px}#arrBtn{display:none!important}}
+/* Arrange mode */
+.arr-btn svg{display:block}
+.box-tools{display:flex;gap:8px;align-items:center}
+.arr-btn.on{background:var(--accent);color:var(--accent-fg)}
+body.arranging{padding-bottom:110px}
+body.arranging .arr-on{position:relative;min-height:120px;border-radius:10px;outline:1px dashed var(--line);outline-offset:8px;
+  background-image:linear-gradient(to right,rgba(255,255,255,.035) 0 calc(100% - 16px),transparent 0);background-size:calc((100% + 16px) / 12) 100%;padding-bottom:64px}
+body.arranging .arr-on>[data-bk]{position:relative;cursor:move;border-radius:8px;outline:1px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:3px;background:color-mix(in srgb,var(--accent) 5%,transparent)}
+body.arranging .arr-on>[data-bk]:hover{outline-color:var(--accent)}
+body.arranging .arr-on .cbox-drag,body.arranging .arr-on .cbox-head .cbox-del{opacity:1;pointer-events:auto;display:inline-flex}
+body.arranging .arr-on .dbar{display:flex}
+body.arranging .arr-on .dbar .cbox-drag{display:inline-flex}
+body.arr-busy,body.arr-busy *{cursor:grabbing!important;user-select:none!important}
+.arr-drag{z-index:30;opacity:.92;box-shadow:0 14px 34px rgba(0,0,0,.45);pointer-events:none;transition:none!important}
+.arr-ghost{border:2px dashed var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,transparent);margin:0 0 16px;pointer-events:none}
+.arr-rz{position:absolute;z-index:5;display:block}
+.arr-rz::after{content:"";position:absolute;border-radius:99px;background:var(--accent);opacity:.75}
+.arr-rz.e{top:25%;bottom:25%;right:-9px;width:12px;cursor:ew-resize}.arr-rz.e::after{left:4px;top:0;bottom:0;width:4px}
+.arr-rz.s{left:25%;right:25%;bottom:-9px;height:12px;cursor:ns-resize}.arr-rz.s::after{top:4px;left:0;right:0;height:4px}
+.arr-rz.se{right:-9px;bottom:-9px;width:16px;height:16px;cursor:nwse-resize}.arr-rz.se::after{inset:4px;border-radius:3px}
+.arr-hide{position:absolute;z-index:6;top:-11px;right:-11px;width:24px;height:24px;display:grid;place-items:center;padding:0;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.arr-hide:hover{border-color:var(--loss);color:var(--loss)}
+body.arranging .lbl-edit{cursor:text;text-decoration:underline dashed;text-decoration-color:var(--muted);text-underline-offset:4px}
+body.arranging .lbl-edit:hover{text-decoration-color:var(--accent)}
+.lbl-in{font:inherit;font-weight:600;padding:2px 8px;min-width:0;flex:1;max-width:100%}
+#arrBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:80;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;width:max-content;max-width:min(1100px,calc(100vw - 32px));
+  padding:10px 14px;background:var(--surface);color:var(--fg);border:1px solid var(--accent);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px}
+#arrBar .arr-t{display:flex;flex-direction:column;gap:2px;min-width:0}#arrBar .arr-t span{color:var(--muted)}
+#arrBar .arr-hid{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#arrBar .arr-hid .tf-chip{cursor:pointer;border:0;font:inherit}
+#arrBar .arr-act{display:flex;gap:8px;align-items:center;margin-left:auto}
+#arrBar select{width:auto;max-width:180px}
+/* templates */
+.tpl-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tpl-pick{display:flex;align-items:center;gap:8px;margin:0 0 0 auto;font:400 13px var(--font-body);color:var(--muted)}
+.tpl-pick select{width:auto;min-width:150px}
+.tpl-kind{padding:12px 0;border-top:1px solid var(--line)}.tpl-kind:first-of-type{border-top:0;padding-top:4px}
+.tpl-kind h3{margin:0 0 8px;font-size:14px}
+.tpl-row,.lay-row,.tc-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:6px 0}
+.tpl-row>input[type=text],.lay-row>input[type=text]{max-width:240px}
+.tpl-days{display:flex;flex-wrap:wrap;gap:4px 10px}.tpl-days .chk{margin:0}
+.tpl-btns,.lay-btns{display:flex;gap:6px;margin-left:auto}
+.lay-h{margin:18px 0 6px;font-size:14px}
+.lay-list{border:1px solid var(--line);border-radius:8px;padding:2px 12px}
+.lay-list>.lay-row+.lay-row{border-top:1px solid var(--line)}
+.lay-row>span.muted{min-width:180px}
+.lay-none{font-size:13px;margin:0}
+.lay-new{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.lay-new input{max-width:260px}
+.tc-list{display:flex;flex-direction:column;gap:2px;margin:6px 0 4px}
+.tc-row{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.tc-row>input[type=text]{max-width:200px}.tc-row select{width:auto;max-width:220px}
+.tc-f{display:flex;gap:6px;flex-wrap:wrap}.tc-row>.btn.danger{margin-left:auto}
+/* more kinds of your own boxes */
+.seg-mini.box-kinds{flex-wrap:wrap}
+.cbox-tags{margin-top:2px}
 </style>
 
 <div class="wrap shell">
@@ -937,12 +1007,12 @@ body.locked .shell{visibility:hidden}
   <div class="content">
   <header class="top">
     <h1><span id="siteTitle">Day Trade Ledger</span><small>Futures trades, stats and reviews. Stored in this browser only.</small></h1>
-    <div class="box-tools"><button class="plus-box" id="boxPlus" type="button" aria-label="Add a text box to this tab" aria-expanded="false" aria-controls="boxPop" title="Add a text box">+</button>
+    <div class="box-tools"><button class="plus-box arr-btn" id="arrBtn" type="button" hidden aria-pressed="false" title="Arrange this page: move, resize, rename or hide its boxes" aria-label="Arrange this page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke-dasharray="2.5 2"/></svg></button><button class="plus-box" id="boxPlus" type="button" aria-label="Add a text box to this tab" aria-expanded="false" aria-controls="boxPop" title="Add a text box">+</button>
       <div class="box-pop" id="boxPop" hidden role="dialog" aria-label="Add a text box">
         <label>Kind of box</label>
-        <div class="seg-mini"><button class="btn small primary" type="button" data-boxtype="text">Text box</button><button class="btn small" type="button" data-boxtype="choice">Multiple choice</button></div>
+        <div class="seg-mini box-kinds"><button class="btn small primary" type="button" data-boxtype="text">Text</button><button class="btn small" type="button" data-boxtype="choice">Multiple choice</button><button class="btn small" type="button" data-boxtype="tags">Tags</button><button class="btn small" type="button" data-boxtype="num">Number</button><button class="btn small" type="button" data-boxtype="yn">Yes or no</button><button class="btn small" type="button" data-boxtype="rate">Rating 1 to 5</button><button class="btn small" type="button" data-boxtype="time">Time</button></div>
         <label for="boxName">Name for the new box</label><input id="boxName" type="text" maxlength="60" placeholder="For example: Market notes" autocomplete="off">
-        <div id="boxChoiceWrap" hidden style="margin-top:10px"><label for="boxOpts">Choices, one per line</label><textarea id="boxOpts" class="prose short" placeholder="Leave blank for a 1 to 5 scale, or type your own, like:&#10;Yes&#10;Partly&#10;No"></textarea></div>
+        <div id="boxChoiceWrap" hidden style="margin-top:10px"><label for="boxOpts" id="boxOptsLbl">Choices, one per line</label><textarea id="boxOpts" class="prose short" placeholder="Leave blank for a 1 to 5 scale, or type your own, like:&#10;Yes&#10;Partly&#10;No"></textarea></div>
         <p class="help" id="boxPopWhere" style="margin:8px 0 12px"></p>
         <p class="help" id="boxRestoreWrap" hidden style="margin:0 0 12px"><span id="boxRestoreTxt"></span> <button class="btn small" id="boxRestore" type="button">Bring back</button></p>
         <div class="actions" style="margin-top:0"><button class="btn primary small" id="boxAdd" type="button">Add box</button><button class="btn small" id="boxCancel" type="button">Cancel</button></div>
@@ -1704,7 +1774,7 @@ document.addEventListener('click',function(e){var id=e.target.id;
   if(id==='trAll'){ui.trShown=1e9;renderTrades()}});
 /* everything you can search a trade by: contract, side, setup, notes, tags and your own text boxes */
 function tradeText(t){
-  var x=t.x&&typeof t.x==='object'?Object.keys(t.x).map(function(k){var v=t.x[k];return typeof v==='string'?v:''}).join(' '):'';
+  var x=t.x&&typeof t.x==='object'?Object.keys(t.x).map(function(k){var v=t.x[k];return v&&typeof v.t==='string'?v.t:typeof v==='string'?v:''}).join(' '):'';
   return [t.ticker,t.side,t.setup,t.notes,mistakesOf(t).join(' '),condsOf(t).join(' '),sessionOf(t),t.egrade?'grade '+t.egrade:'',x].join(' • ').toLowerCase();
 }
 function filteredTrades(){
@@ -1714,7 +1784,7 @@ function filteredTrades(){
     if(!tfMatch(x.t,x.c))return false;
     return true});
   var k=ui.sortKey,d=ui.sortDir;
-  var val=function(x){return k==='mood'||k==='sleep'?(lifeNum(lifeOn(calDate(x.t)),k)||-1):k==='net'?x.c.net:k==='pts'?x.c.pts:k==='r'?(x.c.r==null?-Infinity:x.c.r):k==='held'?(holdMin(x.t)==null?-1:holdMin(x.t)):k==='fees'?feeOf(x.t):k==='stop'||k==='target'?(+x.t[k]||0):k==='conds'?condsOf(x.t).join(', ').toLowerCase():k==='session'?sessionOf(x.t).toLowerCase():k==='mistake'?mistakeText(x.t).toLowerCase():k==='qty'||k==='entry'||k==='exit'?x.t[k]:String(x.t[k]||'').toLowerCase()};
+  var val=function(x){return k.indexOf('x:')===0?xSortVal(x.t,k.slice(2)):k==='mood'||k==='sleep'?(lifeNum(lifeOn(calDate(x.t)),k)||-1):k==='net'?x.c.net:k==='pts'?x.c.pts:k==='r'?(x.c.r==null?-Infinity:x.c.r):k==='held'?(holdMin(x.t)==null?-1:holdMin(x.t)):k==='fees'?feeOf(x.t):k==='stop'||k==='target'?(+x.t[k]||0):k==='conds'?condsOf(x.t).join(', ').toLowerCase():k==='session'?sessionOf(x.t).toLowerCase():k==='mistake'?mistakeText(x.t).toLowerCase():k==='qty'||k==='entry'||k==='exit'?x.t[k]:String(x.t[k]||'').toLowerCase()};
   list.sort(function(a,b){var A=val(a),B=val(b);if(A<B)return -1*d;if(A>B)return 1*d;return a.t.id<b.t.id?-1:1});
   return list;
 }
@@ -1930,12 +2000,12 @@ function plannedRR(t){var d=targetDist(t);if(d==null||!(t.stop>0))return null;va
 /* ---------- reviews ---------- */
 var FLD_KEY={'r-right':'d-right','r-wrong':'d-wrong','r-focus':'d-focus','r-mood':'d-mood','r-worked':'w-worked','r-failed':'w-failed','r-patterns':'w-patterns','r-goals':'w-goals','p-levels':'p-levels','p-news':'p-news','p-scen':'p-scen','p-bias':'p-bias','p-mood':'p-mood','f-notes':'a-notes'};
 function fkey(id){if(/^lw?-/.test(id))return id;return id==='r-rating'?(ui.revTab==='daily'?'d-rating':'w-rating'):FLD_KEY[id]}
-function hid(id){var k=fkey(id);return !!(k&&state.settings.hidden&&state.settings.hidden[k])}
+function hid(id){var k=fkey(id);return !!(k&&hidMap()[k])}
 function lbl(id,label){var k=fkey(id);if(!k)return '<label for="'+id+'">'+label+'</label>';
   return '<div class="cbox-head"><label for="'+id+'">'+label+'</label><button class="btn small cbox-del" type="button" data-fld-del="'+k+'" aria-label="Remove the box '+esc(label)+'" title="Remove this box">\u00D7</button></div>'}
 function keepHid(o,prev,map){prev=prev||{};Object.keys(map).forEach(function(f){if(!document.getElementById(map[f]))o[f]=prev[f]||''})}
 function hidPrefix(){return ui.tab==='life'?(ui.lifeTab==='weekly'?'lw-':'l-'):ui.tab==='review'?(ui.revTab==='daily'?'d-':'w-'):ui.tab==='plan'?'p-':ui.tab==='add'?'a-':null}
-function hiddenHere(){var p=hidPrefix();if(!p)return [];return Object.keys(state.settings.hidden||{}).filter(function(k){return k.indexOf(p)===0&&state.settings.hidden[k]})}
+function hiddenHere(){var p=hidPrefix(),H=hidMap();if(!p)return [];return Object.keys(H).filter(function(k){return k.indexOf(p)===0&&H[k]})}
 function ratingSelect(id,label,val,low,high){
   if(hid(id))return '';
   var o='<option value="">Not rated</option>';
@@ -1998,7 +2068,7 @@ function dailyView(){
     tp+='<div class="panel empty">No trades logged for '+esc(shortDate(d))+'. You can still write a review.</div>';
   }
   var pc=planCheckHTML(d,true);h+=pc?'<div class="rev-duo rev-side">'+tp+pc+'</div>':tp;
-  h+='<form id="reviewForm" class="panel" novalidate><h2>Daily review</h2><p class="help">Write it while the session is fresh. One point per line, press Enter for a new bullet. It saves as you type. Paste (Ctrl+V or Cmd+V) or drop screenshots into the Screenshots box and they show right in the review. The + at the top right adds your own box to this template. Click into a box and drag the dotted handle next to its title to move it.</p><div class="rv-split"><div class="rev-cols rv-text">'+
+  h+='<form id="reviewForm" class="panel" novalidate><h2>Daily review</h2><p class="help">Write it while the session is fresh. One point per line, press Enter for a new bullet. It saves as you type. Paste (Ctrl+V or Cmd+V) or drop screenshots into the Screenshots box and they show right in the review. The + at the top right adds your own box to this template. Press Arrange at the top right to move, resize, rename or hide any box.</p><div class="rv-split"><div class="rev-cols rv-text">'+
     '<div class="c4">'+bulletArea('r-right','What I did right',r.right,'Setups I waited for, stops I respected, size I kept in check, times I stayed out.')+'</div>'+
     '<div class="c4">'+bulletArea('r-wrong','What I did wrong',r.wrong,'Entries I chased, rules I broke, trades taken out of boredom or frustration.')+'</div>'+
     '<div class="c4">'+bulletArea('r-focus','One thing to focus on next session',r.focus,'A single rule or habit for tomorrow.')+'</div>'+
@@ -2053,7 +2123,7 @@ function weeklyView(){
     pDaily='<div class="panel"><h2>From your daily reviews</h2><div class="grid2"><div><h2 class="sub">Did right</h2>'+list('right')+'</div><div><h2 class="sub">Did wrong</h2>'+list('wrong')+'</div></div></div>';
   }
   h+='<div class="rev-duo">'+[pDay,pSet,pMis,pDaily].filter(Boolean).join('')+'</div>';
-  h+='<form id="reviewForm" class="panel" novalidate><h2>Weekly review</h2><p class="help">Look back over the whole week. One point per line, press Enter for a new bullet. It saves as you type. The + at the top right adds your own box to this template. Click into a box and drag the dotted handle next to its title to move it.</p><div class="rv-split"><div class="rev-cols rv-text">'+
+  h+='<form id="reviewForm" class="panel" novalidate><h2>Weekly review</h2><p class="help">Look back over the whole week. One point per line, press Enter for a new bullet. It saves as you type. The + at the top right adds your own box to this template. Press Arrange at the top right to move, resize, rename or hide any box.</p><div class="rv-split"><div class="rev-cols rv-text">'+
     '<div class="c6">'+bulletArea('r-worked','What worked this week',r.worked,'Setups, habits and decisions worth repeating.')+'</div>'+
     '<div class="c6">'+bulletArea('r-failed','What did not work',r.failed,'Recurring mistakes, rule breaks, setups that lost money.')+'</div>'+
     '<div class="c6">'+bulletArea('r-patterns','Patterns I noticed',r.patterns,'Time of day, contracts, size, emotions, days of the week.')+'</div>'+
@@ -2274,8 +2344,7 @@ function renderPlan(){
   var h='<div class="panel"><div class="rev-nav"><button class="btn small" type="button" data-pstep="-1" aria-label="Previous day">\u2190</button>'+
     '<input id="p-date" type="date" value="'+d+'" aria-label="Plan date"><button class="btn small" type="button" data-pstep="1" aria-label="Next day">\u2192</button>'+
     '<button class="btn small" type="button" data-ptoday>Today</button><b>'+esc(shortDate(d))+span+'</b>'+
-    (canCopy?'<button class="btn small" type="button" data-pcopy>Start from my last plan</button>':'')+'</div>'+
-    '<div class="seg plan-sess" role="tablist" aria-label="Plan session">'+stabs+'</div></div>';
+    (canCopy?'<button class="btn small" type="button" data-pcopy>Start from my last plan</button>':'')+'</div></div>';
   if(pr&&(pr.focus||pr.wrong)&&!off('review')){
     h+='<div class="panel"><h2 class="sub">From your review on '+esc(shortDate(prev))+'</h2>'+
       bq('Focus',pr.focus)+bq('Watch for',pr.wrong)+'</div>';
@@ -2283,16 +2352,20 @@ function renderPlan(){
   var sel=function(id,label,opts,val,blank){if(hid(id))return '';return '<div>'+lbl(id,label)+'<select id="'+id+'"><option value="">'+blank+'</option>'+
     opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>'}).join('')+'</select></div>'};
   var checks=p.checks||{},sFrom=sn?planSessCfg().filter(function(s){return s[0]===sn})[0][1]:0;
-  h+='<form id="planForm" class="panel" novalidate><h2>'+(sn?esc(sn)+' plan':'Premarket plan')+'</h2><p class="help">'+
+  /* a session plan has the same rows as Whole day: where Whole day has its limits, a session shows them, and its if/then takes the full row */
+  var day=function(){var it=[];if(P.bias)it.push(['Bias',planBiasText(P)]);if(P.maxLoss)it.push(['Max daily loss',money(+P.maxLoss)]);if(P.maxTrades)it.push(['Max trades',P.maxTrades]);if(P.size)it.push(['Max size',P.size]);
+    return '<div class="c6 plan-daysum" data-bk="p-daysum"><div class="cbox-head"><label>From Whole day</label><button class="btn small" type="button" data-psess="">'+(it.length?'Change':'Set them')+' on Whole day</button></div>'+
+      '<div class="pds">'+(it.length?it.map(function(x){return '<span><span class="muted">'+esc(x[0])+'</span> <b>'+esc(String(x[1]))+'</b></span>'}).join(''):'<span class="muted">No bias or limits set for the day yet.</span>')+'</div></div>'};
+  h+='<form id="planForm" class="panel'+(sn?' sess':'')+'" novalidate><div class="seg plan-sess" role="tablist" aria-label="Plan session">'+stabs+'</div><h2>'+(sn?esc(sn)+' plan':'Premarket plan')+'</h2><p class="help">'+
     (sn?'From '+esc(hhmm(sFrom))+'. Trades placed in this session are linked to this plan. Your loss limit, size and routine are on Whole day. ':'For the whole trading day. Each session has its own tab for its bias, levels and if/then. ')+'One point per line. Press Enter for a new bullet.</p><div class="plan-grid">'+
     '<div class="c3">'+sel('p-bias','Market bias',withCur(BIASES,p.bias),p.bias,'Not set')+'</div>'+
     '<div class="c3">'+sel('p-mood','State of mind',MOODS,p.mood,'Not noted')+'</div>'+
-    (sn?'':'<div class="c2"><label for="p-maxloss">Max daily loss, $</label><input id="p-maxloss" type="number" step="any" min="0" inputmode="decimal" value="'+esc(p.maxLoss||'')+'"></div>'+
+    (sn?day():'<div class="c2"><label for="p-maxloss">Max daily loss, $</label><input id="p-maxloss" type="number" step="any" min="0" inputmode="decimal" value="'+esc(p.maxLoss||'')+'"></div>'+
     '<div class="c2"><label for="p-maxtrades">Max trades</label><input id="p-maxtrades" type="number" step="1" min="0" inputmode="numeric" value="'+esc(p.maxTrades||'')+'"></div>'+
     '<div class="c2"><label for="p-size">Max size</label><input id="p-size" type="text" placeholder="5 MES or 1 ES" value="'+esc(p.size||'')+'"></div>')+
     '<div class="c6">'+bulletArea('p-levels','Key levels',p.levels,sn==='Asia'?'Prior day high and low, settlement, round numbers.':'Prior day high and low, overnight high and low, VWAP, round numbers.')+'</div>'+
     '<div class="c6">'+bulletArea('p-news','News and events',p.news,'Data releases and times (ET), Fed speakers, earnings that move the index.')+'</div>'+
-    '<div class="c7">'+bulletArea('p-scen','If this, then that',p.scen,'If price holds above X, I look for... If it loses Y, I stay out until...')+'</div>'+
+    '<div class="'+(sn?'wide':'c7')+'">'+bulletArea('p-scen','If this, then that',p.scen,'If price holds above X, I look for... If it loses Y, I stay out until...')+'</div>'+
     (sn?'':'<div class="c5" data-bk="p-routine"><label>Routine</label><div class="chk-grid">'+
       (state.settings.premarketChecks||[]).map(function(c,i){return '<label class="chk" for="p-chk-'+i+'"><input type="checkbox" id="p-chk-'+i+'" data-chk="'+esc(c)+'"'+(checks[c]?' checked':'')+'> '+esc(c)+'</label>'}).join('')+'</div></div>'+
     entryBoxes('plan',p.x,true,'c6'))+picsBlock(sn?sn+' charts and level screenshots':'Premarket charts and level screenshots')+'</div>'+
@@ -2741,41 +2814,47 @@ var TPL_NAMES={daily:'daily review',weekly:'weekly review',plan:'premarket plan'
 var TPL_FUTURE={daily:'every future daily review',weekly:'every future weekly review',plan:'every future premarket plan',add:'every new trade form',life:'every life journal entry',lifew:'every weekly life review'};
 var TAB_NAMES={dash:'Dashboard',cal:'Calendar',trades:'Trades',rules:'Rules',playbook:'Playbook',gallery:'Gallery',goals:'Goals',data:'Setup & data',settings:'Settings'};
 function cleanOpts(a){var seen={},out=[];(Array.isArray(a)?a:[]).forEach(function(x){x=String(x==null?'':x).trim().slice(0,60);if(x&&!seen[x]&&out.length<20){seen[x]=1;out.push(x)}});return out}
-function cleanBoxList(a){return Array.isArray(a)?a.filter(function(b){return b&&typeof b.id==='string'&&b.id}).map(function(b){var o={id:b.id,label:String(b.label==null?'':b.label).slice(0,60),text:typeof b.text==='string'?b.text:''};if(typeof b.hint==='string'&&b.hint)o.hint=b.hint.slice(0,160);if(b.type==='choice'){o.type='choice';o.options=cleanOpts(b.options)}return o}):[]}
+function cleanBoxList(a){return Array.isArray(a)?a.filter(function(b){return b&&typeof b.id==='string'&&b.id}).map(function(b){var o={id:b.id,label:String(b.label==null?'':b.label).slice(0,60),text:typeof b.text==='string'?b.text:''};if(typeof b.hint==='string'&&b.hint)o.hint=b.hint.slice(0,160);
+  if(BOX_K[b.type]){o.type=b.type;if(b.type==='choice')o.options=cleanOpts(b.options);if(b.type==='tags')o.options=cleanOpts((b.options||[]).map(function(x){return String(x).replace(/,/g,' ')}))}return o}):[]}
 function saveSoon(){clearTimeout(saveSoon.h);saveSoon.h=setTimeout(function(){saveSoon.h=null;save()},250)}
-function boxLabelFor(kind,id,stored){var f=((state.settings.tpl||{})[kind]||[]).filter(function(b){return b.id===id})[0];return f?f.label:(stored||'Text box')}
+function boxLabelFor(kind,id,stored){var L=Array.prototype.concat.apply(((state.settings.tpl||{})[kind]||[]).slice(),tplSets(kind).map(function(s){return s.boxes||[]})),f=L.filter(function(b){return b.id===id})[0];return f?f.label:(stored||'Text box')}
 function choiceOpts(list,val){return '<option value="">Not answered</option>'+list.map(function(x){return '<option'+(x===val?' selected':'')+'>'+esc(x)+'</option>'}).join('')}
 function boxHTML(b,o){
-  var key=esc(o.scope)+'|'+esc(b.id),ch=b.type==='choice',id=esc(b.id);
+  var key=esc(o.scope)+'|'+esc(b.id),ty=BOX_K[b.type]?b.type:'text',id=esc(b.id),opt=ty==='choice'||ty==='tags',lab=' aria-label="'+esc(b.label)+'"',txt=o.text==null?'':String(o.text);
   var head='<div class="cbox-head"><input class="cbox-label" type="text" maxlength="60" data-box-label="'+key+'" value="'+esc(b.label)+'" aria-label="Box title"'+
       (o.orphan?' readonly title="This box is no longer in your template. Clear its answer to drop it from this entry."':' title="Click to rename"')+'>'+
-    (ch&&!o.orphan?'<button class="btn small cbox-del" type="button" data-box-opts-toggle aria-label="Edit the choices" title="Edit the choices">✎</button>':'')+
+    (opt&&!o.orphan?'<button class="btn small cbox-del" type="button" data-box-opts-toggle aria-label="Edit the '+(ty==='tags'?'tags':'choices')+'" title="Edit the '+(ty==='tags'?'tags':'choices')+'">✎</button>':'')+
     '<button class="btn small cbox-del" type="button" data-box-del="'+key+'" aria-label="Remove this box" title="'+(o.orphan?'Remove from this entry':'Remove this box')+'">×</button></div>';
-  var body;
-  if(ch){
-    var list=(b.options||[]).slice();if(o.text&&list.indexOf(o.text)<0)list.push(o.text);
-    body='<select id="bx-'+id+'" data-box-text="'+id+'" aria-label="'+esc(b.label)+'">'+choiceOpts(list,o.text)+'</select>'+
-      (o.orphan?'':'<div class="cbox-opts" hidden><label for="bxo-'+id+'">Choices, one per line</label><textarea id="bxo-'+id+'" class="prose short" data-box-opts="'+key+'">'+esc((b.options||[]).join('\n'))+'</textarea></div>');
-  }else{
-    body='<textarea id="bx-'+id+'" class="prose'+(o.bullets?' bullets':'')+'" data-box-text="'+id+'" aria-label="'+esc(b.label)+'" placeholder="'+esc(b.hint||(o.bullets?'One point per line':'Write here'))+'">'+esc(o.bullets?toBulletText(o.text):o.text)+'</textarea>';
-  }
-  return '<div class="cbox'+(o.orphan?' orphan':'')+(o.cls?' '+o.cls:'')+'" data-box="'+id+'">'+head+body+'</div>';
+  var opts=o.orphan?'':'<div class="cbox-opts" hidden><label for="bxo-'+id+'">'+(ty==='tags'?'Tags':'Choices')+', one per line</label><textarea id="bxo-'+id+'" class="prose short" data-box-opts="'+key+'">'+esc((b.options||[]).join('\n'))+'</textarea></div>';
+  var body,list;
+  if(ty==='choice'){list=(b.options||[]).slice();if(txt&&list.indexOf(txt)<0)list.push(txt);body='<select id="bx-'+id+'" data-box-text="'+id+'"'+lab+'>'+choiceOpts(list,txt)+'</select>'+opts}
+  else if(ty==='tags'){var on=boxTags(txt);list=(b.options||[]).slice();on.forEach(function(x){if(list.indexOf(x)<0)list.push(x)});
+    body='<div class="mchips cbox-tags" data-box-text="'+id+'" role="group"'+lab+'>'+(list.length?list.map(function(x){return '<label class="chk"><input type="checkbox" value="'+esc(x)+'"'+(on.indexOf(x)>=0?' checked':'')+'> '+esc(x)+'</label>'}).join(''):'<span class="muted" style="font-size:13px">No tags yet. Add them with the ✎ button.</span>')+'</div>'+opts}
+  else if(ty==='yn')body='<select id="bx-'+id+'" data-box-text="'+id+'"'+lab+'>'+choiceOpts(['Yes','No'],txt)+'</select>';
+  else if(ty==='rate')body='<select id="bx-'+id+'" data-box-text="'+id+'"'+lab+'><option value="">Not rated</option>'+[1,2,3,4,5].map(function(n){return '<option'+(String(n)===txt?' selected':'')+'>'+n+'</option>'}).join('')+'</select>';
+  else if(ty==='num')body='<input id="bx-'+id+'" type="number" step="any" inputmode="decimal" data-box-text="'+id+'"'+lab+' placeholder="'+esc(b.hint||'A number')+'" value="'+esc(txt)+'">';
+  else if(ty==='time')body='<input id="bx-'+id+'" type="time" data-box-text="'+id+'"'+lab+' value="'+esc(txt)+'">';
+  else body='<textarea id="bx-'+id+'" class="prose'+(o.bullets?' bullets':'')+'" data-box-text="'+id+'"'+lab+' placeholder="'+esc(b.hint||(o.bullets?'One point per line':'Write here'))+'">'+esc(o.bullets?toBulletText(txt):txt)+'</textarea>';
+  /* small answers sit like the other small fields instead of taking a whole row */
+  var cl=o.cls||'';if(/^(num|yn|rate|time)$/.test(ty))cl=cl==='wide'?'':cl==='c6'?'c3':cl;
+  return '<div class="cbox'+(o.orphan?' orphan':'')+(cl?' '+cl:'')+'" data-box="'+id+'" data-btype="'+ty+'">'+head+body+'</div>';
 }
 /* boxes for one saved entry (a review, a plan or a trade): the template, plus any older box that is no longer in it */
 function entryBoxes(kind,x,bullets,cls,only){
   x=x||{};var seen={},h='',want=function(isC){return !only||(only==='choice')===isC};
-  ((state.settings.tpl||{})[kind]||[]).forEach(function(b){seen[b.id]=1;var v=x[b.id];if(!want(b.type==='choice'))return;
+  (tplBoxes(kind)||[]).forEach(function(b){seen[b.id]=1;var v=x[b.id];if(!want(!!BOX_K[b.type]))return;
     h+=boxHTML(b,{scope:'tpl:'+kind,bullets:bullets,cls:cls,text:v&&typeof v.t==='string'?v.t:''})});
   Object.keys(x).forEach(function(id){if(seen[id])return;var v=x[id];
-    if(v&&typeof v.t==='string'&&v.t&&want(v.k==='c'))h+=boxHTML({id:id,label:v.l||'Text box',type:v.k==='c'?'choice':'text',options:[v.t]},{scope:'orphan',orphan:true,bullets:bullets,cls:cls,text:v.t})});
+    if(v&&typeof v.t==='string'&&v.t&&want(!!BOX_T[v.k]))h+=boxHTML({id:id,label:v.l||'Text box',type:BOX_T[v.k]||'text',options:v.k==='g'?boxTags(v.t):[v.t]},{scope:'orphan',orphan:true,bullets:bullets,cls:cls,text:v.t})});
   return h;
 }
 function readBoxes(root){
   var out={},n=0;
   document.querySelectorAll(root+' [data-box]').forEach(function(box){
-    var ta=box.querySelector('[data-box-text]'),lb=box.querySelector('[data-box-label]');if(!ta)return;
-    var t=isBul(ta)?cleanBullets(ta.value):ta.value.trim();
-    if(t){out[box.dataset.box]={l:(lb&&lb.value.trim())||'Text box',t:t};if(ta.tagName==='SELECT')out[box.dataset.box].k='c';n++}
+    var ta=box.querySelector('[data-box-text]'),lb=box.querySelector('[data-box-label]'),ty=box.dataset.btype||'text',t;if(!ta)return;
+    if(ty==='tags'){var a=[];ta.querySelectorAll('input:checked').forEach(function(c){a.push(c.value)});t=a.join(', ')}
+    else t=isBul(ta)?cleanBullets(ta.value):String(ta.value||'').trim();
+    if(t){out[box.dataset.box]={l:(lb&&lb.value.trim())||'Text box',t:t};var k=BOX_K[ty]||(ta.tagName==='SELECT'?'c':'');if(k)out[box.dataset.box].k=k;n++}
   });
   return n?out:null;
 }
@@ -2803,7 +2882,9 @@ function boxScope(){
 }
 function boxScopeText(sc){return sc.tpl?'Saved to your '+TPL_NAMES[sc.tpl]+' template, so it appears on '+TPL_FUTURE[sc.tpl]+'.':'A note box on the '+TAB_NAMES[sc.notes]+' tab.'}
 function setBoxType(t){ui.boxType=t;document.querySelectorAll('[data-boxtype]').forEach(function(x){x.classList.toggle('primary',x.dataset.boxtype===t)});
-  var w=$('#boxChoiceWrap');if(w)w.hidden=t!=='choice';var n=$('#boxName');if(n)n.placeholder=t==='choice'?'For example: Followed my stop rule?':'For example: Market notes'}
+  var w=$('#boxChoiceWrap');if(w)w.hidden=t!=='choice'&&t!=='tags';var ol=$('#boxOptsLbl');if(ol)ol.textContent=t==='tags'?'Tags, one per line':'Choices, one per line';
+  var bo=$('#boxOpts');if(bo)bo.placeholder=t==='tags'?'For example:\nA+ setup\nNews\nCounter-trend':'Leave blank for a 1 to 5 scale, or type your own, like:\nYes\nPartly\nNo';
+  var n=$('#boxName');if(n)n.placeholder={choice:'For example: Followed my stop rule?',tags:'For example: Trade tags',num:'For example: Confidence',yn:'For example: Waited for confirmation?',rate:'For example: Focus',time:'For example: First trade at'}[t]||'For example: Market notes'}
 function boxRestoreInfo(){var ks=hiddenHere(),w=$('#boxRestoreWrap');if(!w)return;w.hidden=!ks.length;
   $('#boxRestoreTxt').textContent=ks.length+(ks.length===1?' built-in box was':' built-in boxes were')+' removed here.'}
 function boxPopOpen(){var pop=$('#boxPop');if(!pop)return;$('#boxPopWhere').textContent=boxScopeText(boxScope());$('#boxName').value='';$('#boxOpts').value='';setBoxType('text');boxRestoreInfo();pop.hidden=false;
@@ -2811,29 +2892,35 @@ function boxPopOpen(){var pop=$('#boxPop');if(!pop)return;$('#boxPopWhere').text
 function boxPopClose(){var pop=$('#boxPop');if(pop&&!pop.hidden){pop.hidden=true;var p=$('#boxPlus');if(p)p.setAttribute('aria-expanded','false')}}
 function snapshotAdd(){if($('#tradeForm'))ui.addDraft=readForm()}
 function boxAdd(){
-  var sc=boxScope(),choice=ui.boxType==='choice',name=($('#boxName').value||'').trim().slice(0,60)||(choice?'New choice box':'New box'),id=uid(),nb={id:id,label:name,text:''};
-  if(choice){var ops=cleanOpts($('#boxOpts').value.split('\n'));
+  var sc=boxScope(),ty=BOX_K[ui.boxType]?ui.boxType:'text',name=($('#boxName').value||'').trim().slice(0,60)||(ty==='text'?'New box':'New '+BOX_TYPES.filter(function(x){return x[0]===ty})[0][1].toLowerCase()+' box'),id=uid(),nb={id:id,label:name,text:''};
+  if(!sc.tpl&&ty!=='text'&&ty!=='choice'){toast('Note boxes here are text or multiple choice. The other kinds go on Add trade, the plan, reviews and the life journal.');return}
+  if(ty==='choice'){var ops=cleanOpts($('#boxOpts').value.split('\n'));
     if(!ops.length)ops=['1','2','3','4','5'];
     if(ops.length<2){toast('Type at least two choices, or leave it blank for a 1 to 5 scale');return}
     nb.type='choice';nb.options=ops}
+  else if(ty==='tags'){var tg=cleanOpts($('#boxOpts').value.replace(/,/g,' ').split('\n'));if(!tg.length){toast('Type at least one tag');return}nb.type='tags';nb.options=tg}
+  else if(ty!=='text')nb.type=ty;
   flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();
-  if(sc.tpl)state.settings.tpl[sc.tpl].push(nb);else state.notes[sc.notes].push(nb);
+  if(sc.tpl)tplBoxes(sc.tpl).push(nb);else state.notes[sc.notes].push(nb);
   save();boxPopClose();renderAll();
   setTimeout(function(){var ta=document.querySelector('[data-box="'+id+'"] [data-box-text]');if(ta){ta.scrollIntoView({block:'center',behavior:'smooth'});ta.focus({preventScroll:true})}},60);
-  toast(sc.tpl?(choice?'Choice box':'Box')+' added to your '+TPL_NAMES[sc.tpl]+' template':(choice?'Choice box':'Box')+' added to this tab');
+  toast('Box added '+(sc.tpl?'to your '+TPL_NAMES[sc.tpl]+' template':'to this tab'));
 }
 function boxRemove(scope,id){
   if(scope==='orphan'){var el=document.querySelector('[data-box="'+id+'"]');if(el){var f=el.closest('form');el.remove();if(f)f.dispatchEvent(new Event('input',{bubbles:true}))}return}
   flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();
   var p=scope.split(':');
-  if(p[0]==='tpl')state.settings.tpl[p[1]]=state.settings.tpl[p[1]].filter(function(b){return b.id!==id});
+  if(p[0]==='tpl'){var TL=tplBoxes(p[1]);for(var i=TL.length-1;i>=0;i--)if(TL[i].id===id)TL.splice(i,1)}
   else state.notes[p[1]]=state.notes[p[1]].filter(function(b){return b.id!==id});
   save();renderAll();toast(p[0]==='tpl'?'Box removed from the template':'Box removed');
 }
-function boxFind(scope,id){var p=scope.split(':'),L=p[0]==='tpl'?state.settings.tpl[p[1]]:p[0]==='notes'?state.notes[p[1]]:null;return L?L.filter(function(b){return b.id===id})[0]:null}
+function boxFind(scope,id){var p=scope.split(':'),L=p[0]==='tpl'?tplBoxes(p[1]):p[0]==='notes'?state.notes[p[1]]:null;return L?L.filter(function(b){return b.id===id})[0]:null}
 function boxOptsSet(el){var p=el.dataset.boxOpts.split('|'),b=boxFind(p[0],p[1]);if(!b)return;
-  b.options=cleanOpts(el.value.split('\n'));saveSoon();
-  var sel=el.closest('.cbox').querySelector('select'),cur=sel.value,list=b.options.slice();if(cur&&list.indexOf(cur)<0)list.push(cur);
+  var box=el.closest('.cbox');b.options=cleanOpts((b.type==='tags'?el.value.replace(/,/g,' '):el.value).split('\n'));saveSoon();
+  if(b.type==='tags'){var tw=box.querySelector('.cbox-tags'),on=[];tw.querySelectorAll('input:checked').forEach(function(c){on.push(c.value)});
+    var tl=b.options.slice();on.forEach(function(x){if(tl.indexOf(x)<0)tl.push(x)});
+    tw.innerHTML=tl.map(function(x){return '<label class="chk"><input type="checkbox" value="'+esc(x)+'"'+(on.indexOf(x)>=0?' checked':'')+'> '+esc(x)+'</label>'}).join('');return}
+  var sel=box.querySelector('select'),cur=sel.value,list=b.options.slice();if(cur&&list.indexOf(cur)<0)list.push(cur);
   sel.innerHTML=choiceOpts(list,cur)}
 function boxLabelSet(el){var p=el.dataset.boxLabel.split('|'),b=boxFind(p[0],p[1]);if(!b)return;b.label=el.value.slice(0,60);saveSoon()}
 function noteSet(el){var box=el.closest('.cbox'),lb=box&&box.querySelector('[data-box-label]');if(!lb)return;var p=lb.dataset.boxLabel.split('|'),b=boxFind(p[0],p[1]);if(!b)return;b.text=el.value;saveSoon()}
@@ -4012,11 +4099,11 @@ function sleepRing(h,size,big){if(h==null)return '';size=size||18;var c0=size/2,
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-ltf]');if(!b)return;
   var v=b.dataset.ltf.split(':');ui.tf={};ui.tf[v[0]]=v[1];ui.fSearch='';go('trades')});
 
-/* ---------- move boxes: drag the dotted handle, or focus it and use the arrow keys ---------- */
+/* ---------- move boxes in order: drag the dotted handle, or focus it and use the arrow keys. Arrange mode, further down, places them freely ---------- */
 var SORT_TARGETS=[
-  ['#reviewForm .rv-text',function(){return 'rev-'+ui.revTab+'-t'}],
-  ['#reviewForm .rv-choices',function(){return 'rev-'+ui.revTab+'-c'}],
-  ['#planForm > .plan-grid',function(){return 'plan'}],
+  ['#reviewForm .rv-text',function(){return 'rev-'+ui.revTab+'-t'+tplSuf(ui.revTab)}],
+  ['#reviewForm .rv-choices',function(){return 'rev-'+ui.revTab+'-c'+tplSuf(ui.revTab)}],
+  ['#planForm > .plan-grid',function(el){return el.parentNode.classList.contains('sess')?'plan-sess':'plan'+tplSuf('plan')}],
   ['#tradeForm .form-grid',function(){return 'add'}],
   ['#lifeForm > .rev-cols',function(){return 'life'}],
   ['#lifeWeekForm > .rev-cols',function(){return 'lifew'}],
@@ -4042,7 +4129,7 @@ function sortify(){
       if(head.querySelector('.cbox-drag'))return;
       var h=document.createElement('button');h.type='button';h.className='btn small cbox-drag';h.setAttribute('aria-label','Move this box. Drag it, or use the arrow keys.');h.title='Drag to move';h.innerHTML=GRIP;
       head.insertBefore(h,head.firstChild)});
-    var order=(state.settings.order||{})[scope];if(!order||!order.length)return;
+    var O=state.settings.order||{},order=O[scope]&&O[scope].length?O[scope]:O[scopeBase(scope)];if(!order||!order.length)return;
     var pos={};order.forEach(function(k,i){pos[k]=i});
     var sorted=items.slice().sort(function(a,b){var pa=pos[a.dataset.bk],pb=pos[b.dataset.bk];
       if(pa==null&&pb==null)return items.indexOf(a)-items.indexOf(b);if(pa==null)return 1;if(pb==null)return -1;return pa-pb});
@@ -4255,7 +4342,7 @@ var _rPB=renderPlaybook;renderPlaybook=function(){_rPB();
 
 /* ---------- notes timeline: every note written on a setup's trades, so old lessons resurface ---------- */
 function noteText(t){var parts=[];if(t.notes&&t.notes.trim())parts.push(t.notes.trim());
-  if(t.x&&typeof t.x==='object')Object.keys(t.x).forEach(function(k){var v=t.x[k];if(typeof v==='string'&&v.trim())parts.push(v.trim())});return parts.join('\n')}
+  if(t.x&&typeof t.x==='object')Object.keys(t.x).forEach(function(k){var v=t.x[k],s=v&&typeof v.t==='string'?v.t:typeof v==='string'?v:'';if(s.trim())parts.push(s.trim())});return parts.join('\n')}
 function tlPerPage(){var n=+state.settings.tlPage;return n>=3&&n<=100?Math.round(n):10}
 function notesTimelineHTML(setup){
   var f=ui.tlF||'all',q=(ui.tlQ||'').trim().toLowerCase(),all=sortedByTime().filter(function(t){return t.setup===setup&&noteText(t)}).reverse();
@@ -4862,9 +4949,9 @@ document.addEventListener('click',function(e){
   if(b.dataset.tab){ui.backTo=null;if(b.dataset.tab==='add'){ui.editId=null;ui.addDate=null}go(b.dataset.tab);return}
   if(b.id==='boxPlus'){var bp=$('#boxPop');if(bp.hidden)boxPopOpen();else boxPopClose();return}
   if(b.dataset.boxtype){setBoxType(b.dataset.boxtype);return}
-  if(b.id==='boxRestore'){var hk=hiddenHere();hk.forEach(function(k){delete state.settings.hidden[k]});flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();save();boxPopClose();renderAll();toast('Boxes brought back');return}
+  if(b.id==='boxRestore'){var hk=hiddenHere(),HM=hidMap();hk.forEach(function(k){delete HM[k]});flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();save();boxPopClose();renderAll();toast('Boxes brought back');return}
   if(b.dataset.fldDel){
-    if(b.dataset.armed){flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();state.settings.hidden[b.dataset.fldDel]=1;save();renderAll();toast('Box removed. The + button can bring it back.')}
+    if(b.dataset.armed){flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();hidMap()[b.dataset.fldDel]=1;save();renderAll();toast('Box removed. The + button can bring it back.')}
     else{b.dataset.armed='1';b.textContent='Remove?';setTimeout(function(){if(b.isConnected){b.dataset.armed='';b.textContent='\u00D7'}},3000)}
     return}
   if(b.dataset.boxOptsToggle!==undefined){var op=b.closest('.cbox').querySelector('.cbox-opts');if(op){op.hidden=!op.hidden;if(!op.hidden){var ot=op.querySelector('textarea');if(ot)ot.focus()}}return}
@@ -5337,7 +5424,7 @@ function renderDash(){
     if(col){
       var add=function(h){if(h)col.insertAdjacentHTML('beforeend',h)};
       add(dfBarHTML(sortedChrono().length));add(propPanelHTML());add(acctChartHTML());add(rollingHTML());
-      add(sideContractHTML()+condsHTML()+sessionsHTML());add(setSessHTML());add(egradeHTML());
+      add(sideContractHTML()+condsHTML()+sessionsHTML());add(setSessHTML());add(egradeHTML());add(xFieldsHTML());
       add('<div class="grid2 dash2"><div class="panel"><h2>Results in R</h2>'+rDistHTML()+'</div><div class="panel"><h2>Streaks</h2>'+mgmtHTML()+'</div></div>');
       add(holdTargetHTML());add(timeStatsHTML());add(processHTML());add(whatIfHTML());add(exitsHTML());add(bizHTML());
       if(!off('life')&&Object.keys(state.life||{}).length)add(lifeTradeHTML());
@@ -5388,7 +5475,7 @@ function renderDashSet(){
       '<select data-dswide="'+esc(k)+'" aria-label="Width of '+esc(nm)+'"><option value="half"'+(w==='half'?' selected':'')+'>Half width</option><option value="full"'+(w==='full'?' selected':'')+'>Full width</option></select>'+
       '<label class="chk"><input type="checkbox" data-dsmin="'+esc(k)+'"'+(cfg.min[k]?' checked':'')+'> Minimized</label></div>'}).join('');
   var nOn=ord.filter(function(k){return !cfg.hidden[k]}).length;
-  $('#tab-dashset').innerHTML='<div class="panel"><h2>Dashboard boxes</h2><p class="help">Tick a box to show it on the Dashboard, untick it to remove it. Nothing is deleted, and you can add it back any time. Use the arrows to change the order. On the Dashboard itself, click a box to show its drag handle and minimize button, then drag the handle to move it. Half width boxes sit side by side, full width boxes take the whole row. Minimized boxes show only their name until you expand them. Boxes can only be removed here. Your own note boxes stay at the bottom of the Dashboard.</p>'+
+  $('#tab-dashset').innerHTML='<div class="panel"><h2>Dashboard boxes</h2><p class="help">Tick a box to show it on the Dashboard, untick it to remove it. Nothing is deleted, and you can add it back any time. Use the arrows to change the order. On the Dashboard itself, press Arrange at the top right to place any box anywhere, resize it, rename it or hide it, or click a box to show its minimize button. Half width boxes sit side by side, full width boxes take the whole row, until you arrange them yourself. Minimized boxes show only their name until you expand them. Your own note boxes stay at the bottom of the Dashboard.</p>'+
     '<p class="muted" style="font-size:13px;margin:0 0 12px">'+nOn+' of '+ord.length+' boxes showing.</p>'+
     '<div class="dset-list">'+rows+'</div>'+
     '<div class="actions"><button class="btn" type="button" id="dsShowAll">Show every box</button><button class="btn" type="button" id="dsExpandAll">Expand every box</button><button class="btn danger" type="button" id="dsReset">Reset layout</button><button class="btn primary" type="button" data-tab="dash">Go to the Dashboard</button></div></div>';
@@ -5711,7 +5798,6 @@ var TILES=[['net','Net P&L',1],['leader','Leader account',1],['win','Win rate',1
   ['fees','Commissions and fees',0],['trades','Trades',0],['best','Best trade',0],['worst','Worst trade',0],['green','Green days',0],['avgday','Average day',0]];
 function tileCfg(){var st=state.settings,c=st.tiles;if(!c||typeof c!=='object'||Array.isArray(c))c=st.tiles={};if(!Array.isArray(c.order))c.order=[];
   if(!c.hidden||typeof c.hidden!=='object'){c.hidden={};TILES.forEach(function(x){if(!x[2])c.hidden[x[0]]=1})}return c}
-function tileOrder(){return placeMissing(tileCfg().order.filter(function(k){return TILES.some(function(x){return x[0]===k})}),TILES.map(function(x){return x[0]}))}
 function tileHTML(k,s,lr,days){var pf=s.pf===Infinity?'∞':s.pf.toFixed(2),dk=Object.keys(days),dn=dk.length,gd=dk.filter(function(d){return days[d]>0}).length;
   switch(k){
     case 'net':return statCell('Net P&amp;L',money(s.net,true),cls(s.net),s.n+' trades');
@@ -5733,12 +5819,6 @@ function tilesApply(col){var dl=col.querySelector('dl.strip.oneline');if(!dl)ret
   var s=stats(),lr=acctRows()[0],cfg=tileCfg(),days={};sortedChrono().forEach(function(t){days[t.date]=(days[t.date]||0)+calc(t).net});
   var h=tileOrder().filter(function(k){return !cfg.hidden[k]}).map(function(k){return tileHTML(k,s,lr,days)}).join('');
   dl.innerHTML=h||'<div><dt>Summary</dt><dd class="sub">Pick numbers in Settings, Dashboard</dd></div>'}
-function tilesPanelHTML(){var cfg=tileCfg(),ord=tileOrder();
-  return '<div class="panel" style="margin-top:20px"><h2>Summary numbers</h2><p class="help">Choose which numbers sit in the summary row at the top of the Dashboard, and their order.</p><div class="dset-list">'+
-    ord.map(function(k,i){var t=TILES.filter(function(x){return x[0]===k})[0],on=!cfg.hidden[k];
-      return '<div class="dset-row'+(on?'':' off')+'"><span style="display:flex;gap:4px"><button class="btn small" type="button" data-tilemove="'+k+'|-1" aria-label="Move '+esc(t[1])+' up"'+(i?'':' disabled')+'>↑</button><button class="btn small" type="button" data-tilemove="'+k+'|1" aria-label="Move '+esc(t[1])+' down"'+(i<ord.length-1?'':' disabled')+'>↓</button></span>'+
-        '<label class="chk dset-name"><input type="checkbox" data-tileshow="'+k+'"'+(on?' checked':'')+'> <b>'+esc(t[1])+'</b></label></div>'}).join('')+
-    '</div><div class="actions"><button class="btn" type="button" id="tilesReset">Reset summary numbers</button></div></div>'}
 var _renderDashSet29=renderDashSet;renderDashSet=function(){_renderDashSet29();$('#tab-dashset').insertAdjacentHTML('beforeend',tilesPanelHTML())};
 
 /* ---------- sidebar tab names and order ---------- */
@@ -5773,7 +5853,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   if(b.id==='colsReset'){delete st.tradeCols;save();renderTrades();toast('Columns reset');return}
   if(b.dataset.colmove){p=b.dataset.colmove.split('|');tradeColCfg().order=moveIn(tradeColOrder(),p[0],+p[1]);save();renderTrades();var f1=document.querySelector('[data-colmove="'+b.dataset.colmove+'"]');if(f1&&!f1.disabled)f1.focus({preventScroll:true});return}
   if(b.dataset.tilemove){p=b.dataset.tilemove.split('|');tileCfg().order=moveIn(tileOrder(),p[0],+p[1]);save();renderDashSet();var f2=document.querySelector('[data-tilemove="'+b.dataset.tilemove+'"]');if(f2&&!f2.disabled)f2.focus({preventScroll:true});return}
-  if(b.id==='tilesReset'){delete st.tiles;save();renderDashSet();toast('Summary numbers reset');return}
+  if(b.id==='tilesReset'){var mine=tileCustom();delete st.tiles;tileCfg().custom=mine;save();renderDashSet();toast('Summary numbers reset. Your own numbers are kept.');return}
   if(b.dataset.tabmove){p=b.dataset.tabmove.split('|');st.tabOrder=moveIn(tabOrder(),p[0],+p[1]);save();renderAll();var f3=document.querySelector('[data-tabmove="'+b.dataset.tabmove+'"]');if(f3&&!f3.disabled)f3.focus({preventScroll:true});return}
 });
 document.addEventListener('change',function(e){var el=e.target,d=el.dataset||{},st=state.settings;
@@ -5852,7 +5932,7 @@ function renderCustom(){
   '<div class="panel"><h2>Playbook</h2><div class="cust-grid">'+custField('Notes shown at a time',cIn('tlPage',tlPerPage(),'type="number" min="3" max="100" step="1" data-ct="num"'),'How many notes the notes timeline on each setup page shows before Show older notes.')+
     custField('Best conditions page',cChk('pbAuto',pbAutoOn(),'Show the automatic Best conditions page'))+
     custField('Fewest trades to count',cIn('pbMin',pbMin(),'type="number" min="2" step="1" data-ct="num"'),'A choice needs at least this many trades before Best conditions can pick it.')+'</div></div>'+
-  lifeCustHTML()+
+  lifeCustHTML()+layoutPanelsHTML()+
   '<div class="panel"><h2>Charts</h2><div class="cust-grid">'+
     custField('Rolling chart windows',cIn('rollWins',rollWins().join(', '),'type="text" data-ct="csv"'),'Up to five numbers of trades, separated by commas.')+'</div></div>'+
   '</div>';
@@ -5865,6 +5945,7 @@ function renderCustom(){
   window.scrollTo(0,y);
 }
 var CUST_SUBS=[['look','Look',['Site titles','Background','Theme','Colors and fonts']],['pages','Pages',['Tabs in the sidebar','Keyboard shortcuts','Trades tab','Trades filters','Account card','Gallery','Playbook','Life journal']],
+  ['layout','Layout',['Arrange and rename','Templates','Saved layouts','Setup file']],
   ['stats','Stats',['Groupings in the stats','Formats','Odds of passing','Charts']],['reports','Reports',['Weekly report card','Monthly report','Yearly report']]];
 /* switching sub-menus only shows and hides panels, like Setup & data */
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button[data-csub]');if(!b)return;ui.custSub=b.dataset.csub;
@@ -7053,40 +7134,449 @@ if(APP){
     if(t.name==='appTray'){appS.cfg.tray=t.value;appCfgSave().then(function(){toast(t.value==='min'?'Minimize now sends it to the tray':t.value==='close'?'The X now sends it to the tray':'Minimize and X work as usual')})}});
 }else if(picFilesDone)picFilesDone(null);
 
+/* ---------- your own layout: rename any box, place and size boxes freely, hide any box ---------- */
+/* a page laid out by hand is a 12-column grid with 8px rows: each box keeps its column, row, width and height, gaps are allowed
+   and boxes never overlap (a box dropped on another pushes it down). Phones stack the boxes in the same order */
+var LAY_ROW=8,LAY_GAP=16,LAY_N=12,LAY_KEEP={'f-date':1,'f-ticker':1,'f-side':1,'f-qty':1,'f-entry':1,'f-exit':1};
+var ICON_EYE='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2.5 12 2.5 12s3.5 7 9.5 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+function layCfg(){var st=state.settings;['layout','labels','boxOff'].forEach(function(k){if(!st[k]||typeof st[k]!=='object'||Array.isArray(st[k]))st[k]={}});return st}
+/* titles are named once per page, so every template of a page shares them */
+function lblScope(sc){return String(sc||'').replace(/@.*$/,'').replace(/-sess$/,'').replace(/^(rev-\w+)-[tc]$/,'$1')}
+function itemLabel(it){if(it.querySelector('[data-box-label]'))return null;
+  if(it.classList.contains('dbox')){var p=it.querySelector('.panel');return p?p.querySelector('h2'):null}
+  return it.querySelector('.cbox-head>label')||(it.classList.contains('pics')?it.querySelector(':scope>label'):null)}
+function lblGet(el){return (el.tagName==='H2'?h2Text(el):el.textContent).trim()}
+function lblPut(el,txt){if(el.tagName!=='H2'){el.textContent=txt;return}
+  var ns=Array.prototype.filter.call(el.childNodes,function(n){return n.nodeType===3&&n.textContent.trim()});
+  ns.forEach(function(n,i){if(i)n.textContent=''});if(ns[0])ns[0].textContent=txt+(el.children.length?' ':'');else el.insertBefore(document.createTextNode(txt),el.firstChild)}
+function lblText(v){return v&&typeof v==='object'?v.t:v}
+function layLabel(it,sc){var el=itemLabel(it);if(!el)return;if(el.dataset.def==null)el.dataset.def=lblGet(el);
+  var k=lblScope(sc)+'|'+it.dataset.bk,v=lblText(layCfg().labels[k]);el.dataset.lk=k;if(typeof v==='string'&&v.trim())lblPut(el,v)}
+function itemName(it){var el=itemLabel(it);if(el)return lblGet(el);if(it.classList.contains('dbox'))return dashName(it.dataset.bk);
+  var l=it.querySelector('label:not(.chk)');return l?l.textContent.trim():it.dataset.bk}
+function layVis(it){return !it.hidden&&!it.classList.contains('box-off')}
+function layKids(cont){return Array.prototype.filter.call(cont.children,function(c){return !c.classList.contains('arr-ghost')})}
+function layItems(cont){return layKids(cont).filter(function(c){return c.dataset.bk&&layVis(c)})}
+function layDefW(it,cont){var c=it.classList;
+  if(cont.classList.contains('form-grid'))return c.contains('wide')||c.contains('pics')?12:2;
+  if(c.contains('dbox'))return c.contains('dw-full')?12:6;
+  var m=/\bc(\d{1,2})\b/.exec(it.className);if(m)return Math.min(LAY_N,+m[1]);return c.contains('wide')||c.contains('pics')?12:6}
+function layHit(a,b){return a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h}
+/* anything that overlaps a box placed before it moves down until it fits; the box being dragged is placed first */
+function layResolve(pos,fixed){var ks=Object.keys(pos).sort(function(a,b){if(a===fixed)return -1;if(b===fixed)return 1;return pos[a].y-pos[b].y||pos[a].x-pos[b].x}),done=[];
+  ks.forEach(function(k){var p=pos[k],again=k!==fixed;while(again){again=false;for(var i=0;i<done.length;i++)if(layHit(p,done[i])){p.y=done[i].y+done[i].h;again=true}}done.push(p)});return pos}
+function layClone(pos){var o={};Object.keys(pos||{}).forEach(function(k){var p=pos[k];o[k]={x:p.x,y:p.y,w:p.w,h:p.h}});return o}
+function layBottom(pos){var b=0;Object.keys(pos).forEach(function(k){b=Math.max(b,pos[k].y+pos[k].h)});return b}
+function layFlow(cont){cont.classList.remove('free');layKids(cont).forEach(function(c){c.style.gridColumn='';c.style.gridRow='';c.style.order=''})}
+function layPaint(cont,skip){var pos=cont._pos||{},ks=Object.keys(pos).sort(function(a,b){return pos[a].y-pos[b].y||pos[a].x-pos[b].x}),b=layBottom(pos);
+  layKids(cont).forEach(function(c){var k=c.dataset.bk;
+    if(k&&pos[k]&&layVis(c)){if(c===skip)return;var p=pos[k];c.style.gridColumn=(p.x+1)+' / span '+p.w;c.style.gridRow=(p.y+1)+' / span '+p.h;c.style.order=ks.indexOf(k);return}
+    if(k||c.hidden)return;
+    /* anything that is not a box, like a note, goes full width below the boxes */
+    var n=Math.max(1,Math.ceil((c.offsetHeight+LAY_GAP)/LAY_ROW));c.style.gridColumn='1 / -1';c.style.gridRow=(b+1)+' / span '+n;c.style.order=999;b+=n})}
+/* a box is never shorter than what is in it: when its contents need more room it grows and pushes the boxes below */
+/* how tall a box's contents are, leaving out the Arrange handles that stick out of it */
+function layNeedPx(it){var top=it.getBoundingClientRect().top,b=0;
+  Array.prototype.forEach.call(it.children,function(k){if(k.hidden||k.classList.contains('arr-rz')||k.classList.contains('arr-hide'))return;var cs=getComputedStyle(k);
+    if(cs.position==='absolute'||cs.position==='fixed'||cs.display==='none')return;var r=k.getBoundingClientRect();
+    b=Math.max(b,r.top-top+(k.tagName==='TEXTAREA'?r.height:Math.max(r.height,k.scrollHeight))+(parseFloat(cs.marginBottom)||0))});return b}
+function layFit(cont,fixed){var pos=cont._pos;if(!pos||!cont.classList.contains('free')||innerWidth<=760||!cont.offsetParent)return;var grow=false;
+  layItems(cont).forEach(function(it){var p=pos[it.dataset.bk];if(!p)return;var px=layNeedPx(it),need=Math.ceil((px+LAY_GAP)/LAY_ROW);if(need>p.h&&px>it.clientHeight+1){p.h=need;grow=true}});
+  if(grow){layResolve(pos,fixed);layPaint(cont)}}
+function layRun(cont){var sc=cont.dataset.sortScope,L=layCfg().layout[sc];
+  if(!L&&!cont._draft){cont._pos=null;layFlow(cont);return}
+  if(L&&!cont._draft){var pos={},items=layItems(cont);
+    items.forEach(function(it){var p=L[it.dataset.bk];if(p&&p.w>0){var x=Math.max(0,Math.min(LAY_N-1,p.x|0));pos[it.dataset.bk]={x:x,y:Math.max(0,p.y|0),w:Math.max(1,Math.min(LAY_N-x,p.w|0)),h:Math.max(2,p.h|0)}}});
+    /* boxes added since the layout was saved line up along the bottom */
+    var y=layBottom(pos),cx=0;items.forEach(function(it){var k=it.dataset.bk;if(pos[k])return;var w=layDefW(it,cont);if(cx+w>LAY_N){cx=0;y+=6}pos[k]={x:cx,y:y,w:w,h:6};cx+=w});
+    cont._pos=layResolve(pos)}
+  cont.classList.add('free');layPaint(cont);layFit(cont)}
+/* turn the page as it looks now into a layout, so starting to arrange changes nothing on screen */
+function layCapture(cont){var cr=cont.getBoundingClientRect(),colW=(cr.width+LAY_GAP)/LAY_N,pos={};
+  layItems(cont).forEach(function(it){var r=it.getBoundingClientRect();if(!r.width&&!r.height)return;
+    var x=Math.max(0,Math.min(LAY_N-1,Math.round((r.left-cr.left)/colW))),w=Math.max(1,Math.min(LAY_N-x,Math.round((r.width+LAY_GAP)/colW)));
+    pos[it.dataset.bk]={x:x,y:Math.max(0,Math.round((r.top-cr.top)/LAY_ROW)),w:w,h:Math.max(3,Math.round((r.height+LAY_GAP)/LAY_ROW))}});
+  return layResolve(pos)}
+function layCommit(cont){var sc=cont.dataset.sortScope,st=layCfg(),n=layClone(st.layout[sc]);
+  Object.keys(cont._pos||{}).forEach(function(k){var p=cont._pos[k];n[k]={x:p.x,y:p.y,w:p.w,h:p.h}});st.layout[sc]=n;cont._draft=false;save()}
+function layApply(cont){var sc=cont.dataset.sortScope,st=layCfg();if(!sc)return;
+  layKids(cont).forEach(function(c){if(!c.dataset.bk&&c.classList.contains('pics')&&!cont.querySelector(':scope>[data-bk="pics"]'))c.dataset.bk='pics';if(!c.dataset.bk)return;
+    layLabel(c,sc);c.classList.toggle('box-off',sc!=='dash'&&!!st.boxOff[sc+'|'+c.dataset.bk])});
+  cont._pos=null;cont._draft=false;layRun(cont);if(ui.arr&&arrHere(cont))arrDecorate(cont)}
+function layScan(){var fresh=false;
+  document.querySelectorAll('main [data-sort-scope]').forEach(function(c){if(c.dataset.laid)return;c.dataset.laid='1';fresh=true;layApply(c)});
+  if(fresh&&ui.arr)arrBar();arrBtnSync();layFitSoon()}
+function layFitSoon(){if(layFitSoon.f)return;layFitSoon.f=requestAnimationFrame(function(){layFitSoon.f=0;
+  document.querySelectorAll('main .free[data-sort-scope]').forEach(function(c){if(!arrD||arrD.cont!==c)layFit(c)})})}
+new MutationObserver(layScan).observe(document.querySelector('main'),{childList:true,subtree:true});
+window.addEventListener('resize',layFitSoon);
+/* new box orders and session or template layouts start from the page's own order */
+function scopeBase(sc){return sc.replace(/@.*$/,'').replace(/-sess$/,'')}
+
+/* ---------- Arrange mode ---------- */
+var arrD=null;
+function arrHere(cont){var sec=$('#tab-'+ui.tab);return !!(sec&&sec.contains(cont))}
+function arrConts(){var sec=$('#tab-'+ui.tab);return sec?Array.prototype.slice.call(sec.querySelectorAll('[data-sort-scope]')):[]}
+function arrBtnSync(){var b=$('#arrBtn'),st=state.settings;if(b){b.hidden=st.arrOn===false||!arrConts().length;b.classList.toggle('on',!!ui.arr);b.setAttribute('aria-pressed',ui.arr?'true':'false')}
+  var p=$('#boxPlus');if(p)p.hidden=st.plusOn===false}
+function arrStart(){if(innerWidth<=760){toast('Arrange works on a bigger screen. On a phone the boxes stack in your order.');return}
+  flushReview();flushPlan();boxPopClose();ui.arr=true;document.body.classList.add('arranging');arrConts().forEach(arrDecorate);arrBar();arrBtnSync()}
+function arrDecorate(cont){cont.classList.add('arr-on');var sc=cont.dataset.sortScope;
+  if(!cont._pos){cont._pos=layCapture(cont);cont._draft=true;cont.classList.add('free');layPaint(cont);layFit(cont)}
+  layItems(cont).forEach(function(it){if(it.querySelector(':scope>.arr-rz'))return;
+    it.insertAdjacentHTML('beforeend','<span class="arr-rz e" data-rz="e"></span><span class="arr-rz s" data-rz="s"></span><span class="arr-rz se" data-rz="se"></span>'+
+      (sc==='add'&&LAY_KEEP[it.dataset.bk]?'':'<button class="arr-hide" type="button" data-arr-hide title="Hide this box" aria-label="Hide '+esc(itemName(it))+'">'+ICON_EYE+'</button>'));
+    var el=itemLabel(it);if(el)el.classList.add('lbl-edit')})}
+function arrEnd(){if(!ui.arr)return;ui.arr=false;arrD=null;document.body.classList.remove('arranging');
+  document.querySelectorAll('.arr-on').forEach(function(cont){cont.classList.remove('arr-on');
+    cont.querySelectorAll('.arr-rz,.arr-hide,.arr-ghost').forEach(function(x){x.remove()});cont.querySelectorAll('.lbl-edit').forEach(function(x){x.classList.remove('lbl-edit')});
+    cont.querySelectorAll('.arr-drag').forEach(function(x){x.classList.remove('arr-drag');x.style.transform=''});
+    if(cont._draft){cont._draft=false;cont._pos=null;layFlow(cont)}});
+  var b=$('#arrBar');if(b)b.remove();arrBtnSync()}
+function arrPageName(){return ui.tab==='review'?(ui.revTab==='weekly'?'Weekly review':'Daily review'):ui.tab==='life'?(ui.lifeTab==='weekly'?'Weekly life review':'Life journal'):ui.tab==='add'?'Add trade':tabName(ui.tab)}
+function arrHidden(){var st=layCfg(),out=[];
+  arrConts().forEach(function(c){var sc=c.dataset.sortScope;
+    if(sc==='dash'){var H=dashCfg().hidden;Object.keys(H).forEach(function(k){if(H[k])out.push([sc,k,dashName(k)])});return}
+    Object.keys(st.boxOff).forEach(function(key){if(key.indexOf(sc+'|')===0){var v=st.boxOff[key];out.push([sc,key.slice(sc.length+1),typeof v==='string'?v:key.slice(sc.length+1)])}})});
+  return out}
+function arrBar(){if(!ui.arr)return;var b=$('#arrBar');if(!b){b=document.createElement('div');b.id='arrBar';b.setAttribute('role','toolbar');b.setAttribute('aria-label','Arrange this page');document.body.appendChild(b)}
+  var H=arrHidden(),P=presets();
+  b.innerHTML='<div class="arr-t"><b>Arranging '+esc(arrPageName())+'</b><span>Drag a box anywhere. Drag its right or bottom edge to resize. Click a title to rename it.</span></div>'+
+    (H.length?'<div class="arr-hid"><span class="muted">Hidden:</span>'+H.map(function(h){return '<button class="tf-chip" type="button" data-arr-show="'+esc(h[0])+'|'+esc(h[1])+'" title="Show this box again">'+esc(h[2])+' <b>+</b></button>'}).join('')+'</div>':'')+
+    '<div class="arr-act">'+(P.length?'<select id="arrPreset" aria-label="Saved layouts"><option value="">Saved layouts</option>'+P.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'}).join('')+'</select>':'')+
+    '<button class="btn small" type="button" id="arrReset" title="Puts the boxes on this page back where they started and shows the hidden ones. Renamed titles stay.">Reset this page</button><button class="btn small primary" type="button" id="arrDone">Done</button></div>'}
+function arrHide(it){var cont=it.parentElement,sc=cont.dataset.sortScope,k=it.dataset.bk,st=layCfg();
+  if(sc==='dash'){dashCfg().hidden[k]=1;if(st.layout.dash)delete st.layout.dash[k];save();renderDash();arrBar();toast('Box hidden. Bring it back from the bar below.');return}
+  st.boxOff[sc+'|'+k]=String(itemName(it)||k).slice(0,60);if(cont._pos)delete cont._pos[k];if(st.layout[sc])delete st.layout[sc][k];
+  it.classList.add('box-off');save();arrBar();toast('Box hidden. Anything already in it is kept.')}
+function arrShow(sc,k){var st=layCfg();
+  if(sc==='dash'){delete dashCfg().hidden[k];save();renderDash();arrBar();return}
+  delete st.boxOff[sc+'|'+k];save();
+  var cont=arrConts().filter(function(c){return c.dataset.sortScope===sc})[0],it=cont&&layKids(cont).filter(function(c){return c.dataset.bk===k})[0];
+  if(!it){renderAll();return}
+  it.classList.remove('box-off');
+  if(cont._pos){cont._pos[k]={x:0,y:layBottom(cont._pos),w:layDefW(it,cont),h:6};layPaint(cont);layFit(cont);if(!cont._draft)layCommit(cont)}
+  arrDecorate(cont);arrBar();it.scrollIntoView({block:'center',behavior:'smooth'})}
+function arrReset(){var st=layCfg();flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();
+  arrConts().forEach(function(c){var sc=c.dataset.sortScope;delete st.layout[sc];if(st.order)delete st.order[sc];
+    Object.keys(st.boxOff).forEach(function(k){if(k.indexOf(sc+'|')===0)delete st.boxOff[k]})});
+  save();renderAll();toast('This page is back to how it started')}
+/* the height a box needs at a width, worked out by squeezing it to one row and measuring what spills out */
+function arrNeed(it,p,w){var gc=it.style.gridColumn,gr=it.style.gridRow;it.style.gridColumn=(p.x+1)+' / span '+w;it.style.gridRow=(p.y+1)+' / span 1';
+  var n=Math.ceil((layNeedPx(it)+LAY_GAP)/LAY_ROW);it.style.gridColumn=gc;it.style.gridRow=gr;return Math.max(3,n)}
+function arrGhost(cont,q){var g=cont.querySelector(':scope>.arr-ghost');if(!g){g=document.createElement('div');g.className='arr-ghost';cont.appendChild(g)}
+  g.style.gridColumn=(q.x+1)+' / span '+q.w;g.style.gridRow=(q.y+1)+' / span '+q.h}
+document.addEventListener('pointerdown',function(e){if(!ui.arr||e.button>0)return;var t=e.target,it=t.closest&&t.closest('.arr-on>[data-bk]');if(!it)return;
+  var rz=t.closest('.arr-rz');
+  if(!rz&&t.closest('input,textarea,select,a,.lbl-edit,.lbl-in,label.chk,summary,.drop,.thumbs,.cbox-opts,button:not(.cbox-drag)'))return;
+  var cont=it.parentElement;if(!cont._pos||!cont._pos[it.dataset.bk])return;
+  e.preventDefault();e.stopPropagation();var r=it.getBoundingClientRect();
+  arrD={it:it,cont:cont,k:it.dataset.bk,rz:rz?rz.dataset.rz:null,sx:e.clientX,sy:e.clientY+scrollY,gx:e.clientX-r.left,gy:e.clientY-r.top,snap:layClone(cont._pos),go:false,last:''};
+  if(rz){arrD.go=true;arrD.need=arrNeed(it,arrD.snap[arrD.k],arrD.snap[arrD.k].w);arrD.needW=arrD.snap[arrD.k].w;document.body.classList.add('arr-busy')}},true);
+document.addEventListener('pointermove',function(e){var d=arrD;if(!d)return;
+  if(!d.go){if(Math.abs(e.clientX-d.sx)+Math.abs(e.clientY+scrollY-d.sy)<5)return;d.go=true;d.it.classList.add('arr-drag');document.body.classList.add('arr-busy')}
+  e.preventDefault();if(e.clientY<70)scrollBy(0,-14);else if(e.clientY>innerHeight-70)scrollBy(0,14);
+  var cr=d.cont.getBoundingClientRect(),colW=(cr.width+LAY_GAP)/LAY_N,p=d.snap[d.k],np=layClone(d.snap),q=np[d.k];
+  if(d.rz){if(d.rz!=='s')q.w=Math.max(1,Math.min(LAY_N-p.x,Math.round((e.clientX-cr.left+LAY_GAP/2)/colW)-p.x));
+    if(q.w!==d.needW){d.needW=q.w;d.need=arrNeed(d.it,p,q.w)}
+    q.h=d.rz==='e'?Math.max(d.need,p.h):Math.max(d.need,Math.round((e.clientY-cr.top+LAY_GAP)/LAY_ROW)-p.y)}
+  else{d.it.style.transform='translate('+(e.clientX-d.sx)+'px,'+(e.clientY+scrollY-d.sy)+'px)';
+    q.x=Math.max(0,Math.min(LAY_N-q.w,Math.round((e.clientX-d.gx-cr.left)/colW)));q.y=Math.max(0,Math.round((e.clientY-d.gy-cr.top)/LAY_ROW))}
+  var key=q.x+','+q.y+','+q.w+','+q.h;if(key===d.last)return;d.last=key;
+  d.cont._pos=layResolve(np,d.k);layPaint(d.cont,d.rz?null:d.it);if(!d.rz)arrGhost(d.cont,q)},{passive:false});
+function arrUp(){var d=arrD;if(!d)return;arrD=null;if(!d.go)return;document.body.classList.remove('arr-busy');
+  d.it.classList.remove('arr-drag');d.it.style.transform='';var g=d.cont.querySelector(':scope>.arr-ghost');if(g)g.remove();
+  layPaint(d.cont);layFit(d.cont,d.k);layCommit(d.cont)}
+document.addEventListener('pointerup',arrUp);document.addEventListener('pointercancel',arrUp);
+/* the keyboard: focus a box's handle, then the arrows move it and Shift with the arrows resizes it */
+document.addEventListener('keydown',function(e){if(!ui.arr)return;
+  if(e.key==='Escape'&&!(e.target.classList&&e.target.classList.contains('lbl-in'))){e.preventDefault();arrEnd();toast('Layout saved');return}
+  var h=e.target.closest&&e.target.closest('.arr-on>[data-bk] .cbox-drag');if(!h)return;
+  var dx={ArrowLeft:-1,ArrowRight:1}[e.key]||0,dy={ArrowUp:-1,ArrowDown:1}[e.key]||0;if(!dx&&!dy)return;
+  var it=h.closest('.arr-on>[data-bk]'),cont=it.parentElement,np=layClone(cont._pos),q=np[it.dataset.bk];if(!q)return;e.preventDefault();e.stopPropagation();
+  if(e.shiftKey){q.w=Math.max(1,Math.min(LAY_N-q.x,q.w+dx));q.h=Math.max(arrNeed(it,q,q.w),q.h+dy*4)}else{q.x=Math.max(0,Math.min(LAY_N-q.w,q.x+dx));q.y=Math.max(0,q.y+dy*4)}
+  cont._pos=layResolve(np,it.dataset.bk);layPaint(cont);layFit(cont,it.dataset.bk);layCommit(cont);h.focus()},true);
+/* rename a title: click it while arranging, type, then Enter. Empty puts the original name back */
+function lblEdit(el){if(el.hidden||el.parentNode.querySelector('.lbl-in'))return;var inp=document.createElement('input');inp.type='text';inp.className='lbl-in';inp.maxLength=60;inp.value=lblGet(el);
+  inp.setAttribute('aria-label','Box title');el.hidden=true;el.parentNode.insertBefore(inp,el.nextSibling);inp.focus();inp.select();
+  var done=false,fin=function(ok){if(done)return;done=true;var v=inp.value.trim();inp.remove();el.hidden=false;if(ok)lblSet(el,v)};
+  inp.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();fin(true)}else if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();fin(false)}});
+  inp.addEventListener('blur',function(){fin(true)})}
+function lblSet(el,v){var k=el.dataset.lk,st=layCfg(),def=el.dataset.def||'';if(!k)return;var cur=lblText(st.labels[k])||def;if(v===cur||(!v&&cur===def))return;
+  if(!v||v===def){delete st.labels[k];lblPut(el,def);toast('Title back to '+def)}else{st.labels[k]={t:v.slice(0,60),d:def};lblPut(el,st.labels[k].t);toast('Renamed to '+st.labels[k].t)}save()}
+document.addEventListener('click',function(e){if(!ui.arr)return;var el=e.target.closest&&e.target.closest('.arr-on .lbl-edit');if(!el)return;e.preventDefault();e.stopPropagation();lblEdit(el)},true);
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
+  if(b.id==='arrBtn'){if(ui.arr){arrEnd();toast('Layout saved')}else arrStart();return}
+  if(b.dataset.arrHide!==undefined){e.preventDefault();arrHide(b.closest('[data-bk]'));return}
+  if(b.dataset.arrShow){var i=b.dataset.arrShow.indexOf('|');arrShow(b.dataset.arrShow.slice(0,i),b.dataset.arrShow.slice(i+1));return}
+  if(b.id==='arrDone'){arrEnd();toast('Layout saved');return}
+  if(b.id==='arrReset'){if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Click again to reset';setTimeout(function(){if(b.isConnected){b.dataset.armed='';b.textContent='Reset this page'}},3000);return}arrReset();return}});
+document.addEventListener('change',function(e){if(e.target.id==='arrPreset'&&e.target.value)presetUse(e.target.value)});
+var _goArr=go;go=function(){if(ui.arr)arrEnd();return _goArr.apply(this,arguments)};
+
+/* ---------- templates: more than one version of the premarket plan and the reviews ---------- */
+var TPL_KINDS=[['plan','Premarket plan','p-',['plan']],['daily','Daily review','d-',['rev-daily-t','rev-daily-c']],['weekly','Weekly review','w-',['rev-weekly-t','rev-weekly-c']]];
+function tplKind(k){return TPL_KINDS.filter(function(x){return x[0]===k})[0]}
+function tplSets(kind){var st=state.settings;if(!st.tplSets||typeof st.tplSets!=='object'||Array.isArray(st.tplSets))st.tplSets={};
+  if(!tplKind(kind))return [];if(!Array.isArray(st.tplSets[kind]))st.tplSets[kind]=[];return st.tplSets[kind]}
+function tplStdName(kind){var n=(state.settings.tplName||{})[kind];return typeof n==='string'&&n.trim()?n.trim():'Standard'}
+function tplEntryKey(kind){return kind==='plan'?ui.planDate:kind==='daily'?ui.revDate:ui.revWeek}
+function tplEntry(kind,key){return kind==='plan'?state.plans[key]:(state.reviews[kind]||{})[key]}
+/* the template an entry uses: the one picked for it, else the one it was written with, else the one set for that weekday */
+function tplActiveId(kind){var S=tplSets(kind);if(!S.length)return '';var key=tplEntryKey(kind),pk=kind+'|'+key,id;ui.tplPick=ui.tplPick||{};
+  if(pk in ui.tplPick)id=ui.tplPick[pk];
+  else{var E=tplEntry(kind,key);if(E)id=E.tset||'';else{var wd=kind==='weekly'?-1:pd(key).getDay();id=(S.filter(function(s){return (s.days||[]).indexOf(wd)>=0})[0]||{}).id||''}ui.tplPick[pk]=id}
+  return S.some(function(s){return s.id===id})?id:''}
+function tplActive(kind){var id=tplActiveId(kind);return id?tplSets(kind).filter(function(s){return s.id===id})[0]:null}
+function tplSuf(kind){var id=tplActiveId(kind);return id?'@'+id:''}
+function tplBoxes(kind){var s=tplActive(kind);if(s){if(!Array.isArray(s.boxes))s.boxes=[];return s.boxes}return state.settings.tpl[kind]}
+function tplStamp(kind){if(!tplSets(kind).length)return;var key=tplEntryKey(kind),E=tplEntry(kind,key),pk=kind+'|'+key;if(!E||!ui.tplPick||!(pk in ui.tplPick))return;
+  var id=ui.tplPick[pk]||'';if((E.tset||'')===id)return;if(id)E.tset=id;else delete E.tset;save()}
+/* built-in boxes removed with × belong to the template in use */
+function hidMap(){var k=ui.tab==='plan'&&!ui.planSess?'plan':ui.tab==='review'&&(ui.revTab==='daily'||ui.revTab==='weekly')?ui.revTab:null,s=k&&tplActive(k);
+  if(s){if(!s.hidden||typeof s.hidden!=='object'||Array.isArray(s.hidden))s.hidden={};return s.hidden}
+  if(!state.settings.hidden||typeof state.settings.hidden!=='object')state.settings.hidden={};return state.settings.hidden}
+var _savePlanT=savePlan;savePlan=function(m){_savePlanT(m);tplStamp('plan')};
+var _saveRevT=saveReview;saveReview=function(m){var k=ui.revTab;_saveRevT(m);if(k==='daily'||k==='weekly')tplStamp(k)};
+function tplPickAdd(kind,sel){if(kind==='plan'&&ui.planSess)return;var S=tplSets(kind);if(!S.length)return;var f=$(sel),h=f&&f.querySelector(':scope>h2');if(!h||h.querySelector('.tpl-pick'))return;
+  var cur=tplActiveId(kind);h.classList.add('tpl-h');
+  h.insertAdjacentHTML('beforeend','<label class="tpl-pick"><span>Template</span><select data-tplpick="'+kind+'"><option value="">'+esc(tplStdName(kind))+'</option>'+
+    S.map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===cur?' selected':'')+'>'+esc(s.name||'Template')+'</option>'}).join('')+'</select></label>')}
+var _rPlanT=renderPlan;renderPlan=function(){_rPlanT();tplPickAdd('plan','#planForm')};
+var _rRevT=renderReview;renderReview=function(){_rRevT();if(ui.revTab==='daily'||ui.revTab==='weekly')tplPickAdd(ui.revTab,'#reviewForm')};
+var _boxScopeTextT=boxScopeText;boxScopeText=function(sc){var s=sc.tpl&&tplActive(sc.tpl);
+  return s?'Saved to your '+esc(s.name||'Template')+' template of the '+TPL_NAMES[sc.tpl]+', so it appears whenever that template is in use.':_boxScopeTextT(sc)};
+document.addEventListener('change',function(e){var el=e.target;if(!el.dataset||!el.dataset.tplpick)return;var kind=el.dataset.tplpick;
+  flushReview();flushPlan();var key=tplEntryKey(kind),E=tplEntry(kind,key);ui.tplPick=ui.tplPick||{};ui.tplPick[kind+'|'+key]=el.value;
+  if(E){if(el.value)E.tset=el.value;else delete E.tset;save()}
+  renderAll();toast('Using the '+(el.value?(tplSets(kind).filter(function(s){return s.id===el.value})[0]||{}).name:tplStdName(kind))+' template')});
+function tplCopyScopes(kind,from,to){var st=layCfg(),K=tplKind(kind);
+  K[3].forEach(function(b){var f=b+from,t=b+to;if(st.layout[f])st.layout[t]=JSON.parse(JSON.stringify(st.layout[f]));if(st.order&&st.order[f])st.order[t]=st.order[f].slice();
+    Object.keys(st.boxOff).forEach(function(k){if(k.indexOf(f+'|')===0)st.boxOff[t+k.slice(f.length)]=st.boxOff[k]})})}
+function tplDropScopes(kind,id){var st=layCfg(),K=tplKind(kind);
+  K[3].forEach(function(b){var s=b+'@'+id;delete st.layout[s];if(st.order)delete st.order[s];Object.keys(st.boxOff).forEach(function(k){if(k.indexOf(s+'|')===0)delete st.boxOff[k]})})}
+function tplPanelHTML(){var st=state.settings;
+  return '<div class="panel"><h2>Templates</h2><p class="help">Keep more than one version of the premarket plan and the reviews, like a normal day, an FOMC day or a Monday. Each template has its own boxes, its own hidden boxes and its own layout. Pick one at the top of the plan or review, or tick weekdays to use it on those days by itself. Without extra templates nothing changes.</p>'+
+    TPL_KINDS.map(function(K){var kind=K[0],S=tplSets(kind),days=kind!=='weekly';
+      return '<div class="tpl-kind"><h3>'+K[1]+'</h3>'+
+        '<div class="tpl-row"><input type="text" maxlength="40" data-tplname="'+kind+'|" value="'+esc(tplStdName(kind))+'" aria-label="Name of the standard '+K[1].toLowerCase()+' template"><span class="muted">Used on any day no other template claims</span></div>'+
+        S.map(function(s){return '<div class="tpl-row"><input type="text" maxlength="40" data-tplname="'+kind+'|'+esc(s.id)+'" value="'+esc(s.name||'')+'" aria-label="Template name">'+
+          (days?'<span class="tpl-days">'+DOW.map(function(n,i){return '<label class="chk"><input type="checkbox" data-tplday="'+kind+'|'+esc(s.id)+'|'+i+'"'+((s.days||[]).indexOf(i)>=0?' checked':'')+'> '+n+'</label>'}).join('')+'</span>':'')+
+          '<span class="tpl-btns"><button class="btn small" type="button" data-tplopen="'+kind+'|'+esc(s.id)+'">Open</button><button class="btn small danger" type="button" data-tpldel="'+kind+'|'+esc(s.id)+'">Delete</button></span></div>'}).join('')+
+        '<button class="btn small" type="button" data-tpladd="'+kind+'">+ New template</button></div>'}).join('')+'</div>'}
+document.addEventListener('input',function(e){var el=e.target;if(!el.dataset||el.dataset.tplname==null)return;var p=el.dataset.tplname.split('|'),st=state.settings;
+  if(!p[1]){st.tplName=st.tplName||{};if(el.value.trim())st.tplName[p[0]]=el.value.trim().slice(0,40);else delete st.tplName[p[0]]}
+  else{var s=tplSets(p[0]).filter(function(x){return x.id===p[1]})[0];if(s)s.name=el.value.slice(0,40)}saveSoon()});
+document.addEventListener('change',function(e){var el=e.target;if(!el.dataset||!el.dataset.tplday)return;var p=el.dataset.tplday.split('|'),d=+p[2];
+  tplSets(p[0]).forEach(function(s){s.days=(s.days||[]).filter(function(x){return x!==d});if(s.id===p[1]&&el.checked)s.days.push(d)});ui.tplPick={};save();renderCustom();toast('Saved')});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;var p;
+  if(b.dataset.tpladd){var kind=b.dataset.tpladd,K=tplKind(kind),st=state.settings,id=uid(),H={};
+    Object.keys(st.hidden||{}).forEach(function(k){if(k.indexOf(K[2])===0&&st.hidden[k])H[k]=1});
+    tplSets(kind).push({id:id,name:'New template',days:[],boxes:JSON.parse(JSON.stringify(st.tpl[kind]||[])),hidden:H});tplCopyScopes(kind,'','@'+id);save();renderCustom();
+    var ins=document.querySelectorAll('[data-tplname^="'+kind+'|"]');if(ins.length){ins[ins.length-1].focus();ins[ins.length-1].select()}toast('Template added. It starts as a copy of your standard one.');return}
+  if(b.dataset.tpldel){p=b.dataset.tpldel.split('|');if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Delete?';setTimeout(function(){if(b.isConnected){b.dataset.armed='';b.textContent='Delete'}},3000);return}
+    state.settings.tplSets[p[0]]=tplSets(p[0]).filter(function(s){return s.id!==p[1]});tplDropScopes(p[0],p[1]);ui.tplPick={};save();renderCustom();toast('Template deleted. Entries written with it use the standard one, and keep their answers.');return}
+  if(b.dataset.tplopen){p=b.dataset.tplopen.split('|');ui.tplPick=ui.tplPick||{};
+    if(p[0]==='plan'){ui.planSess='';ui.tplPick['plan|'+ui.planDate]=p[1];go('plan')}else{ui.revTab=p[0];ui.tplPick[p[0]+'|'+tplEntryKey(p[0])]=p[1];go('review')}return}});
+
+/* ---------- saved layouts: switch between whole setups of boxes, like Full and Minimal ---------- */
+var LOOK_KEYS=['order','layout','labels','boxOff','hidden','dash','tiles','tradeCols','tfHide'];
+function presets(){var st=state.settings;if(!Array.isArray(st.presets))st.presets=[];return st.presets}
+function presetSnap(){var st=state.settings,o={};LOOK_KEYS.forEach(function(k){if(st[k]!==undefined)o[k]=JSON.parse(JSON.stringify(st[k]))});return o}
+function presetUse(id){var p=presets().filter(function(x){return x.id===id})[0];if(!p)return;var st=state.settings,mine=tileCustom().slice();
+  flushReview();flushPlan();if(ui.tab==='add')snapshotAdd();
+  LOOK_KEYS.forEach(function(k){if(p.data[k]!==undefined)st[k]=JSON.parse(JSON.stringify(p.data[k]));else delete st[k]});
+  tileCfg().custom=mine;st.presetOn=id;save();renderAll();toast('Switched to '+p.name)}
+function presetPanelHTML(){var P=presets(),on=state.settings.presetOn;
+  return '<div class="panel"><h2>Saved layouts</h2><p class="help">Save how your pages look now, the box positions, sizes, names and hidden boxes, the Dashboard and the Trades columns, under a name like Full or Minimal. Switch back in one click here or from the Arrange bar. Your trades and answers never change.</p>'+
+    (P.length?'<div class="lay-list">'+P.map(function(p){return '<div class="lay-row"><input type="text" maxlength="40" data-presetname="'+esc(p.id)+'" value="'+esc(p.name)+'" aria-label="Layout name">'+
+      (p.id===on?'<span class="tag">in use</span>':'')+'<span class="lay-btns"><button class="btn small primary" type="button" data-presetuse="'+esc(p.id)+'">Use</button><button class="btn small" type="button" data-presetupd="'+esc(p.id)+'" title="Replace it with how your pages look now">Update</button><button class="btn small danger" type="button" data-presetdel="'+esc(p.id)+'">Delete</button></span></div>'}).join('')+'</div>':'<p class="muted" style="font-size:13px">No saved layouts yet.</p>')+
+    '<div class="lay-new"><input id="presetName" type="text" maxlength="40" placeholder="Name, like Minimal" aria-label="Name for this layout"><button class="btn" type="button" id="presetSave">Save current layout</button></div></div>'}
+document.addEventListener('input',function(e){var el=e.target;if(!el.dataset||!el.dataset.presetname)return;var p=presets().filter(function(x){return x.id===el.dataset.presetname})[0];if(p){p.name=el.value.slice(0,40)||'Layout';saveSoon()}});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;var p;
+  if(b.id==='presetSave'){var n=($('#presetName').value||'').trim().slice(0,40)||'Layout '+(presets().length+1),id=uid();presets().push({id:id,name:n,data:presetSnap()});state.settings.presetOn=id;save();renderCustom();toast('Saved as '+n);return}
+  if(b.dataset.presetuse){presetUse(b.dataset.presetuse);return}
+  if(b.dataset.presetupd){p=presets().filter(function(x){return x.id===b.dataset.presetupd})[0];if(p){p.data=presetSnap();state.settings.presetOn=p.id;save();renderCustom();toast(p.name+' updated')}return}
+  if(b.dataset.presetdel){if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Delete?';setTimeout(function(){if(b.isConnected){b.dataset.armed='';b.textContent='Delete'}},3000);return}
+    state.settings.presets=presets().filter(function(x){return x.id!==b.dataset.presetdel});if(state.settings.presetOn===b.dataset.presetdel)delete state.settings.presetOn;save();renderCustom();toast('Layout deleted');return}});
+
+/* ---------- setup file: every setting without a single trade, for the phone or as a spare ---------- */
+var SETUP_SKIP={accounts:1,groups:1,startBalance:1,pin:1,tourDone:1,lastAcct:1,lastGrp:1,cheerName:1,ex25:1,dashLife61:1,dailyMore:1,lifeMore:1};
+function setupSave(){var st=state.settings,o={};Object.keys(st).forEach(function(k){if(!SETUP_SKIP[k]&&!/^pin/i.test(k))o[k]=st[k]});
+  var txt=JSON.stringify({kind:'tradevault-setup',v:1,made:new Date().toISOString(),settings:o},null,1);
+  var r=saveOut('TradeVault setup '+ymd(new Date())+'.json',txt,'application/json');if(r&&r.then)r.then(function(ok){if(ok!==false)toast('Setup file saved')});else toast('Setup file saved')}
+function setupLoad(text){var d;try{d=JSON.parse(text)}catch(x){toast('That file is not a setup file');return}
+  if(!d||d.kind!=='tradevault-setup'||!d.settings||typeof d.settings!=='object'){toast(d&&d.trades?'That is a backup file. Restore it from Backup & data instead.':'That file is not a setup file');return}
+  var st=state.settings;Object.keys(d.settings).forEach(function(k){if(!SETUP_SKIP[k]&&!/^pin/i.test(k))st[k]=d.settings[k]});
+  ui.tplPick={};migrate();save();[applyCustom,applyLook,applyTitles,applyLookExtra,applyTabs].forEach(function(f){try{f()}catch(x){}});
+  renderAll();toast('Setup loaded. Your trades, reviews and accounts are unchanged.')}
+function setupPanelHTML(){return '<div class="panel"><h2>Setup file</h2><p class="help">Saves everything you set up, without a single trade: Customize, the Dashboard, your box templates and layouts, renamed titles, colors, lists, rates and shortcuts. Load it on the phone, or keep it as a spare. Accounts, trades, reviews, pictures and your PIN are never in it, and loading one leaves them alone.</p>'+
+  '<div class="actions" style="margin-top:0"><button class="btn" type="button" id="setupSave">Save setup file</button><label class="btn" style="margin:0;cursor:pointer">Load setup file<input id="setupFile" type="file" accept=".json,application/json" hidden></label></div></div>'}
+document.addEventListener('click',function(e){if(e.target.id==='setupSave')setupSave()});
+document.addEventListener('change',function(e){if(e.target.id!=='setupFile'||!e.target.files[0])return;var f=e.target.files[0];e.target.value='';var fr=new FileReader();fr.onload=function(){setupLoad(fr.result)};fr.readAsText(f)});
+
+/* ---------- Customize, Layout ---------- */
+function layPlace(sc){var b=lblScope(sc),m=/@(.+)$/.exec(sc),t='';
+  var n={plan:'Premarket','rev-daily':'Daily review','rev-weekly':'Weekly review',add:'Add trade',life:'Life journal',lifew:'Weekly life review',dash:'Dashboard'}[b]||(/^notes-/.test(b)?tabName(b.slice(6))+' notes':b);
+  if(m){var k=b==='plan'?'plan':b.slice(4),s=tplSets(k).filter(function(x){return x.id===m[1]})[0];t=' ('+(s?s.name:'deleted template')+')'}
+  if(/-sess$/.test(sc.replace(/@.*$/,'')))t+=' sessions';if(/-t$/.test(sc.replace(/@.*$/,'')))t+=', text boxes';if(/-c$/.test(sc.replace(/@.*$/,'')))t+=', choices';return n+t}
+function arrPanelHTML(){var st=layCfg(),L=Object.keys(st.labels),lay=Object.keys(st.layout).filter(function(k){return st.layout[k]&&Object.keys(st.layout[k]).length}),off=Object.keys(st.boxOff);
+  var row=function(a,b,btn){return '<div class="lay-row"><span class="muted">'+a+'</span><b>'+b+'</b><span class="lay-btns">'+btn+'</span></div>'};
+  return '<div class="panel"><h2>Arrange and rename</h2><p class="help">Press <b>Arrange</b> at the top of a page to drag its boxes anywhere, leave gaps, resize them from their edges, rename their titles and hide the ones you don&#39;t use. Each page, and each template, keeps its own layout. On a phone the boxes stack top to bottom in the same order.</p>'+
+    '<div class="cust-grid">'+custField('At the top of each page',cChk('arrOn',st.arrOn!==false,'Show the Arrange button')+cChk('plusOn',st.plusOn!==false,'Show the + button for adding your own boxes'))+'</div>'+
+    '<h3 class="lay-h">Renamed titles</h3>'+(L.length?'<div class="lay-list">'+L.map(function(k){var v=st.labels[k],i=k.indexOf('|');return row(esc(layPlace(k.slice(0,i))+(v&&v.d?', '+v.d:'')),esc(lblText(v)),'<button class="btn small" type="button" data-lblreset="'+esc(k)+'">Original name</button>')}).join('')+'</div>':'<p class="muted lay-none">None yet. Click a title while arranging to rename it.</p>')+
+    '<h3 class="lay-h">Pages laid out by hand</h3>'+(lay.length?'<div class="lay-list">'+lay.map(function(k){return row(esc(layPlace(k)),Object.keys(st.layout[k]).length+' boxes placed','<button class="btn small" type="button" data-layreset="'+esc(k)+'">Back to the original</button>')}).join('')+'</div>':'<p class="muted lay-none">None yet.</p>')+
+    '<h3 class="lay-h">Hidden boxes</h3>'+(off.length?'<div class="lay-list">'+off.map(function(k){var i=k.lastIndexOf('|'),v=st.boxOff[k];return row(esc(layPlace(k.slice(0,i))),esc(typeof v==='string'?v:k.slice(i+1)),'<button class="btn small" type="button" data-offreset="'+esc(k)+'">Show it</button>')}).join('')+'</div>':'<p class="muted lay-none">None. Dashboard boxes are chosen in Settings, Dashboard.</p>')+
+    (L.length||lay.length||off.length?'<div class="actions"><button class="btn danger" type="button" id="layResetAll">Reset every layout, title and hidden box</button></div>':'')+'</div>'}
+function layoutPanelsHTML(){return arrPanelHTML()+tplPanelHTML()+presetPanelHTML()+setupPanelHTML()}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||!b.closest('#tab-custom'))return;var st=layCfg();
+  if(b.dataset.lblreset){delete st.labels[b.dataset.lblreset];save();renderCustom();toast('Original name back');return}
+  if(b.dataset.layreset){delete st.layout[b.dataset.layreset];save();renderCustom();toast('Layout reset');return}
+  if(b.dataset.offreset){delete st.boxOff[b.dataset.offreset];save();renderCustom();toast('The box shows again');return}
+  if(b.id==='layResetAll'){if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Click again to reset them all';return}st.layout={};st.labels={};st.boxOff={};save();renderCustom();toast('Every page is back to how it started')}});
+
+/* ---------- more kinds of your own boxes ---------- */
+var BOX_TYPES=[['text','Text'],['choice','Multiple choice'],['tags','Tags'],['num','Number'],['yn','Yes or no'],['rate','Rating 1 to 5'],['time','Time']];
+var BOX_K={choice:'c',num:'n',yn:'y',rate:'r',time:'m',tags:'g'},BOX_T={c:'choice',n:'num',y:'yn',r:'rate',m:'time',g:'tags'};
+function boxTags(t){return String(t||'').split(/\s*,\s*/).filter(Boolean)}
+/* boxes from the trade form you can filter, sort and break down by */
+function xBox(id){return (state.settings.tpl.add||[]).filter(function(b){return b.id===id})[0]||null}
+function xDefs(){return (state.settings.tpl.add||[]).filter(function(b){return BOX_K[b.type]&&b.type!=='time'})}
+function xVal(t,id){var v=t.x&&t.x[id];return v&&typeof v.t==='string'?v.t:''}
+function xAvg(id){var c=xAvg.c||(xAvg.c={});if(!(id in c)){var s=0,n=0;state.trades.forEach(function(t){var v=parseFloat(xVal(t,id));if(isFinite(v)){s+=v;n++}});c[id]=n?s/n:null;setTimeout(function(){xAvg.c=null},0)}return c[id]}
+function xOk(b,v,w,id){if(w==='none')return v==='';var ty=b?b.type:'choice',n=parseFloat(v);
+  if(ty==='num'){if(w==='has')return v!=='';var a=xAvg(id);return isFinite(n)&&a!=null&&(w==='above'?n>a:n<a)}
+  if(ty==='rate'){if(!isFinite(n))return false;if(w==='ge4')return n>=4;if(w==='ge3')return n>=3;if(w==='le2')return n<=2;return String(n)===w}
+  if(ty==='tags')return boxTags(v).indexOf(w)>=0;return v===w}
+var _tfDefsX=tfDefs;tfDefs=function(){var d=_tfDefsX();
+  xDefs().forEach(function(b){var o;
+    if(b.type==='num')o=[['above','Above my average'],['below','Below my average'],['has','Filled in'],['none','Blank']];
+    else if(b.type==='rate')o=[['5','5'],['4','4'],['3','3'],['2','2'],['1','1'],['ge4','4 or more'],['ge3','3 or more'],['le2','2 or less'],['none','Not rated']];
+    else o=(b.type==='yn'?['Yes','No']:(b.options||[])).map(function(x){return [x,x]}).concat([['none','Not answered']]);
+    d.push(['x:'+b.id,b.label||'My box','Your boxes',o])});return d};
+var _tfMatchX=tfMatch;tfMatch=function(t,c){if(!_tfMatchX(t,c))return false;var f=ui.tf,hide=state.settings.tfHide||{};
+  for(var k in f){if(k.indexOf('x:')!==0||!f[k]||hide[k])continue;var id=k.slice(2);if(!xOk(xBox(id),xVal(t,id),f[k],id))return false}return true};
+/* a column in the Trades table for each of them, off until you tick it in Columns */
+function xColsSync(){var cfg=tradeColCfg();if(!cfg.seenX||typeof cfg.seenX!=='object')cfg.seenX={};
+  for(var i=TRADE_COLS.length-1;i>=0;i--)if(TRADE_COLS[i][0].indexOf('x:')===0)TRADE_COLS.splice(i,1);
+  (state.settings.tpl.add||[]).forEach(function(b){var k='x:'+b.id;TRADE_COLS.push([k,esc(b.label||'My box'),b.type==='num'||b.type==='rate'?1:0,1,0]);if(!cfg.seenX[b.id]){cfg.seenX[b.id]=1;cfg.hidden[k]=1}})}
+function xSortVal(t,id){var v=xVal(t,id),b=xBox(id);if(b&&(b.type==='num'||b.type==='rate')){var n=parseFloat(v);return isFinite(n)?n:-Infinity}return v.toLowerCase()}
+var _tradeCellX=tradeCell;tradeCell=function(k,t,c){if(k.indexOf('x:')!==0)return _tradeCellX(k,t,c);var id=k.slice(2),v=xVal(t,id),b=xBox(id);
+  return '<td class="'+(b&&(b.type==='num'||b.type==='rate')?'num':'wrap')+'">'+(v?esc(snip(v,80)):'<span class="muted">–</span>')+'</td>'};
+var _rTradesX=renderTrades;renderTrades=function(){xColsSync();_rTradesX()};
+/* the Dashboard box that breaks your results down by any of them */
+DASH_REG.push(['xfields','Your own boxes','Your own boxes',1,'Shows when the trade form has your own choice, tags, number, yes or no, or rating boxes.']);
+function xFieldsHTML(){var L=xDefs();if(!L.length)return '';var sel=L.filter(function(b){return b.id===ui.xfSel})[0]||L[0],id=sel.id,rows;
+  if(sel.type==='tags')rows=groupByTags(function(t){return boxTags(xVal(t,id))});
+  else if(sel.type==='num'){var vals=sortedChrono().map(function(t){return parseFloat(xVal(t,id))}).filter(function(n){return isFinite(n)}).sort(function(a,b){return a-b});
+    var lo=vals[Math.floor(vals.length/3)],hi=vals[Math.floor(vals.length*2/3)];
+    rows=groupBy(function(t){var n=parseFloat(xVal(t,id));if(!isFinite(n))return '(blank)';if(vals.length<6||lo===hi)return String(n);return n<lo?'Low, under '+lo:n<hi?'Middle, '+lo+' to under '+hi:'High, '+hi+' or more'})}
+  else rows=groupBy(function(t){var v=xVal(t,id);return v?(sel.type==='rate'?v+' of 5':v):'(not answered)'});
+  return '<div class="panel"><div class="rev-nav" style="margin-bottom:10px"><h2 style="margin:0;margin-right:auto">Your own boxes</h2><div class="seg">'+
+    L.map(function(b){return '<button class="btn small'+(b===sel?' primary':'')+'" type="button" data-xfsel="'+esc(b.id)+'">'+esc(b.label||'My box')+'</button>'}).join('')+'</div></div>'+
+    groupTable(rows,true,esc(sel.label||'Answer'))+'<p class="muted" style="font-size:12px;margin:8px 0 0">From the boxes you added to the trade form.'+(sel.type==='tags'?' A trade with two tags counts under both.':'')+'</p></div>'}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-xfsel]');if(!b)return;ui.xfSel=b.dataset.xfsel;renderDash()});
+
+/* ---------- your own summary numbers: any number, for any slice of your trades ---------- */
+var TILE_METRICS=[['net','Net P&L'],['win','Win rate'],['trades','Number of trades'],['exp','Average trade'],['avgr','Average R'],['pf','Profit factor'],['avgwin','Average win'],['avgloss','Average loss'],
+  ['best','Best trade'],['worst','Worst trade'],['fees','Commissions and fees'],['green','Green days'],['dd','Max drawdown']];
+function tileCustom(){var c=tileCfg();if(!Array.isArray(c.custom))c.custom=[];return c.custom}
+function tileAll(){return TILES.concat(tileCustom().map(function(x){return ['c:'+x.id,x.name||'My number',1]}))}
+function tileOrder(){return placeMissing(tileCfg().order.filter(function(k){return tileAll().some(function(x){return x[0]===k})}),tileAll().map(function(x){return x[0]}))}
+function tileFilters(x){return (Array.isArray(x.f)?x.f:[]).filter(function(p){return p&&p.k&&p.v})}
+/* the slice uses the same filters as the Trades tab, so anything you can filter by works here */
+function tileTrades(x){var f=tileFilters(x),keep=ui.tf,hide=state.settings.tfHide;ui.tf={};f.forEach(function(p){ui.tf[p.k]=p.v});state.settings.tfHide={};
+  try{return sortedChrono().filter(function(t){return tfMatch(t,calc(t))})}finally{ui.tf=keep;state.settings.tfHide=hide}}
+function tileDesc(x){var D=tfDefs(),f=tileFilters(x);if(!f.length)return 'All trades';
+  return f.map(function(p){var d=D.filter(function(z){return z[0]===p.k})[0];return d?esc(d[1])+': '+esc(tfLabel(d,p.v)):''}).filter(Boolean).join(' · ')}
+function tileCustomHTML(x){var ts=tileTrades(x),s=stats(ts),days={},v,k='';ts.forEach(function(t){days[t.date]=(days[t.date]||0)+calc(t).net});
+  var dk=Object.keys(days),gd=dk.filter(function(d){return days[d]>0}).length;
+  switch(x.m){case 'win':v=pct(s.winRate);break;case 'trades':v=s.n;break;case 'exp':v=money(s.exp,true);k=cls(s.exp);break;case 'avgr':v=rfmt(s.avgR);k=cls(s.avgR||0);break;
+    case 'pf':v=s.pf===Infinity?'∞':s.pf.toFixed(2);break;case 'avgwin':v=money(s.avgWin);break;case 'avgloss':v=money(Math.abs(s.avgLoss));break;
+    case 'best':v=money(s.best,true);k=cls(s.best);break;case 'worst':v=money(s.worst,true);k=cls(s.worst);break;case 'fees':v=money(s.fees);break;
+    case 'green':v=gd+' of '+dk.length;break;case 'dd':v=s.dd?money(-s.dd):money(0);k=s.dd?'loss':'';break;default:v=money(s.net,true);k=cls(s.net)}
+  return statCell(esc(x.name||'My number'),v,k,tileDesc(x)+' · '+s.n+(s.n===1?' trade':' trades'))}
+var _tileHTMLX=tileHTML;tileHTML=function(k,s,lr,days){if(k.indexOf('c:')!==0)return _tileHTMLX(k,s,lr,days);var x=tileCustom().filter(function(c){return 'c:'+c.id===k})[0];return x?tileCustomHTML(x):''};
+function tileFilterHTML(x,i){var D=tfDefs(),p=tileFilters(x)[i]||(Array.isArray(x.f)&&x.f[i])||{},d=D.filter(function(z){return z[0]===p.k})[0];
+  var opts=d?d[3].filter(function(o){return !(d[0]==='range'&&o[0]==='custom')}):[];
+  return '<span class="tc-f"><select data-tc="'+esc(x.id)+'|k'+i+'" aria-label="Filter '+(i+1)+'"><option value="">'+(i?'And…':'All trades')+'</option>'+
+    D.map(function(z){return '<option value="'+esc(z[0])+'"'+(z[0]===p.k?' selected':'')+'>'+esc(z[1])+'</option>'}).join('')+'</select>'+
+    (d?'<select data-tc="'+esc(x.id)+'|v'+i+'" aria-label="Value"><option value="">Pick one</option>'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===p.v?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>':'')+'</span>'}
+function tilesPanelHTML(){var cfg=tileCfg(),ord=tileOrder(),all=tileAll(),mine=tileCustom();
+  return '<div class="panel" style="margin-top:20px"><h2>Summary numbers</h2><p class="help">Choose which numbers sit in the summary row at the top of the Dashboard, and their order. They follow the Dashboard filters.</p><div class="dset-list">'+
+    ord.map(function(k,i){var t=all.filter(function(x){return x[0]===k})[0],on=!cfg.hidden[k];if(!t)return '';
+      return '<div class="dset-row'+(on?'':' off')+'"><span style="display:flex;gap:4px"><button class="btn small" type="button" data-tilemove="'+esc(k)+'|-1" aria-label="Move '+esc(t[1])+' up"'+(i?'':' disabled')+'>↑</button><button class="btn small" type="button" data-tilemove="'+esc(k)+'|1" aria-label="Move '+esc(t[1])+' down"'+(i<ord.length-1?'':' disabled')+'>↓</button></span>'+
+        '<label class="chk dset-name"><input type="checkbox" data-tileshow="'+esc(k)+'"'+(on?' checked':'')+'> <b>'+esc(t[1])+'</b>'+(k.indexOf('c:')===0?' <span class="tag">yours</span>':'')+'</label></div>'}).join('')+
+    '</div><h3 class="lay-h">Your own numbers</h3><p class="help">Any number for any slice of your trades, like your win rate when Confidence is 4 or more, or your net P&amp;L on Mondays in the last 30 days. Each one joins the list above.</p>'+
+    (mine.length?'<div class="tc-list">'+mine.map(function(x){return '<div class="tc-row"><input type="text" maxlength="40" data-tcname="'+esc(x.id)+'" value="'+esc(x.name||'')+'" placeholder="Name" aria-label="Name of this number">'+
+      '<select data-tc="'+esc(x.id)+'|m" aria-label="Number to show">'+TILE_METRICS.map(function(m){return '<option value="'+m[0]+'"'+(m[0]===(x.m||'net')?' selected':'')+'>'+esc(m[1])+'</option>'}).join('')+'</select>'+
+      tileFilterHTML(x,0)+(tileFilters(x).length?tileFilterHTML(x,1):'')+'<button class="btn small danger" type="button" data-tcdel="'+esc(x.id)+'">Delete</button></div>'}).join('')+'</div>':'')+
+    '<div class="actions"><button class="btn" type="button" id="tcAdd">+ Add a number</button><button class="btn" type="button" id="tilesReset">Reset summary numbers</button></div></div>'}
+function tileSet(id){return tileCustom().filter(function(x){return x.id===id})[0]}
+document.addEventListener('input',function(e){var el=e.target;if(!el.dataset||!el.dataset.tcname)return;var x=tileSet(el.dataset.tcname);if(x){x.name=el.value.slice(0,40);saveSoon()}});
+document.addEventListener('change',function(e){var el=e.target;if(!el.dataset||!el.dataset.tc)return;var p=el.dataset.tc.split('|'),x=tileSet(p[0]);if(!x)return;
+  if(p[1]==='m')x.m=el.value;else{var i=+p[1].slice(1);x.f=Array.isArray(x.f)?x.f:[];while(x.f.length<=i)x.f.push({});
+    if(p[1][0]==='k'){x.f[i]={k:el.value,v:''};if(!el.value)x.f=x.f.slice(0,i)}else x.f[i].v=el.value}
+  save();var y=scrollY;renderDashSet();scrollTo(0,y);toast('Saved')});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
+  if(b.id==='tcAdd'){var id=uid();tileCustom().push({id:id,name:'My number',m:'win',f:[]});save();var y=scrollY;renderDashSet();scrollTo(0,y);var n=document.querySelector('[data-tcname="'+id+'"]');if(n){n.focus();n.select()}return}
+  if(b.dataset.tcdel){if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Delete?';setTimeout(function(){if(b.isConnected){b.dataset.armed='';b.textContent='Delete'}},3000);return}
+    var c=tileCfg(),k='c:'+b.dataset.tcdel;c.custom=tileCustom().filter(function(x){return x.id!==b.dataset.tcdel});c.order=c.order.filter(function(o){return o!==k});delete c.hidden[k];save();var y2=scrollY;renderDashSet();scrollTo(0,y2);toast('Number deleted')}});
+
+/* ---------- start-up: tidy the new settings ---------- */
+var _migLay=migrate;migrate=function(){_migLay();var st=layCfg();
+  Object.keys(st.labels).forEach(function(k){var v=st.labels[k];if(typeof v==='string')st.labels[k]={t:v,d:''};else if(!v||typeof v.t!=='string'||!v.t.trim())delete st.labels[k]});
+  Object.keys(st.layout).forEach(function(k){if(!st.layout[k]||typeof st.layout[k]!=='object')delete st.layout[k]});
+  TPL_KINDS.forEach(function(K){var S=tplSets(K[0]);state.settings.tplSets[K[0]]=S.filter(function(s){return s&&s.id}).map(function(s){
+    return {id:String(s.id),name:String(s.name||'Template').slice(0,40),days:Array.isArray(s.days)?s.days.filter(function(d){return d>=0&&d<=6}):[],boxes:cleanBoxList(s.boxes),hidden:s.hidden&&typeof s.hidden==='object'&&!Array.isArray(s.hidden)?s.hidden:{}}})});
+  presets();state.settings.presets=state.settings.presets.filter(function(p){return p&&p.id&&p.data&&typeof p.data==='object'})};
+
 /* ---------- welcome tour: a short walk through every page, on the first run and from Settings ---------- */
 /* each step: the page it opens (none keeps the current one), what to light up (the first one on screen wins), a title and the text */
 var TOUR=[
   {h:function(){return 'Welcome to '+esc(($('#siteTitle')||{}).textContent||'your journal')},
-    p:function(){return '<p>This short tour shows you where everything is. It takes about two minutes, and you can leave it any time.</p><p>The journal starts with example trades, reviews and plans, so every page has something to show. You clear them before logging your own.</p>'+
+    p:function(){return '<p>This short tour shows you where everything is. It takes about five minutes: first every page, then every part of Settings. Leave it any time with the x or Esc.</p><p>The journal starts with example trades, reviews and plans, so every page has something to show. You clear them before logging your own.</p>'+
       (APP?'<p class="muted" style="font-size:13px">Already used the journal in a browser? Save a backup file there, then restore it here in Settings, Setup &amp; data, Backup &amp; data.</p>':'')}},
-  {tab:'dash',sel:['#nav'],h:'Your pages',p:'<p>Every page of the journal is in this list. Hide the ones you don&#39;t use, rename them or change the order in Settings, Customize.</p>'},
+  {tab:'dash',sel:['#nav'],h:'Your pages',p:'<p>Every page of the journal is in this list. Hide the ones you don&#39;t use, rename them or change the order in Settings, Customize, Pages.</p>'},
   {sel:['.side-add'],h:'Log a trade',p:'<p>Press <b>+ Add trade</b> after each trade. Quick log needs just the contract, side, size and prices. The full form adds your setup, stop, rules, mistakes, notes and chart pictures.</p>'},
   {tab:'add',sel:['.add-import','#qlFull','#tab-add .panel'],h:'Or import your trades',p:function(){return '<p>Bring trades in from a TradingView, NinjaTrader, Tradovate or Rithmic export, or drop the file anywhere on the window. Name your accounts the way your platform does and each trade lands in the right one.</p>'+
     ($('.add-import')?'':'<p>The import button is on the full form: press <b>Full form</b>.</p>')+
     (APP?'<p class="muted" style="font-size:13px">TradeVault can also watch the folder your platform exports to and import new files by itself: Settings, Setup &amp; data, TradeVault app.</p>':'')}},
-  {tab:'dash',sel:['#tab-dash .strip','#tab-dash .panel'],h:function(){return esc(tabName('dash'))},p:'<p>Your results at a glance: net P&amp;L, win rate, equity curve, daily P&amp;L, accounts and prop firm progress. The filters narrow it to one account, setup or date range.</p><p>Move, shrink or hide any box in Settings, Dashboard.</p>'},
+  {tab:'dash',sel:['#tab-dash .strip','#tab-dash .panel'],h:function(){return esc(tabName('dash'))},p:'<p>Your results at a glance: net P&amp;L, win rate, equity curve, daily P&amp;L, accounts and prop firm progress. The filters narrow it to one account, setup or date range.</p><p>Choose its boxes and summary numbers in Settings, Dashboard, and move, resize, rename or hide them with Arrange.</p>'},
   {sel:['#acctCard'],h:'Your balance',p:'<p>This card shows your balance and the drawdown room left on your tightest account. Click it to switch between the total balance, profit above your start, and each group.</p>'},
-  {sel:['#boxPlus'],h:'Add your own boxes',p:'<p>The + at the top of a page adds your own text box or multiple-choice question to it, for anything the journal doesn&#39;t ask yet.</p>'},
+  {tab:'dash',sel:['#boxPlus'],skip:function(){return state.settings.plusOn===false},h:'Add your own boxes',p:'<p>The + at the top of a page adds your own box to it, for anything the journal doesn&#39;t ask yet: text, multiple choice, tags, a number, yes or no, a 1 to 5 rating or a time. Boxes on the trade form become filters, Trades columns and a Dashboard breakdown.</p>'},
+  {tab:'dash',sel:['#arrBtn'],skip:function(){return state.settings.arrOn===false},h:'Arrange any page',p:function(){return '<p>'+(innerWidth<=760?'On a computer or tablet, the grid button at the top turns on Arrange. ':'Press this grid button to Arrange the page you&#39;re on. ')+'Drag boxes anywhere, leave gaps, resize them from their edges, click a title to rename it, and hide the boxes you don&#39;t need with their x. Press Done when you&#39;re finished.</p><p>Each page keeps its own layout, and a phone stacks the boxes in the same order. Reset layout puts a page back the way it was.</p>'}},
   {tab:'cal',sel:['#tab-cal .cal-ctl','#tab-cal .panel'],h:function(){return esc(tabName('cal'))},p:'<p>Each day shows its P&amp;L and number of trades. Click a day to see its trades, plan and review in one place. These buttons switch the calendar to premarket plans, reviews or the life journal.</p>'},
-  {tab:'plan',sel:['#tab-plan .panel'],h:function(){return esc(tabName('plan'))},p:'<p>Write your plan before the session: bias, key levels, news to watch and your checklist. Plan the whole day, or each session (Asia, London, New York) on its own.</p>'},
-  {tab:'trades',sel:['#tab-trades .filters','#tab-trades .panel'],h:function(){return esc(tabName('trades'))},p:'<p>Every trade in one list. Search, filter and sort, click a trade to see it in full, or tick several to change them together.</p>'},
-  {tab:'review',sel:['#tab-review .panel'],h:function(){return esc(tabName('review'))},p:'<p>A daily review after each session and a weekly review at the end of the week. The report card and the monthly and yearly reports add it all up.</p>'},
+  {tab:'plan',sel:['#tab-plan .panel'],h:function(){return esc(tabName('plan'))},p:'<p>Write your plan before the session: bias, key levels, news to watch and your checklist. Plan the whole day, or each session (Asia, London, New York) on its own.</p><p>Want a different plan for some days? Make templates in Settings, Customize, Layout and pick one at the top of the plan.</p>'},
+  {tab:'trades',sel:['#tab-trades .filters','#tab-trades .panel'],h:function(){return esc(tabName('trades'))},p:'<p>Every trade in one list. Search, filter and sort, click a trade to see it in full, or tick several to change them together. Columns lets you choose what the table shows, your own boxes included.</p>'},
+  {tab:'review',sel:['#tab-review .panel'],h:function(){return esc(tabName('review'))},p:'<p>A daily review after each session and a weekly review at the end of the week. The report card and the monthly and yearly reports add it all up.</p><p>Reviews can have templates too, like a shorter one for Fridays.</p>'},
   {tab:'rules',sel:['#tab-rules .strip','#tab-rules .panel'],h:function(){return esc(tabName('rules'))},p:'<p>Write down your trading rules. The ones you check on every trade appear on the Add trade form, and this page shows how often you keep them.</p>'},
   {tab:'playbook',sel:['#tab-playbook .pb-card:not(.pb-auto)','#tab-playbook .panel'],h:function(){return esc(tabName('playbook'))},p:'<p>A card for each of your setups. Open one to write down how you trade it and see its own stats, so you can tell which setups really pay.</p>'},
   {tab:'gallery',sel:['#tab-gallery .panel'],h:function(){return esc(tabName('gallery'))},p:'<p>Every chart and picture you add, from trades, reviews, plans and the life journal, in one place you can search.</p>'},
   {tab:'life',sel:['#tab-life .panel'],h:function(){return esc(tabName('life'))},p:'<p>Track sleep, mood and habits each day, and see how they line up with your trading.</p>'},
   {tab:'goals',sel:['#tab-goals .strip','#tab-goals .panel'],h:function(){return esc(tabName('goals'))},p:'<p>Set goals, give them a due date and track your progress toward them.</p>'},
-  {sel:['#gearBtn'],h:'Settings',p:'<p>The gear opens Settings. Start with <b>Setup &amp; data, Accounts</b>: add each account with its starting balance and any prop firm rules, like the drawdown, daily loss limit, profit target and payouts. Your commission rates go in <b>Trading</b>.</p>'},
-  {tab:'data',sub:'accounts',sel:['.set-seg'],h:'Make it yours',p:'<p><b>Customize</b> changes the colors, background, fonts, tab names and keyboard shortcuts. <b>Dashboard</b> picks the boxes it shows and their order.</p>'},
-  {tab:'data',sel:function(){return APP?['[data-dsub="app"]','[data-dsub="backup"]']:['[data-dsub="backup"]']},h:'Keep a backup',
-    p:function(){return APP?'<p>TradeVault saves your journal on this computer and makes backups by itself. Choose a backup folder of your own, ideally on another drive, in <b>TradeVault app</b>. Backup &amp; data saves or restores a backup file.</p>':
-      '<p>Your journal is stored in this browser only, so clearing the browser&#39;s data would erase it. Save a backup file now and then from <b>Backup &amp; data</b>, where you can also pick a folder it backs up to by itself.</p>'}},
+  {sel:['#gearBtn'],h:'Settings',p:'<p>The gear opens Settings. It has four parts along the top: <b>Setup &amp; data</b> for your accounts, rates, lists and backups, <b>Dashboard</b> for what the Dashboard shows, <b>Customize</b> for how the whole journal looks and works, and <b>Update history</b> for what changed in each version.</p><p>Everything there is optional. The next steps open each part and show what it holds.</p>'},
+  {tab:'data',sub:'accounts',sel:['#tab-data [data-dsub="accounts"]'],h:'Accounts',p:'<p>Add each account with its starting balance. For a prop firm account, add its rules: the max drawdown (fixed or trailing), daily loss limit, max contracts, profit target, minimum days, consistency rule and payout rules. The Dashboard then tracks each rule for you.</p><p>Copy trades to several accounts? Put them in a group: log on the leader, and each follower copies it at its own size. An end date closes an account without losing its history.</p>'},
+  {tab:'data',sub:'trading',sel:['#tab-data [data-dsub="trading"]'],h:'Trading',p:'<p>The most you risk on one trade, with an optional position size calculator on the trade form. The breakeven range, so tiny wins and losses count as breakeven. Your own round-trip commission for each contract, the point value and tick size of each contract, and what the Add trade form starts with.</p>'},
+  {tab:'data',sub:'lists',sel:['#tab-data [data-dsub="lists"]'],h:'Lists',p:'<p>The choices you pick from all over the journal: your setups, mistake tags, premarket checklist, market conditions, habits, bias and state of mind, rule and goal categories, life journal prompts and execution grades. Add, rename or remove any of them.</p>'},
+  {tab:'data',sub:'alerts',sel:['#tab-data [data-dsub="alerts"]'],h:'Alerts &amp; reminders',p:'<p>A tilt warning after a run of losses, with a break timer. Daily limits that put up a stop banner when you hit your max loss or max trades. When your session ends. Which reminders the Dashboard shows, like a missing plan or review, and a celebration when you finish a review.</p>'},
+  {tab:'data',sub:'backup',sel:function(){return APP?['#tab-data [data-dsub="app"]','#tab-data [data-dsub="backup"]']:['#tab-data [data-dsub="backup"]']},h:'Keep a backup',
+    p:function(){return (APP?'<p>TradeVault saves your journal on this computer and makes backups by itself. Choose a backup folder of your own, ideally on another drive, in <b>TradeVault app</b>, where you also set up auto import, quick log and updates.</p><p><b>Backup &amp; data</b> saves or restores a backup file, can lock it with a password, checks your journal for problems, and resets it.</p>':
+      '<p>Your journal is stored in this browser only, so clearing the browser&#39;s data would erase it. Save a backup file now and then from <b>Backup &amp; data</b>, where you can also pick a folder it backs up to by itself, lock backups with a password, check your journal for problems, or reset it.</p>')}},
+  {tab:'data',sub:'privacy',sel:['#tab-data [data-dsub="privacy"]'],h:'Privacy',p:'<p>An optional PIN that locks the journal each time it opens, with a recovery email in case you forget it.</p>'},
+  {tab:'dashset',sel:['#tab-dashset .panel:not(.set-seg) h2'],h:'Dashboard settings',p:'<p>Tick the boxes the Dashboard shows and put them in order. <b>Summary numbers</b> picks the numbers in the row at the top.</p><p><b>Your own numbers</b> makes new ones from any slice of your trades, like your win rate when you followed your plan, or your P&amp;L on Mondays.</p>'},
+  {tab:'custom',csub:'look',sel:['#tab-custom [data-csub="look"]'],h:'Customize: Look',p:'<p>The title at the top, the background (a pattern, a color or your own picture), dark or light theme, the colors for profit, loss, buttons and boxes, and the fonts.</p>'},
+  {tab:'custom',csub:'pages',sel:['#tab-custom [data-csub="pages"]'],h:'Customize: Pages',p:'<p>Hide, rename and reorder the tabs in the sidebar and pick the one the journal opens on. Change the keyboard shortcuts or add your own. Choose the Trades filters, the account card views, the Gallery certificates, the Playbook pages and which Life journal features are on.</p>'},
+  {tab:'custom',csub:'layout',sel:['#tab-custom [data-csub="layout"]'],h:'Customize: Layout',p:'<p>Everything you changed with Arrange in one list, to undo any of it. Turn the Arrange and + buttons off if you don&#39;t want them.</p><p><b>Templates</b> keep more than one premarket plan, daily review or weekly review, each with its own boxes, picked by weekday. <b>Saved layouts</b> switch every page&#39;s look at once. A <b>setup file</b> copies your setup to another device, without your trades.</p>'},
+  {tab:'custom',csub:'stats',sel:['#tab-custom [data-csub="stats"]'],h:'Customize: Stats',p:'<p>How the stats group your trades: hold times, R, time of day, sleep and mood. Your market sessions, the premarket plan sessions and when a trading day starts. The currency symbol and date style, the odds of passing test and the rolling chart windows.</p>'},
+  {tab:'custom',csub:'reports',sel:['#tab-custom [data-csub="reports"]'],h:'Customize: Reports',p:'<p>How the weekly report card grades you: the grade cut-offs, the points off for mistakes and loss limit days, and what counts. And which sections the monthly and yearly reports show.</p>'},
   {tab:'dash',sel:['#exBanner'],h:'You&#39;re all set',p:function(){return '<p>To get started:</p><ol class="blist">'+(exAny()?'<li>Clear the example data with <b>Clear examples</b>.</li>':'')+
     '<li>Add your accounts in Settings, Setup &amp; data, Accounts.</li><li>Log or import your first trade.</li></ol><p class="muted" style="font-size:13px">Take this tour again any time from Settings.</p>'},
     extra:'<button class="btn small" type="button" data-tour="accts">Set up my accounts</button>'}
 ];
 function tourVal(v){return typeof v==='function'?v():v||''}
-function tourSteps(){return TOUR.filter(function(s){return !s.tab||s.tab==='data'||s.tab==='add'||!off(s.tab)})}
+/* a step is left out when its page is hidden, or when its own skip says so (a button turned off in Settings) */
+function tourSteps(){return TOUR.filter(function(s){return !(s.skip&&s.skip())}).filter(function(s){return !s.tab||['data','add','dashset','custom'].indexOf(s.tab)>=0||!off(s.tab)})}
 function tourStart(){
   var el=$('#tour');if(!el){el=document.createElement('div');el.id='tour';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','tourH');document.body.appendChild(el)}
   ui.tour={i:0,s:tourSteps(),from:ui.tab,tg:null};el.innerHTML='<div class="tour-spot none"></div><div class="tour-card kbd-card"></div>';el.hidden=false;tourShow()}
@@ -7097,8 +7587,8 @@ function tourEnd(to){var T=ui.tour,el=$('#tour');if(el){el.hidden=true;el.innerH
 function tourFind(){var s=ui.tour.s[ui.tour.i],tg=null;
   (tourVal(s.sel)||[]).some(function(q){var x=document.querySelector(q);if(x&&x.offsetWidth&&x.getClientRects().length){tg=x;return true}});return tg}
 function tourShow(){var T=ui.tour;if(!T)return;var s=T.s[T.i],el=$('#tour'),last=T.i===T.s.length-1;
-  if(s.tab==='data'&&s.sub)ui.dataSub=s.sub;
-  if(s.tab&&(ui.tab!==s.tab||s.sub))go(s.tab);
+  if(s.tab==='data'&&s.sub)ui.dataSub=s.sub;if(s.tab==='custom'&&s.csub)ui.custSub=s.csub;
+  if(s.tab&&(ui.tab!==s.tab||s.sub||s.csub))go(s.tab);
   var card=el.querySelector('.tour-card');
   card.innerHTML=(T.i?'<button class="tour-x" type="button" data-tour="skip" aria-label="Close the tour">×</button>':'')+'<h2 id="tourH">'+tourVal(s.h)+'</h2>'+tourVal(s.p)+
     '<div class="tour-foot"><span class="tour-n">'+(T.i+1)+' of '+T.s.length+'</span>'+
@@ -7108,6 +7598,8 @@ function tourShow(){var T=ui.tour;if(!T)return;var s=T.s[T.i],el=$('#tour'),last
   T.tg=tourFind();if(T.tg){var H=window.innerHeight,ch=card.offsetHeight,th=T.tg.getBoundingClientRect().height;
     if((H-th)/2<ch+24&&th+ch+40<=H){T.tg.scrollIntoView({block:'start'});window.scrollBy(0,-16)}else T.tg.scrollIntoView({block:'center'})}
   tourPlace();
+  /* some buttons (Arrange) show a moment after the page draws, so look once more */
+  if(!T.tg)setTimeout(function(){if(ui.tour===T&&T.s[T.i]===s&&!T.tg){T.tg=tourFind();if(T.tg){T.tg.scrollIntoView({block:'center'});tourPlace()}}},150);
   var f=card.querySelector('[data-tour="next"],[data-tour="done"]');if(f)f.focus({preventScroll:true})}
 /* light up the step's element and put the card below it, above it or beside it, whichever fits */
 function tourPlace(){var T=ui.tour,el=$('#tour');if(!T||!el||el.hidden)return;
@@ -8050,6 +8542,58 @@ Version 87  (Oct 27, 2026)  (Update history: 2.26)
 - Editing an imported trade no longer makes the journal forget where
   it came from, so importing the same file again still skips it
 - TradeVault desktop app updated to 2.26.0
-
+Version 88  (Oct 27, 2026)  (Update history: 2.261)
+--------------------------
+- Premarket: the Whole day, Asia, London and New York tabs now sit at
+  the top of the plan itself, so each session plan is right next to
+  the whole day plan
+- Session plans are laid out like Whole day, row for row: bias and
+  state of mind first, then key levels and news side by side, then
+  if/then across the full width. Nothing jumps around anymore
+- Where Whole day has its limits, a session shows the day's bias, max
+  loss, max trades and max size, with a button to change them on Whole
+  day
+- Box labels on the Premarket plan line up with their boxes; the move
+  handle sits at the end of each label instead
+- On tablets the plan boxes pair up evenly
+- TradeVault desktop app updated to 2.26.1
+Version 89  (Nov 9, 2026)  (Update history: 2.27)
+--------------------------
+- Arrange any page: press the new grid button at the top right, then
+  drag boxes anywhere you like. Gaps are allowed, a box you drop on
+  another pushes it down instead of swapping, and the edges of each
+  box resize it. Arrow keys move the picked box, Shift + arrows resize
+  it, Esc finishes
+- Rename any box, built-in ones too: in Arrange, click a title and
+  type. Dashboard section titles can be renamed the same way
+- Hide any box in Arrange with its x, and bring it back from the bar
+  at the bottom. A hidden box on Add trade keeps its value. Date,
+  ticker, side, quantity, entry and exit always stay
+- The Dashboard can be arranged, resized, renamed and hidden like
+  every other page
+- Reset layout puts a page back the way it was. On a phone, boxes
+  stack in your order
+- New kinds of your own boxes: number, yes/no, rating 1 to 5, time
+  and tags, next to text and choice. Use them as Trades filters, as
+  Trades columns (off until you turn them on), and in the new "Your
+  own boxes" Dashboard breakdown
+- Your own stat tiles: pick a number (P&L, win rate, average R and
+  more) and a filter, and it shows on the Dashboard
+- Plan and review templates: make more than one Premarket plan, daily
+  review or weekly review, each with its own boxes. Pick one per day
+  or let it pick itself by weekday
+- Saved layouts: save how every page looks under a name and switch
+  between them, from Settings or the Arrange bar
+- Setup file: save your layout, boxes, templates and settings to a
+  file and load it on another computer or phone. Trades and accounts
+  are never in it
+- Settings has a new Layout page with all of this in one place. The
+  Arrange and + buttons can be turned off there
+- Search now finds the text in your own trade boxes
+- The welcome tour now covers all of this, and walks through every part
+  of Settings: each Setup & data section, the Dashboard settings and
+  each Customize section, explaining what is in it. Steps for the
+  Arrange and + buttons are left out when you turn those buttons off
+- TradeVault desktop app updated to 2.27.0
 </script>
 </body></html>
