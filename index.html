@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="TradeVault"><meta name="theme-color" content="#0d1220"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest"><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){})</script></head><body>
-<title>Day Trade Ledger</title>
+<title>TradeVault</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,16 +26,11 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 .wrap{max-width:1720px;margin:0 auto}
 header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:20px 16px;border-bottom:1px solid var(--line)}
 h1{font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.1}
 h1 small{display:block;font-family:var(--font-body);font-size:12px;font-weight:400;color:var(--muted);letter-spacing:0;margin-top:4px}
 nav{display:flex;flex-wrap:wrap;gap:4px}
-nav button{font:inherit;font-weight:500;background:transparent;color:var(--muted);border:1px solid transparent;border-radius:6px;padding:7px 12px;cursor:pointer}
-nav button:hover{color:var(--fg);background:var(--surface-2)}
-nav button[aria-current="page"]{color:var(--accent-fg);background:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 main{padding-top:20px;display:flex;flex-direction:column;gap:20px}
 h2{font-family:var(--font-display);font-size:16px;font-weight:600;margin:0 0 12px}
@@ -58,7 +53,6 @@ h2.sub{font-family:var(--font-body);font-size:12px;font-weight:600;letter-spacin
 .strip dd{margin:0;font-family:var(--font-mono);font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .strip dd.sub{font-size:12px;color:var(--muted);margin-top:2px;font-family:var(--font-body)}
 .gain{color:var(--gain)} .loss{color:var(--loss)} .muted{color:var(--muted)}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px}
 .grid2>*{min-width:0}
 svg.chart{width:100%;height:auto;display:block}
 svg .axis{fill:var(--muted);font-family:var(--font-mono);font-size:10px}
@@ -81,10 +75,8 @@ tr:last-child td{border-bottom:0}
 label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px}
 input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
 input[type=number]{font-family:var(--font-mono)}
-textarea{resize:vertical;min-height:88px;font-family:var(--font-mono);font-size:12px}
 textarea.prose{font-family:var(--font-body);font-size:14px;line-height:1.5;min-height:120px}
 textarea.prose.short{min-height:76px}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 14px}
 .form-grid .wide{grid-column:1/-1}
 .rev-nav{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .rev-nav input[type=date],.rev-nav input[type=month]{width:auto}
@@ -95,10 +87,7 @@ textarea.prose.short{min-height:76px}
 .preview b{font-weight:500}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
 .err{color:var(--loss);font-size:13px;min-height:1.2em}
-.empty{color:var(--muted);padding:28px 8px;text-align:center}
 .help{color:var(--muted);font-size:13px;margin:0 0 12px;max-width:65ch}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:6px;font-weight:500;z-index:20}
-.chk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 16px}
 label.chk{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:400;color:var(--fg);margin:0 0 6px;cursor:pointer}
 label.chk input{width:auto;flex:none}
 .tag.ok{color:var(--gain)} .tag.bad{color:var(--loss)}
@@ -163,17 +152,16 @@ label.chk input{width:auto;flex:none}
 .cal-sec{margin-top:18px}
 .cal-sec:first-of-type{margin-top:14px}
 /* ---------- top-to-bottom layout, bullets ---------- */
-.grid2{grid-template-columns:1fr}
-.form-grid{grid-template-columns:1fr;gap:14px;max-width:560px}
-.chk-grid{grid-template-columns:1fr}
+.grid2{display:grid;gap:20px;grid-template-columns:1fr}
+.form-grid{display:grid;grid-template-columns:1fr;gap:14px;max-width:560px}
+.chk-grid{display:grid;gap:2px 16px;grid-template-columns:1fr}
 .blist{margin:0 0 10px;padding-left:20px;font-size:13px}
 .blist li{margin:2px 0;overflow-wrap:anywhere}
 .qb{margin:0 0 10px}
-.ql{font-weight:600;font-size:13px;margin:0 0 2px}
 textarea.bullets{line-height:1.6}
 /* ---------- blue gradient background, tighter side margins, trades table fits ---------- */
 html{min-height:100%;background:#1c1030}
-body{background:transparent}
+body{color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px;background:transparent}
 body.wide{padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
 header.top h1{color:#fff}
 header.top h1 small{color:rgba(255,255,255,.78)}
@@ -186,7 +174,6 @@ th.num{font-family:inherit;font-size:11px}
 .tt th.num{font-size:10.5px}
 th{vertical-align:bottom}
 .tt td:first-child,.tt td.num,.tt th.num{white-space:nowrap}
-.tt td.notes{max-width:none;overflow:visible;text-overflow:clip;min-width:120px}
 .tt td:last-child{white-space:normal;min-width:72px}
 .tt td:last-child .btn{margin:0 4px 4px 0}
 .grid2.dash2{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -200,16 +187,15 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .panel,.strip,.banner,.side,.acct-card{-webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1)}
 .panel,.strip,.banner{border-radius:16px}
 .panel{box-shadow:0 8px 28px rgba(0,0,0,.22)}
-.toast{color:var(--accent-fg)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);padding:9px 16px;border-radius:6px;font-weight:500;z-index:20;color:var(--accent-fg)}
 .shell{display:grid;grid-template-columns:208px minmax(0,1fr);gap:20px;align-items:start;padding-top:20px}
 .content{min-width:0}
 .side{position:sticky;top:max(20px,env(safe-area-inset-top,0px));display:flex;flex-direction:column;gap:14px;min-height:calc(100vh - 40px);
   background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px 12px}
-.side-top{display:flex;align-items:center;gap:10px;padding:0 6px 6px}
 .avatar{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;font:700 13px var(--font-display);color:var(--accent-fg);background:linear-gradient(135deg,var(--accent-hi,#ffd0ec),var(--accent))}
 .side-name{font-family:var(--font-display);font-weight:600;font-size:14px}
 .side nav{flex-direction:column;gap:6px}
-nav button{text-align:left;border-radius:999px;padding:9px 16px;color:var(--fg)}
+nav button{font:inherit;font-weight:500;background:transparent;border:1px solid transparent;cursor:pointer;text-align:left;border-radius:999px;padding:9px 16px;color:var(--fg)}
 nav button:hover{background:rgba(255,255,255,.12);color:var(--fg)}
 nav button[aria-current="page"]{background:var(--accent);color:var(--accent-fg);font-weight:600}
 .side-add{font:inherit;font-weight:500;margin-top:10px;text-align:center;color:var(--fg);background:var(--accent-soft,rgba(245,154,214,.14));border:1px solid var(--accent);border-radius:12px;padding:9px 12px;cursor:pointer}
@@ -239,7 +225,6 @@ tr.total td{font-weight:600;border-top:1px solid var(--line)}
   .side-add{margin-top:0}
   .acct-card{min-width:0;width:100%}
 }
-.icon-stack{margin-left:auto;display:flex;flex-direction:column;gap:4px}
 .icon-btn{width:30px;height:30px;display:grid;place-items:center;padding:0;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--fg);cursor:pointer}
 .icon-btn:hover{background:rgba(255,255,255,.16)}
 .icon-btn[aria-current="page"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
@@ -329,18 +314,17 @@ html[data-bg="chart"] :is(.panel,.strip,.banner,.side,.acct-card),html[data-bg="
 .note-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px 18px}
 .notes-wrap{margin-top:20px}
 .xnote{margin-top:4px;font-size:12px;color:var(--fg)}
-.box-tools{position:relative;margin-left:auto;align-self:center}
 .plus-box{width:36px;height:36px;display:grid;place-items:center;padding:0;border-radius:10px;border:1px solid var(--accent);background:var(--accent-soft,rgba(255,255,255,.08));color:var(--fg);font:500 24px/1 var(--font-body);cursor:pointer}
 .plus-box:hover,.plus-box[aria-expanded="true"]{background:var(--accent);color:var(--accent-fg)}
 .box-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:min(320px,calc(100vw - 32px));background:var(--cal-cell,#1a1424);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 14px 36px rgba(0,0,0,.45)}
 .box-pop[hidden]{display:none}
 /* ---------- v4: icons side by side, resizable boxes, choice boxes, gallery ---------- */
-.side-top{flex-wrap:wrap}
-.icon-stack{flex-direction:row;gap:6px;margin-left:0}
+.side-top{display:flex;align-items:center;gap:10px;padding:0 6px 6px;flex-wrap:wrap}
+.icon-stack{display:flex;flex-direction:row;gap:6px;margin-left:0}
 .shell.collapsed{grid-template-columns:84px minmax(0,1fr)}
 .shell.collapsed .side{padding:14px 8px}
 .shell.collapsed .side-top{align-items:center}
-textarea{resize:both;max-width:100%}
+textarea{min-height:88px;font-family:var(--font-mono);font-size:12px;resize:both;max-width:100%}
 .rev-cols>div:empty,.plan-grid>div:empty,.form-grid>div:empty{display:none}
 .cbox-head label{margin:0;flex:1;min-width:0}
 .cbox-opts{margin:0 0 8px}
@@ -398,7 +382,6 @@ tr.sec td{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var
 #tradeForm textarea.prose.short{min-height:64px}
 #tradeForm .preview{margin-top:12px}
 #tradeForm .actions{margin-top:12px}
-
 /* trade detail */
 tr[data-trow]{cursor:pointer}
 tr[data-trow]:hover td{background:rgba(255,255,255,.05)}
@@ -504,7 +487,6 @@ body.box-dragging,body.box-dragging *{user-select:none!important;cursor:grabbing
 .wi-key{display:inline-block;width:14px;height:3px;vertical-align:middle;margin:0 4px 0 8px}.wi-key-act{background:var(--accent)}.wi-key-alt{background:var(--warn)}
 .banner.stopbar{background:color-mix(in srgb,var(--loss) 16%,var(--surface));color:var(--fg);border:1px solid var(--loss)}
 .banner.stopbar b{color:var(--loss);font-weight:700}
-.remind{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:10px 14px}
 .rem-list{list-style:none;margin:0;padding:0}
 .rem-list li{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
 .rem-list li:last-child{border-bottom:0}
@@ -551,7 +533,6 @@ input[readonly]{background:var(--surface-2);color:var(--muted)}
 .prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
 .prop-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
 .prop-head{margin-bottom:10px}
-.prop-row{display:flex;justify-content:space-between;gap:10px;font-size:13px}
 .prop-status{font-size:13px;font-weight:500;margin:6px 0 0}
 .pay-list{display:flex;flex-direction:column;gap:4px;margin:6px 0}
 .pay-row{display:flex;align-items:center;gap:8px;font-size:13px}
@@ -573,7 +554,7 @@ table.odds th,table.odds td{padding:6px 4px;font-size:12px;white-space:nowrap}
 table.odds th{white-space:normal;letter-spacing:.02em}
 table.odds th:first-child,table.odds td:first-child{width:30%;padding-left:0}
 table.odds th:last-child,table.odds td:last-child{padding-right:0}
-.prop-row{flex-wrap:wrap}
+.prop-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;flex-wrap:wrap}
 .prop-row>span:last-child{margin-left:auto}
 .dbox>.panel{flex:1 1 auto}
 .dbox>.strip.oneline{width:auto}
@@ -648,7 +629,6 @@ th{white-space:normal}
 .dgrid{gap:12px 16px}
 main{gap:16px}
 .tt td.wrap{white-space:normal;min-width:96px;max-width:150px}
-.tt td.notes{max-width:180px}
 /* ---------- v35: light theme, drawing, chart legend, shortcuts ---------- */
 html[data-mode="light"]:root:root:root{--surface-2:rgba(0,0,0,.05);--line:rgba(10,20,40,.13);--gain:#0e7a3c;--loss:#c0262d;--warn:#8a5a00;--warn-bg:#fff4d6;color-scheme:light}
 html[data-mode="light"] body::before{background:var(--bgimg,#eef2f8)}
@@ -689,7 +669,7 @@ kbd{font-family:var(--font-body);font-size:12px;border:1px solid var(--line);bor
 /* the merge preview: one group per part, each item with its own tick */
 #dataMsg:not(:empty){margin-top:12px}
 /* quick log: big targets for thumbs */
-.ql{max-width:560px;margin:0 auto}.ql-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ql{font-weight:600;font-size:13px;max-width:560px;margin:0 auto}.ql-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .ql-label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
 .ql-chips{display:flex;flex-wrap:wrap;gap:8px}
 .ql-chip{font:inherit;font-weight:600;padding:10px 14px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);cursor:pointer}
@@ -777,7 +757,7 @@ details.hist li{margin:0 0 6px;line-height:1.45}
 .app-bk{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;max-height:320px;overflow:auto}
 .app-bk-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-top:1px solid var(--line);font-size:13px}
 .app-bk-row:first-child{border-top:0}
-#appNote{margin:0 0 16px}
+#appNote{margin:0}
 /* ---------- v59: life journal extras ---------- */
 .life-seg .seg-row{flex-wrap:wrap}
 .seg-gap{width:1px;align-self:stretch;background:var(--line);margin:0 6px}
@@ -812,7 +792,7 @@ ul.plain{list-style:none;margin:0;padding:0}ul.plain li{margin:0 0 6px;font-size
 .px-sum{font-size:12px;color:var(--muted);padding-left:8px;white-space:nowrap}
 .px-sum b{color:var(--fg)}
 @media (max-width:760px){.px-full .px-row{grid-template-columns:26px repeat(31,minmax(0,1fr));gap:2px}.px-sum{display:none}}
-#checkinBox{margin:0 0 16px}
+#checkinBox{margin:0}
 .checkin .qc-head{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}.checkin .qc-head .rem-one{margin-left:auto}
 .qc-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 .qc-row>label{margin:0;font-size:13px;color:var(--muted)}
@@ -873,7 +853,6 @@ body.locked .shell{visibility:hidden}
 .tt td:first-child{white-space:nowrap}
 .tt td:first-child .tag{display:inline-block;margin:0 0 0 6px;vertical-align:1px}
 .tt td{vertical-align:middle;white-space:nowrap}
-.tt td.notes{max-width:260px;overflow:hidden;text-overflow:ellipsis}
 #tab-trades .tt td:last-child{white-space:nowrap}
 /* filters share one row when there is room */
 #tab-trades .filters>div{flex:1 1 120px!important}
@@ -888,7 +867,7 @@ body.locked .shell{visibility:hidden}
 /* calmer spacing and headings across panels */
 .panel>h2:first-child{margin-top:0}
 .panel h2.sub{letter-spacing:.06em}
-.empty{padding:22px 12px}
+.empty{color:var(--muted);text-align:center;padding:22px 12px}
 /* ---------- v70: tab icons; the sidebar sits against the left edge of the window and collapses to a rail of icons ---------- */
 .nav-ico{width:18px;height:18px;flex:none}
 #nav button,.side-add{display:flex;align-items:center;gap:11px}
@@ -932,7 +911,7 @@ body.locked .shell{visibility:hidden}
   .free>[data-bk] textarea{flex:none;height:auto!important;min-height:90px}#arrBtn{display:none!important}}
 /* Arrange mode */
 .arr-btn svg{display:block}
-.box-tools{display:flex;gap:8px;align-items:center}
+.box-tools{position:relative;margin-left:auto;align-self:center;display:flex;gap:8px;align-items:center}
 .arr-btn.on{background:var(--accent);color:var(--accent-fg)}
 body.arranging{padding-bottom:110px}
 body.arranging .arr-on{position:relative;min-height:120px;border-radius:10px;outline:1px dashed var(--line);outline-offset:8px;
@@ -985,11 +964,26 @@ body.arranging .lbl-edit:hover{text-decoration-color:var(--accent)}
 /* more kinds of your own boxes */
 .seg-mini.box-kinds{flex-wrap:wrap}
 .cbox-tags{margin-top:2px}
-</style>
+/* ---------- 2.28 cleanup: Dashboard tabs, one-line reminders, slimmer banners, Trades table, account fields ---------- */
+#tab-dash>.dash-tabs{margin:0 0 16px;padding:8px 10px}
+.dash-tabs .seg{display:flex;flex-wrap:wrap;gap:6px}
+.remind{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:8px 14px}
+.remind.rem-short{display:flex;align-items:center;gap:10px}
+.remind.rem-short .rem-list{flex:1 1 auto;min-width:0}
+.remind.rem-short .rem-list li{border-bottom:0;padding:2px 0}
+.remind.rem-short .rem-list li:nth-child(n+2){display:none}
+.remind.rem-short .rem-foot{margin:0;flex:0 0 auto}
+#exBanner{padding:7px 14px;font-size:13px}
+#exBanner .btn{padding-top:4px;padding-bottom:4px}
+.dsave-note{font-size:12px;margin:2px 4px 0;text-align:right}
+.acct-row [hidden]{display:none!important}
+.tt td.num,.tt th.num{padding-left:9px;padding-right:9px}
+.tt td.notes{min-width:120px;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+@media (max-width:760px){.remind.rem-short{flex-wrap:wrap}.dash-tabs .seg .btn{flex:1 1 auto}}</style>
 
 <div class="wrap shell">
   <aside class="side">
-    <div class="side-top"><div class="avatar" id="avatar" aria-hidden="true">DT</div><span class="side-name" id="sideName">Trade Ledger</span><div class="icon-stack"><button class="icon-btn" id="sideToggle" type="button" aria-label="Hide tabs" aria-expanded="true" title="Hide tabs"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button class="icon-btn" data-tab="data" id="gearBtn" type="button" aria-label="Settings, setup and data" title="Settings, setup and data"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div></div>
+    <div class="side-top"><div class="avatar" id="avatar" aria-hidden="true">TV</div><span class="side-name" id="sideName">TradeVault</span><div class="icon-stack"><button class="icon-btn" id="sideToggle" type="button" aria-label="Hide tabs" aria-expanded="true" title="Hide tabs"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button class="icon-btn" data-tab="data" id="gearBtn" type="button" aria-label="Settings, setup and data" title="Settings, setup and data"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div></div>
     <nav id="nav" aria-label="Sections">
       <button data-tab="dash" aria-current="page">Dashboard</button>
       <button data-tab="cal">Calendar</button>
@@ -1006,7 +1000,7 @@ body.arranging .lbl-edit:hover{text-decoration-color:var(--accent)}
   </aside>
   <div class="content">
   <header class="top">
-    <h1><span id="siteTitle">Day Trade Ledger</span><small>Futures trades, stats and reviews. Stored in this browser only.</small></h1>
+    <h1><span id="siteTitle">TradeVault</span><small>Futures trades, stats and reviews. Stored in this browser only.</small></h1>
     <div class="box-tools"><button class="plus-box arr-btn" id="arrBtn" type="button" hidden aria-pressed="false" title="Arrange this page: move, resize, rename or hide its boxes" aria-label="Arrange this page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke-dasharray="2.5 2"/></svg></button><button class="plus-box" id="boxPlus" type="button" aria-label="Add a text box to this tab" aria-expanded="false" aria-controls="boxPop" title="Add a text box">+</button>
       <div class="box-pop" id="boxPop" hidden role="dialog" aria-label="Add a text box">
         <label>Kind of box</label>
@@ -1169,8 +1163,8 @@ function migrate(){
   if(!st.hidden||typeof st.hidden!=='object'||Array.isArray(st.hidden))st.hidden={};
   if(!state.sizes||typeof state.sizes!=='object'||Array.isArray(state.sizes))state.sizes={};
   if(!st.titles||typeof st.titles!=='object')st.titles={};
-  if(typeof st.titles.main!=='string')st.titles.main='Day Trade Ledger';
-  if(typeof st.titles.side!=='string')st.titles.side='Trade Ledger';
+  if(typeof st.titles.main!=='string')st.titles.main='TradeVault';
+  if(typeof st.titles.side!=='string')st.titles.side='TradeVault';
   Object.keys(state.plans||{}).forEach(function(k){delete state.plans[k].setups});
   /* journals still showing the examples get 25 more example trades, once */
   if(!st.ex25&&state.trades.some(function(t){return t.ex})){moreExamples(25);st.ex25=true}
@@ -1300,7 +1294,10 @@ document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' '
 document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('g-follow'))return;var gid=el.dataset.g;
   collectAccounts();save();renderData();renderAcctCard();var g=grpById(gid),f=grpFollow(gid);if(g)toast(f?g.name+' now follows the '+grpById(f).name+' leader. Set its size in the leader row.':g.name+' follows its own leader only')});
 /* the payout rules appear as soon as an account's stage is set to Funded */
-document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('a-prop'))return;var row=el.closest('.acct-row'),pr=row&&row.querySelector('.a-payrow');if(pr)pr.hidden=el.value!=='funded'});
+document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('a-prop'))return;var row=el.closest('.acct-row'),pr=row&&row.querySelector('.a-payrow');if(pr)pr.hidden=el.value!=='funded';if(row)row.querySelectorAll('.a-propon').forEach(function(x){x.hidden=el.value==='none'})});
+/* drawdown fields show only for a rule that uses them: the amount for any rule, the known high and stop trailing for trailing ones */
+document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('a-ddtype'))return;var row=el.closest('.acct-row');if(!row)return;
+  row.querySelectorAll('.a-ddon').forEach(function(x){x.hidden=el.value==='none'});row.querySelectorAll('.a-trailon').forEach(function(x){x.hidden=!/^trail/.test(el.value)})});
 function soloChk(g){return '<label class="chk" style="margin:0;flex:1 1 260px" title="Each account in this group has its own trades, and none copies another"><input class="g-solo" data-g="'+esc(g.id)+'" type="checkbox"'+(g.solo?' checked':'')+'> No leader: each account trades on its own</label>'}
 /* switching a group to no leader (or back) saves straight away; trades already logged keep counting the way they were logged */
 document.addEventListener('change',function(e){var el=e.target;if(!el.classList||!el.classList.contains('g-solo'))return;
@@ -1392,18 +1389,18 @@ function acctRowHTML(a,i){
     '<button class="btn small" type="button" data-acct-arch="'+i+'" title="Passed, failed or closed: keep its history and take it off the Dashboard">Archive</button>'+archBox+
     '<div style="flex-basis:100%;height:0"></div>'+
     '<div style="flex:2 1 200px"><label>Max drawdown rule</label>'+typeSel+'</div>'+
-    '<div style="'+fl+'"><label>Max drawdown, $</label><input class="a-dd" type="number" step="any" min="0" aria-label="Max drawdown in dollars" value="'+(a.dd>0?a.dd:'')+'" placeholder="e.g. 2000"></div>'+
-    '<div style="'+fl+'"><label>Known high, optional</label><input class="a-hi" type="number" step="any" min="0" aria-label="Highest balance the limit trails from, if it was set before your journal" title="The highest end-of-day balance (or, for intraday trailing, the highest balance) before you started this journal" value="'+(a.hi>0?a.hi:'')+'" placeholder="auto"></div>'+
+    '<div class="a-ddon" style="'+fl+'"'+(a.ddType&&a.ddType!=='none'?'':' hidden')+'><label>Max drawdown, $</label><input class="a-dd" type="number" step="any" min="0" aria-label="Max drawdown in dollars" value="'+(a.dd>0?a.dd:'')+'" placeholder="e.g. 2000"></div>'+
+    '<div class="a-trailon" style="'+fl+'"'+(/^trail/.test(a.ddType||'')?'':' hidden')+'><label>Known high, optional</label><input class="a-hi" type="number" step="any" min="0" aria-label="Highest balance the limit trails from, if it was set before your journal" title="The highest end-of-day balance (or, for intraday trailing, the highest balance) before you started this journal" value="'+(a.hi>0?a.hi:'')+'" placeholder="auto"></div>'+
     '<div style="'+fl+'"><label>Daily loss limit, $</label><input class="a-dll" type="number" step="any" min="0" aria-label="The firm&#39;s daily loss limit for this account" title="Your firm&#39;s daily loss limit for this account, at its own size. Leave blank if there is none." value="'+(a.dll>0?a.dll:'')+'" placeholder="none"></div>'+
     '<div style="'+fl+'"><label>Max contracts</label><input class="a-maxqty" type="number" step="any" min="0" aria-label="Most contracts this account may hold, in full-size contracts" title="In full-size contracts: 10 micros count as 1. Leave blank if there is no limit." value="'+(a.maxQty>0?a.maxQty:'')+'" placeholder="none"></div>'+
-    '<div style="flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px"><label class="chk" style="margin:0"><input class="a-lock" type="checkbox"'+(a.lock?' checked':'')+'> Stop trailing once the limit reaches the starting balance plus</label>'+
+    '<div class="a-trailon" style="flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px"'+(/^trail/.test(a.ddType||'')?'':' hidden')+'><label class="chk" style="margin:0"><input class="a-lock" type="checkbox"'+(a.lock?' checked':'')+'> Stop trailing once the limit reaches the starting balance plus</label>'+
       '<span style="display:inline-flex;align-items:center;gap:4px">$<input class="a-lockadd" type="number" step="any" min="0" aria-label="Amount above the starting balance where the limit stops trailing" value="'+(isFinite(a.lockAdd)&&a.lockAdd!==null?+a.lockAdd:100)+'" style="width:90px"></span>'+
       '<span class="muted" style="font-size:12px">'+(a.start>0?'Stops at '+money(lockLevel(a))+'.':'')+'</span></div>'+
     '<div style="flex-basis:100%;height:0"></div>'+
     '<div style="flex:2 1 200px"><label>Prop firm stage</label><select class="a-prop" aria-label="Prop firm stage">'+[['none','Not a prop account'],['eval','Evaluation'],['funded','Funded']].map(function(o){return '<option value="'+o[0]+'"'+((a.prop||'none')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
-    '<div style="'+fl+'"><label>Profit target, $</label><input class="a-target" type="number" step="any" min="0" aria-label="Profit target in dollars" value="'+(a.target>0?a.target:'')+'" placeholder="e.g. 3000"></div>'+
-    '<div style="'+fl+'"><label>Minimum trading days</label><input class="a-mindays" type="number" step="1" min="0" aria-label="Minimum trading days" value="'+(a.minDays>0?a.minDays:'')+'" placeholder="e.g. 5"></div>'+
-    '<div style="'+fl+'"><label>Consistency rule, %</label><input class="a-cons" type="number" step="any" min="0" max="100" aria-label="Best day may be at most this percent of total profit" value="'+(a.cons>0?a.cons:'')+'" placeholder="e.g. 50"></div>'+
+    '<div class="a-propon" style="'+fl+'"'+(a.prop&&a.prop!=='none'?'':' hidden')+'><label>Profit target, $</label><input class="a-target" type="number" step="any" min="0" aria-label="Profit target in dollars" value="'+(a.target>0?a.target:'')+'" placeholder="e.g. 3000"></div>'+
+    '<div class="a-propon" style="'+fl+'"'+(a.prop&&a.prop!=='none'?'':' hidden')+'><label>Minimum trading days</label><input class="a-mindays" type="number" step="1" min="0" aria-label="Minimum trading days" value="'+(a.minDays>0?a.minDays:'')+'" placeholder="e.g. 5"></div>'+
+    '<div class="a-propon" style="'+fl+'"'+(a.prop&&a.prop!=='none'?'':' hidden')+'><label>Consistency rule, %</label><input class="a-cons" type="number" step="any" min="0" max="100" aria-label="Best day may be at most this percent of total profit" value="'+(a.cons>0?a.cons:'')+'" placeholder="e.g. 50"></div>'+
     /* payout rules show for funded accounts only; they stay in the row (hidden) so switching the stage keeps them */
     '<div class="a-payrow" style="flex:1 1 100%;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end"'+(a.prop==='funded'?'':' hidden')+'>'+
       '<div style="'+fl+'"><label>Your profit split, %</label><input class="a-split" type="number" step="any" min="0" max="100" aria-label="Your share of each payout, in percent" title="The share of each payout you keep, like 90. The firm keeps the rest." value="'+(a.split>0&&a.split<100?a.split:'')+'" placeholder="100"></div>'+
@@ -1459,7 +1456,7 @@ function applyPalette(){
   else p=palette(214,60);
   Object.keys(p).forEach(function(k){root.style.setProperty(k,p[k])});
 }
-var DEF_TITLES={main:'Day Trade Ledger',side:'Trade Ledger'};
+var DEF_TITLES={main:'TradeVault',side:'TradeVault'};
 function applyTitles(){
   var T=state.settings.titles,m=(T.main||'').trim()||DEF_TITLES.main,sd=(T.side||'').trim()||DEF_TITLES.side;
   var a=$('#siteTitle');if(a)a.textContent=m;
@@ -1869,25 +1866,25 @@ function renderAdd(){
     '<div class="form-grid">'+
     (multiGrp()?'<div><label for="f-grp" title="The accounts this trade counts for">Account group</label><select id="f-grp">'+(function(cg){return state.settings.groups.map(function(g){var ld=grpLeader(g.id);return '<option value="'+esc(g.id)+'"'+(g.id===cg?' selected':'')+'>'+esc(g.name)+(ld?' ('+esc(ld.name)+')':'')+'</option>'}).join('')})(fg)+'</select></div>':'')+
     '<div id="f-acctBox"'+(acctBoxOn(fg,t)?'':' hidden')+'><label for="f-acct" title="The account this trade was taken on. Every account in the group copies it to the followers">Account</label><select id="f-acct">'+acctOpts(fg,t.acct,!grpSolo(fg)||!!ui.editId&&!t.acct)+'</select></div>'+
-    '<div><label for="f-date"'+(tdStart()!=null?' title="The day you placed it. From '+esc(hhmm(tdStart()))+' on, a trade counts toward the next trading day."':'')+'>Date</label><input id="f-date" type="date" value="'+esc(calDate(t))+'"></div>'+
-    '<div><label for="f-time">Entry time</label><input id="f-time" type="time" value="'+esc(t.time||'')+'"></div>'+
-    '<div><label for="f-xtime" title="When you were fully out. With the entry time it gives the hold time.">Exit time</label><input id="f-xtime" type="time" value="'+esc(t.xtime||'')+'"></div>'+
-    '<div><label for="f-xdate" title="Only for trades held overnight or longer. Leave blank for a same-day trade.">Exit date, if a later day</label><input id="f-xdate" type="date" value="'+esc(t.xdate||'')+'"></div>'+
     '<div><label for="f-ticker">Contract</label><input id="f-ticker" type="text" list="contractList" autocapitalize="characters" autocomplete="off" placeholder="ESZ6" value="'+esc(t.ticker)+'"></div>'+
     '<div><label for="f-side">Side</label><select id="f-side"><option'+(t.side==='Long'?' selected':'')+'>Long</option><option'+(t.side==='Short'?' selected':'')+'>Short</option></select></div>'+
-    '<div><label for="f-setup">Setup</label><select id="f-setup">'+optionList(state.settings.setups,t.setup)+'</select></div>'+
     '<div><label for="f-qty">Contracts</label><input id="f-qty" type="number" step="any" min="0" inputmode="decimal" value="'+v(t.qty)+'"></div>'+
+    '<div><label for="f-setup">Setup</label><select id="f-setup">'+optionList(state.settings.setups,t.setup)+'</select></div>'+
     '<div><label for="f-entry">Entry price</label><input id="f-entry" type="number" step="any" min="0" inputmode="decimal" value="'+v(t.entry)+'"></div>'+
     '<div><label for="f-exit">Exit price</label><input id="f-exit" type="number" step="any" min="0" inputmode="decimal" value="'+v(t.exit)+'"></div>'+
     '<div><label for="f-stop">Stop price</label><input id="f-stop" type="number" step="any" min="0" inputmode="decimal" value="'+v(t.stop)+'"></div>'+
     '<div><label for="f-target" title="Where you planned to take profit when you entered">Target price</label><input id="f-target" type="number" step="any" min="0" inputmode="decimal" placeholder="optional" value="'+v(t.target)+'"></div>'+
+    '<div><label for="f-date"'+(tdStart()!=null?' title="The day you placed it. From '+esc(hhmm(tdStart()))+' on, a trade counts toward the next trading day."':'')+'>Date</label><input id="f-date" type="date" value="'+esc(calDate(t))+'"></div>'+
+    '<div><label for="f-time">Entry time</label><input id="f-time" type="time" value="'+esc(t.time||'')+'"></div>'+
+    '<div><label for="f-xtime" title="When you were fully out. With the entry time it gives the hold time.">Exit time</label><input id="f-xtime" type="time" value="'+esc(t.xtime||'')+'"></div>'+
+    '<div><label for="f-xdate" title="Only for trades held overnight or longer. Leave blank for a same-day trade.">Exit date, if a later day</label><input id="f-xdate" type="date" value="'+esc(t.xdate||'')+'"></div>'+
+    '<div><label for="f-be">Result</label><select id="f-be" title="Breakeven trades count toward P&amp;L but not toward wins or losses"><option value="">Automatic</option><option value="be"'+(t.be?' selected':'')+'>Breakeven</option><option value="no"'+(t.notBe?' selected':'')+'>Win or loss, not breakeven</option></select></div>'+
+    '<div><label for="f-plan">Followed plan?</label><select id="f-plan"><option'+(t.plan==='Yes'?' selected':'')+'>Yes</option><option'+(t.plan==='No'?' selected':'')+'>No</option></select></div>'+
+    '<div><label for="f-egrade" title="How well you executed the setup, whatever the result">Execution grade</label><select id="f-egrade"><option value="">Not graded</option>'+withCur(egrades(),t.egrade).map(function(g){return '<option'+(g===t.egrade?' selected':'')+'>'+esc(g)+'</option>'}).join('')+'</select></div>'+
     '<div><label for="f-mae" title="Maximum adverse excursion: the furthest price went against you, in points">Most against you, pts</label><input id="f-mae" type="number" step="any" min="0" inputmode="decimal" placeholder="MAE" value="'+v(t.mae)+'"></div>'+
     '<div><label for="f-mfe" title="Maximum favorable excursion: the furthest price went in your favor, in points">Most in your favor, pts</label><input id="f-mfe" type="number" step="any" min="0" inputmode="decimal" placeholder="MFE" value="'+v(t.mfe)+'"></div>'+
     '<div><label for="f-mult">Point value, $ per point</label><input id="f-mult" type="number" step="any" min="0" inputmode="decimal" placeholder="auto" value="'+v(t.mult)+'"></div>'+
     '<div><label for="f-fee" title="Commissions and fees for the whole trade, in and out. Leave blank to use your rates from Setup &amp; data.">Commissions and fees, $</label><input id="f-fee" type="number" step="any" min="0" inputmode="decimal" placeholder="from your rates" value="'+v(t.fee)+'"></div>'+
-    '<div><label for="f-be">Result</label><select id="f-be" title="Breakeven trades count toward P&amp;L but not toward wins or losses"><option value="">Automatic</option><option value="be"'+(t.be?' selected':'')+'>Breakeven</option><option value="no"'+(t.notBe?' selected':'')+'>Win or loss, not breakeven</option></select></div>'+
-    '<div><label for="f-plan">Followed plan?</label><select id="f-plan"><option'+(t.plan==='Yes'?' selected':'')+'>Yes</option><option'+(t.plan==='No'?' selected':'')+'>No</option></select></div>'+
-    '<div><label for="f-egrade" title="How well you executed the setup, whatever the result">Execution grade</label><select id="f-egrade"><option value="">Not graded</option>'+withCur(egrades(),t.egrade).map(function(g){return '<option'+(g===t.egrade?' selected':'')+'>'+esc(g)+'</option>'}).join('')+'</select></div>'+
     mistakeChipsHTML(t)+condChipsHTML(t)+fillsHTML(t)+
     (hid('f-notes')?'':'<div class="wide">'+lbl('f-notes','Notes and emotions')+'<textarea id="f-notes" class="prose short" placeholder="What did you see, and how did you feel?">'+esc(t.notes)+'</textarea></div>')+entryBoxes('add',t.x,false,'wide')+picsBlock('Chart pictures')+'</div>'+
     ruleChecksHTML(t,!ui.editId)+'<div class="preview" id="preview"></div><div class="err" id="formErr" role="alert"></div>'+
@@ -2448,7 +2445,7 @@ function importCSV(text){
 }
 /* ---------- Setup & data: five subsections, one shown at a time ---------- */
 var DATA_SUBS=[['accounts','Accounts'],['trading','Trading'],['lists','Lists'],['alerts','Alerts & reminders'],['backup','Backup & data'],['privacy','Privacy']];
-/* subsections that save on their own, so the Save settings bar is hidden there */
+/* subsections with their own buttons and files, left out of saving as you type */
 var DATA_NOSAVE=['backup','privacy'];
 function feeGridHTML(vals){var s=state.settings;vals=vals||{};
   return '<div class="fee-grid" id="feeGrid">'+FEE_ORDER.filter(function(r){return CONTRACTS[r]}).concat(ROOTS.filter(function(r){return FEE_ORDER.indexOf(r)<0})).concat(['*']).map(function(r){
@@ -2486,24 +2483,23 @@ function renderData(){
   var trading=sec('trading','<h2>Trading</h2>'+
     '<h2 class="sub">Risk and position size</h2>'+
     '<label for="s-risk">Most I risk on one trade, $</label><input id="s-risk" type="number" min="0" step="any" value="'+esc(s.riskPerTrade>0?s.riskPerTrade:'')+'" placeholder="e.g. 200" style="max-width:160px">'+note('Powers the position size calculator on the Add trade and Premarket tabs, and warns you when a trade risks more. Leave blank to turn the warning off.')+
-    '<label class="chk" style="margin-top:8px"><input id="s-sizecalc" type="checkbox"'+(s.sizeCalc!==false?' checked':'')+'> Show the position size calculator</label>'+note('Untick to remove it from the Add trade and Premarket tabs. The over-limit warning stays while a risk amount is set. Changes right away.')+
+    '<label class="chk" style="margin-top:8px"><input id="s-sizecalc" type="checkbox"'+(s.sizeCalc!==false?' checked':'')+'> Show the position size calculator</label>'+note('Untick to remove it from the Add trade and Premarket tabs. The over-limit warning stays while a risk amount is set.')+
     '<h2 class="sub" style="margin-top:20px">Breakeven</h2>'+
     '<label for="s-be">Breakeven range, $</label><input id="s-be" type="number" min="0" step="any" value="'+esc(isFinite(s.beRange)?s.beRange:10)+'" style="max-width:160px">'+note('Trades that net within plus or minus this amount count as breakeven, unless you set Result on the trade.')+
     '<h2 class="sub" style="margin-top:20px">Commissions and fees</h2>'+
     '<p class="help">Enter your all-in <b>round-trip</b> cost per contract: broker commission plus exchange, clearing, NFA and platform fees, in and out. The surest way to get it is to take one recent trade from your broker or prop firm statement and divide its total fees by the number of contracts. Rates differ by broker and change over time, so the journal does not guess them. Leave a contract blank to use the Other rate. New trades keep the rate in force when you save them, so changing a rate later does not rewrite those. Older trades with no fee saved use the current rate.</p>'+
     feeGridHTML()+
-    '<h2 class="sub" style="margin-top:20px">Contracts <span class="saves-now">saves right away</span></h2>'+
+    '<h2 class="sub" style="margin-top:20px">Contracts</h2>'+
     '<p class="help">The point value and tick size of every contract the journal knows. Typing a contract on the Add trade form fills in its point value from here. Add your own, change one, or remove one you never trade. A contract you add gets its own fee box above.</p>'+
     '<div id="ctBox">'+contractsHTML()+'</div>'+
-    '<div style="height:20px"></div>'+tdefHTML());
+    '<div style="height:20px"></div>'+tdefHTML()+sessSetHTML());
   var lists=sec('lists','<h2>Lists</h2>'+
     '<h2 class="sub">Your lists</h2><div class="lists4 lists5">'+
       '<div><label for="s-setups">Setups</label><textarea id="s-setups">'+esc(s.setups.join('\n'))+'</textarea></div>'+
       '<div><label for="s-mist">Mistake tags</label><textarea id="s-mist">'+esc(s.mistakes.join('\n'))+'</textarea></div>'+
       '<div><label for="s-check">Premarket checklist</label><textarea id="s-check">'+esc((s.premarketChecks||[]).join('\n'))+'</textarea></div>'+
       '<div><label for="s-cond">Market conditions</label><textarea id="s-cond">'+esc((s.conditions||[]).join('\n'))+'</textarea></div>'+
-      '<div><label for="s-life">Life journal habits</label><textarea id="s-life">'+esc((s.lifeHabits||[]).join('\n'))+'</textarea></div>'+
-    '</div>'+note('One item per line in each list. Press Save settings to keep changes here.')+
+    '</div>'+note('One item per line in each list. Life journal habits and prompts are with the other Life journal settings in Customize, Pages.')+
     '<div style="height:20px"></div>'+dropdownListsHTML());
   var alerts=sec('alerts','<h2>Alerts &amp; reminders</h2>'+
     '<h2 class="sub">Tilt warning</h2><div class="tilt-row" style="margin-top:0">'+
@@ -2511,18 +2507,18 @@ function renderData(){
       '<div><label for="s-tiltspan">Count those losses</label><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="s-tiltspan" style="max-width:320px">'+TILT_SPANS.map(function(o){return '<option value="'+o[0]+'"'+((s.tiltSpan||'day')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'+
       '<span id="s-tiltwin-wrap" style="display:'+(s.tiltSpan==='days'||s.tiltSpan==='hours'?'flex':'none')+';gap:6px;align-items:center"><input id="s-tiltwin" type="number" min="1" step="1" value="'+esc(s.tiltWin>0?s.tiltWin:2)+'" style="width:90px" aria-label="How many"><span id="s-tiltwin-unit">'+(s.tiltSpan==='hours'?'hours':'days')+'</span></span></div></div></div>'+
     note('Shows a warning on the Add trade tab. Set 0 to turn it off. '+TILT_HELP)+tiltExtraHTML()+
-    '<h2 class="sub" style="margin-top:20px">Daily limits <span class="saves-now">saves right away</span></h2>'+
+    '<h2 class="sub" style="margin-top:20px">Daily limits</h2>'+
       cChk('stopBanner',s.stopBanner!==false,'Show a stop banner on every tab when I reach my daily loss or trade limit')+
       '<div class="tilt-row" style="margin-top:8px"><div><label>Max daily loss, on days the premarket plan doesn’t set one</label>'+cIn('dayLossLimit',+s.dayLossLimit>0?s.dayLossLimit:'','type="number" min="0" step="any" data-ct="num" style="max-width:160px" placeholder="none"')+'</div>'+
       '<div><label>Max trades per day, on days the plan doesn’t set one</label>'+cIn('dayTradeLimit',+s.dayTradeLimit>0?s.dayTradeLimit:'','type="number" min="0" step="1" data-ct="num" style="max-width:160px" placeholder="none"')+'</div></div>'+
       note('A warning shows once you are within 20% of the loss limit, and a stop banner once you reach either limit. The max loss and max trades in a day’s premarket plan always win. Your own rule about losses, if you wrote one on the Rules tab, is shown with it.')+
-    '<h2 class="sub" style="margin-top:20px">Trading session <span class="saves-now">saves right away</span></h2>'+
+    '<h2 class="sub" style="margin-top:20px">Trading session</h2>'+
       '<div class="rem-row"><label for="s-sessend" style="margin:0">My session ends at</label> <input id="s-sessend" type="time" value="'+esc(sessEnd())+'" style="max-width:140px"> <span class="rem-days">on '+DOW.map(function(d,i){return '<label class="chk"><input type="checkbox" data-sessday="'+i+'"'+(sessDays().indexOf(i)>=0?' checked':'')+'> '+d+'</label>'}).join('')+'</span></div>'+
       note('When the end time passes on a trading day, a banner says your session is over and offers your daily review'+(typeof APP!=='undefined'&&APP?', and a Windows notification pops up':'')+'. Clear the time to turn it off.')+
-    '<h2 class="sub" style="margin-top:20px">Dashboard reminders <span class="saves-now">saves right away</span></h2>'+remindHTML()+
+    '<h2 class="sub" style="margin-top:20px">Dashboard reminders</h2>'+remindHTML()+
     '<h2 class="sub" style="margin-top:20px">Celebrations</h2>'+
     '<label for="s-cheer">When I finish a review</label><select id="s-cheer" style="max-width:320px">'+cheerOpts().map(function(o){return '<option value="'+o[0]+'"'+((s.celebrate||'quiet')===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'+
-    cheerHTML()+note('Upload your own MP3 to play a sound when you finish a review; uploading one turns it on. The sound is saved '+(APP?'in the app':'in this browser')+' and included in Download backup file. Changes right away.'));
+    cheerHTML()+note('Upload your own MP3 to play a sound when you finish a review; uploading one turns it on. The sound is saved '+(APP?'in the app':'in this browser')+' and included in Download backup file.'));
   var backup=sec('backup','<h2>Backup &amp; data</h2>'+
     '<h2 class="sub">Back up and restore</h2>'+
     '<p class="help">'+(APP?'Your journal saves to its file on this computer as you work, and TradeVault backs it up for you (below). ':'Your journal lives in this browser. Clearing site data erases it, so back up now and then. ')+'Download backup file saves everything in one file, pictures included, and Restore from backup file brings it back on any computer, replacing what is there. Download trades as CSV saves your trades as a spreadsheet; to bring trades in from a platform or a journal CSV, use the import button next to New trade on the Add trade tab.</p>'+
@@ -2530,19 +2526,38 @@ function renderData(){
     '<p class="muted" style="font-size:12px;margin:8px 0 0"><b>Logging on your phone:</b> use the journal in your phone’s browser during the day, then tap Download backup file there and bring the file to this computer (email, a cable or a shared folder). Open it here with Restore from backup file, or drop it on this window, and choose <b>Merge into my journal</b>: the phone’s new entries are added and nothing here is replaced.</p>'+
     '<div class="err" id="dataMsg" role="status"></div>'+
     '<p class="muted" style="font-size:13px;margin:12px 0 0" id="bkLast">'+backupLastText()+'</p>'+
-    '<label for="s-bkdays" style="margin-top:10px">Remind me to back up every this many days</label><input id="s-bkdays" type="number" min="0" step="1" value="'+esc(s.backupDays>=0?s.backupDays:7)+'" style="max-width:160px">'+note('Shows a banner at the top when a backup is due. Set 0 to turn it off. Changes right away.')+
+    '<label for="s-bkdays" style="margin-top:10px">Remind me to back up every this many days</label><input id="s-bkdays" type="number" min="0" step="1" value="'+esc(s.backupDays>=0?s.backupDays:7)+'" style="max-width:160px">'+note('Shows a banner at the top when a backup is due. Set 0 to turn it off.')+
     '<div id="bkPwBox">'+bkPwHTML()+'</div>'+
     '<h2 class="sub" style="margin-top:20px">Check my journal</h2><p class="muted" style="font-size:13px;margin:0 0 8px">Looks for duplicate trades, trades missing a stop or setup, trading days without a review, entries that look wrong, and pictures left over from deleted trades.</p>'+
     '<div class="actions" style="margin-top:0"><button class="btn" type="button" id="hcRun">Check my journal</button></div><div id="hcOut"></div>'+
-    '<h2 class="sub" style="margin-top:20px">Settings only</h2><p class="help">Copy your setup to another browser or computer without moving any trades: lists, accounts and groups, layout, colors, reminders and every other setting. Loading a settings file replaces the settings here and keeps your trades, reviews and pictures. Your PIN is never included.</p>'+
-    '<div class="actions" style="margin-top:0"><button class="btn" type="button" id="setDl">Download settings file</button><label class="btn" style="margin:0;cursor:pointer">Load settings file<input id="setFile" type="file" accept=".json,application/json" hidden></label></div>'+
-    '<div class="err" id="setMsg" role="status"></div>'+
+    '<h2 class="sub" style="margin-top:20px">Setup file</h2><p class="help">Everything you set up, without a single trade: Customize, the Dashboard, box templates and layouts, renamed titles, colors, lists, rates, reminders and shortcuts. Load it on your phone or another computer, or keep it as a spare. Trades, reviews, pictures and your PIN are never in it, and loading one leaves them alone. Older settings files load here too.</p>'+
+    '<label class="chk" style="margin:0 0 8px"><input type="checkbox" id="setupAccts"> Include my accounts and groups</label>'+
+    '<div class="actions" style="margin-top:0"><button class="btn" type="button" id="setupSave">Save setup file</button><label class="btn" style="margin:0;cursor:pointer">Load setup file<input id="setupFile" type="file" accept=".json,application/json" hidden></label></div>'+
     '<h2 class="sub" style="margin-top:20px">Reset</h2><p class="help">Removes every trade and restores the default setups, mistake tags and premarket checklist. Reviews and all your other settings are kept. This cannot be undone.</p>'+
     '<div class="actions" style="margin-top:0"><button class="btn danger" id="wipe" type="button">Delete all trades</button></div>');
   var privacy=sec('privacy',privacyHTML());
-  var saveBar='<div class="panel dsave" id="dsave"'+(DATA_NOSAVE.indexOf(sub)>=0?' hidden':'')+'><button class="btn primary" id="saveSettings" type="button">Save settings</button><span class="muted" style="font-size:13px">Saves your changes in every subsection. Anything marked saves right away is already saved.</span></div>';
-  $('#tab-data').innerHTML='<div class="data-stack">'+nav+accounts+trading+lists+alerts+backup+privacy+saveBar+'</div>';
+  $('#tab-data').innerHTML='<div class="data-stack">'+nav+accounts+trading+lists+alerts+backup+privacy+'<p class="muted dsave-note">Changes here save as you make them.</p></div>';
 }
+/* Setup & data saves as you go: every change is kept the moment you leave a box, no Save button */
+function dataSave(){
+    collectAccounts();
+    var lines=function(id){return $(id).value.split('\n').map(function(x){return x.trim()}).filter(Boolean)};
+    state.settings.setups=lines('#s-setups');state.settings.mistakes=lines('#s-mist');state.settings.premarketChecks=lines('#s-check');state.settings.conditions=lines('#s-cond');var rkv=parseFloat($('#s-risk').value);state.settings.riskPerTrade=rkv>0?rkv:0;var bev=parseFloat($('#s-be').value);state.settings.beRange=bev>=0?bev:10;state.settings.celebrate=$('#s-cheer').value;var tlv=parseInt($('#s-tilt').value,10);state.settings.tiltLosses=tlv>=0?tlv:2;
+    state.settings.tiltSpan=$('#s-tiltspan').value;var twv=parseInt($('#s-tiltwin').value,10);state.settings.tiltWin=twv>0?twv:2;
+    var fr={};document.querySelectorAll('#tab-data .fee-in').forEach(function(el){var fv=parseFloat(el.value);if(el.value!==''&&fv>=0)fr[el.dataset.root]=fv});state.settings.feeRates=fr;
+    save();renderAcctCard()}
+/* any change in Setup & data is saved when you leave the box; typing is saved a moment after you stop.
+   Account changes redraw the accounts (balances, leaders, groups) and keep your place */
+var dataTimer=0;
+function dataSaveSoon(){clearTimeout(dataTimer);dataTimer=setTimeout(function(){if(ui.tab==='data'&&$('#tab-data .acct-row, #tab-data #s-setups'))dataSave()},700)}
+function dataSec(el){var s=el&&el.closest&&el.closest('#tab-data .dsec');return s&&DATA_NOSAVE.indexOf(s.dataset.dsec)<0&&el.type!=='file'&&!el.closest('.a-archbox')?s:null}
+document.addEventListener('input',function(e){if(dataSec(e.target))dataSaveSoon()});
+document.addEventListener('change',function(e){var el=e.target,s=dataSec(el);if(!s)return;clearTimeout(dataTimer);
+  setTimeout(function(){if(!document.body.contains(s))return;dataSave();
+    if(s.dataset.dsec!=='accounts')return;
+    /* redraw, then put the cursor back in the box it was in */
+    var a=document.activeElement,cl=a&&a.closest&&a.closest('#tab-data')&&a.className?String(a.className).split(' ')[0]:'',all=cl?[].slice.call(document.querySelectorAll('#tab-data .'+cl)):[],ix=all.indexOf(a),y=window.scrollY;
+    renderData();window.scrollTo(0,y);if(ix>=0){var nb=document.querySelectorAll('#tab-data .'+cl)[ix];if(nb)nb.focus({preventScroll:true})}},0)});
 /* switching subsections only shows and hides them, so anything typed but not saved yet is kept */
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dsub]');if(!b)return;ui.dataSub=b.dataset.dsub;
   document.querySelectorAll('#tab-data [data-dsub]').forEach(function(x){x.classList.toggle('primary',x===b)});
@@ -2804,8 +2819,7 @@ function calFit(){var g=$('#tab-cal .cal');if(!g||!g.offsetParent)return;
   for(var i=0;i<4;i++){g.style.setProperty('--cal-row',row+'px');g.style.setProperty('--cal-k',Math.min(1.35,Math.max(.85,row/100)).toFixed(2));
     var over=g.getBoundingClientRect().height-room;if(over<=0||row<=64)break;row=Math.max(64,row-Math.ceil(over/rows))}}
 window.addEventListener('resize',function(){if(ui.tab==='cal')calFit()});
-/* the calendar is drawn while hidden too, so size it again whenever it comes into view, and once the fonts have loaded */
-var _goCalFit=go;go=function(){var r=_goCalFit.apply(this,arguments);if(ui.tab==='cal')calFit();return r};
+/* the calendar is drawn while hidden too, so go() sizes it again whenever it comes into view, and this does once the fonts have loaded */
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){if(ui.tab==='cal')calFit()});
 
 /* ---------- your own text boxes: templates for the forms, notes for the other tabs ---------- */
@@ -3126,7 +3140,7 @@ function runImport(text,m){
 }
 /* the import button sits beside the New trade title; its help is behind the i next to it */
 function tvHeadHTML(){
-  return '<div class="add-import"><label class="btn primary" style="margin:0;cursor:pointer">Choose TradingView file<input id="tvFile" type="file" accept=".csv,text/csv" hidden></label>'+
+  return '<div class="add-import"><label class="btn primary" style="margin:0;cursor:pointer" title="TradingView, NinjaTrader, Tradovate, Rithmic or a journal CSV">Import trades<input id="tvFile" type="file" accept=".csv,text/csv" hidden></label>'+
     '<span class="info" tabindex="0" aria-label="About importing trades"><span class="info-i" aria-hidden="true">i</span><p class="info-tip" role="tooltip" data-info="1">This button reads exports from TradingView, NinjaTrader, Tradovate and Rithmic, and works out which one it is by itself. It also reads a trades CSV downloaded from Setup &amp; data, Backup &amp; data. Trades you already imported from a platform are skipped, so you can repeat it any time.<br><br><b>Where to get the file:</b><br><b>TradingView:</b> Paper Trading (or your broker) panel, Order History tab, turn on every column, then download Order history.<br><b>NinjaTrader:</b> Trade Performance, Trades tab, right-click and export to CSV. The Executions tab works too, and so does the Orders grid (right-click, Export): each row goes to the account in its Account display name column, and the target comes from the limit order left working during the trade. Import either one, both, or neither: when you import both, in any order, the second one fills in the trades the first one made (stop, target and how it ended from the Orders grid; MAE, MFE and commission from the Trades tab) instead of adding copies, and never changes anything already there.<br><b>Tradovate:</b> Reports, Performance or Orders, then download the CSV.<br><b>Rithmic (R|Trader Pro):</b> Order History, export the completed orders to CSV.<br><br>Filled orders on the same contract are matched into trades from the first fill until you are flat again, and scaling in or out is averaged. Stop price, setup and mistake are not in these exports, so imported trades are marked needs tags on the Trades tab until you fill those in.</p></span></div>';
 }szApply();
 
@@ -3187,7 +3201,7 @@ function lifeScale(id,label,val,low,high){if(hid(id))return '';
 function lifeStreak(){var d=ymd(new Date());if(!state.life[d])d=addDays(d,-1);var n=0;while(state.life[d]){n++;d=addDays(d,-1)}return n}
 function lifeAvg(key,from,to){var sum=0,n=0;Object.keys(state.life).forEach(function(k){if(k>=from&&k<=to){var v=parseFloat(state.life[k][key]);if(isFinite(v)&&v>0){sum+=v;n++}}});return n?sum/n:null}
 function lifeHabitTable(){
-  var hs=state.settings.lifeHabits||[];if(!hs.length)return '<div class="empty">Add habits in Setup &amp; data.</div>';
+  var hs=state.settings.lifeHabits||[];if(!hs.length)return '<div class="empty">Add habits in Settings, Customize, Pages.</div>';
   var end=ymd(new Date()),from=addDays(end,-29),ks=Object.keys(state.life).filter(function(k){return k>=from&&k<=end});
   if(!ks.length)return '<div class="empty">Tick your habits in a few entries to see how often you keep them.</div>';
   /* with habit targets on, a This week column counts this week's ticks against the weekly goal */
@@ -3213,7 +3227,7 @@ function renderLife(){
   var ak=lifeAsk(d),q=e.pq||ak.q||ui.lifeQ[d]||lifePromptFor(d),left=lifeAskLeft(d);
   var habitsHTML=hid('l-habits')?'':'<div>'+lbl('l-habits','Habits')+'<div class="chk-grid">'+
     hs.map(function(x,i){return '<label class="chk" for="l-h-'+i+'"><input type="checkbox" id="l-h-'+i+'" data-lhab="'+esc(x)+'"'+(hv[x]?' checked':'')+'> '+esc(x)+'</label>'}).join('')+'</div>'+
-    (hs.length?'':'<p class="muted" style="margin:0">Add habits in Setup &amp; data.</p>')+'</div>';
+    (hs.length?'':'<p class="muted" style="margin:0">Add habits in Settings, Customize, Pages.</p>')+'</div>';
   var promptHTML=hid('l-prompt')?'':'<div>'+lbl('l-prompt','Prompt for the day')+'<p class="life-prompt-q">'+esc(q)+'</p>'+
     '<textarea id="l-prompt" class="prose short" data-pq="'+esc(q)+'" placeholder="Write your answer">'+esc(e.pa||'')+'</textarea>'+
     (e.pa?'':'<div class="actions" style="margin-top:8px"><button class="btn small" type="button" data-lnewq'+(left===0?' disabled':'')+'>'+(left===0?'No new prompts left for this day':'Give me a different prompt'+(left==null?'':' ('+left+' left)'))+'</button></div>')+'</div>';
@@ -3578,7 +3592,6 @@ function renderCheckin(){var box=$('#checkinBox');if(!box)return;if(!checkinDue(
   box.hidden=false;box.innerHTML='<div class="panel checkin"><div class="qc-head"><b>Quick check-in</b><span class="muted">How are you starting today?</span><button class="rem-one" type="button" id="qcSkip" title="Not today" aria-label="Skip the check-in today">×</button></div>'+
     '<div class="qc-row"><label>Mood</label>'+seg('mood')+'<label>Energy</label>'+seg('energy')+'<label for="qcSleep">Sleep, h</label><input id="qcSleep" type="number" step="0.25" min="0" max="24" inputmode="decimal" placeholder="7.5" value="'+esc(q.sleep||'')+'" style="width:80px">'+
     '<input id="qcLine" type="text" maxlength="200" placeholder="One line about today (optional)" value="'+esc(q.line||'')+'" style="flex:1 1 220px"><button class="btn primary small" type="button" id="qcSave">Save</button></div></div>'}
-var _renderAll59=renderAll;renderAll=function(){_renderAll59();renderCheckin()};
 document.addEventListener('input',function(e){if(e.target.id==='qcSleep'){(ui.qc=ui.qc||{}).sleep=e.target.value}else if(e.target.id==='qcLine'){(ui.qc=ui.qc||{}).line=e.target.value}});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#checkinBox button');if(!b)return;var q=ui.qc=ui.qc||{};
   if(b.dataset.qc){var p=b.dataset.qc.split('|');q[p[0]]=q[p[0]]===+p[1]?null:+p[1];renderCheckin();return}
@@ -3617,7 +3630,7 @@ function renderLifeMonth(){
   var byMood=ks.filter(function(d){return lifeNum(L[d],'mood')!=null}).sort(function(a,b){return lifeNum(L[b],'mood')-lifeNum(L[a],'mood')});
   var dayList=function(list){return list.length?list.map(function(d){return '<li><button class="ltf" type="button" data-lopen="'+d+'">'+esc(shortDate(d))+'</button> mood '+L[d].mood+'/5'+(L[d].feel?', '+esc(L[d].feel.toLowerCase()):'')+'</li>'}).join(''):'<li class="muted">No moods rated.</li>'};
   var list=function(key){var it=ks.filter(function(d){return L[d][key]});return it.length?it.slice(0,12).map(function(d){return bq(shortDate(d),L[d][key])}).join(''):'<p class="muted">Nothing written.</p>'};
-  h+='<div class="rev-duo"><div class="panel"><h2>Habits</h2>'+(hs.length?'<div class="scroll"><table><thead><tr><th>Habit</th><th class="num">Days</th><th class="num">Kept</th><th class="num">'+esc(shortMonth(pm))+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty">Add habits in Setup &amp; data, Lists.</div>')+'</div>'+
+  h+='<div class="rev-duo"><div class="panel"><h2>Habits</h2>'+(hs.length?'<div class="scroll"><table><thead><tr><th>Habit</th><th class="num">Days</th><th class="num">Kept</th><th class="num">'+esc(shortMonth(pm))+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'<div class="empty">Add habits in Settings, Customize, Pages.</div>')+'</div>'+
     '<div class="panel"><h2>Best and hardest days</h2><div class="grid2" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><h2 class="sub">Best moods</h2><ul class="plain">'+dayList(byMood.slice(0,3))+'</ul></div><div><h2 class="sub">Hardest days</h2><ul class="plain">'+(byMood.length>3?dayList(byMood.slice(Math.max(3,byMood.length-3)).reverse()):'<li class="muted">Rate a few more days.</li>')+'</ul></div></div></div></div>';
   if(lfOn('trackers')&&trackers().length){var tr=trackers().map(function(t){var v=ks.map(function(d){return (L[d].trk||{})[t.name]}).filter(function(x){return x!=null}),s=v.reduce(function(a,b){return a+(+b)},0);
       return v.length?'<tr><td>'+esc(t.name)+'</td><td class="num">'+v.length+'</td><td class="num">'+(+(s/v.length).toFixed(2))+(t.unit?' '+esc(t.unit):'')+'</td><td class="num">'+(+s.toFixed(2))+(t.unit?' '+esc(t.unit):'')+'</td></tr>':''}).join('');
@@ -3636,7 +3649,7 @@ function lifeCustHTML(){var st=state.settings,hs=st.lifeHabits||[];
   return '<div class="panel"><h2>Life journal</h2><p class="help">Turn each Life journal feature on or off. Turning one off hides it everywhere and keeps anything you already logged. Hiding the Life journal tab in Tabs in the sidebar turns them all off.</p><div class="tf-cust">'+
     LIFE_FEATS.map(function(f){return '<label class="chk" title="'+esc(f[2])+'"><input type="checkbox" data-cs="lifeOff.'+f[0]+'" data-ct="bool"'+((st.lifeOff||{})[f[0]]?'':' checked')+'> '+esc(f[1])+'</label>'}).join('')+'</div>'+
     '<div class="cust-grid" style="margin-top:14px">'+custField('Low readiness is under',cIn('readyLow',readyLow(),'type="number" min="5" max="95" step="5" data-ct="num"'),'Readiness runs from 0 to 100. Under this it shows as Low and Add trade suggests trading smaller. From 70 it is High.')+
-    custField('Your trackers',cLines('trackers',st.trackers||[],5),'One per line, with an optional unit after a bar, like Water | glasses or Workout | minutes.')+'</div>'+
+    custField('Your trackers',cLines('trackers',st.trackers||[],5),'One per line, with an optional unit after a bar, like Water | glasses or Workout | minutes.')+'</div>'+lifeListsHTML()+
     (hs.length?'<h2 class="sub" style="margin-top:14px">Habit targets, days a week</h2><div class="trk-grid">'+hs.map(function(h,i){return '<div><label for="ht-'+i+'">'+esc(h)+'</label><input id="ht-'+i+'" type="number" min="0" max="7" step="1" data-htarget="'+esc(h)+'" value="'+(habitTarget(h)||'')+'" placeholder="none"></div>'}).join('')+'</div>':'')+'</div>'}
 document.addEventListener('change',function(e){var el=e.target;if(!el.dataset||el.dataset.htarget===undefined)return;var st=state.settings,v=parseInt(el.value,10);st.habitTargets=st.habitTargets||{};
   if(v>0)st.habitTargets[el.dataset.htarget]=Math.min(7,v);else delete st.habitTargets[el.dataset.htarget];save();toast('Saved')});
@@ -3843,22 +3856,6 @@ document.addEventListener('click',function(e){
   if(b.dataset.gdel!==undefined){if(b.dataset.armed){state.goals=state.goals.filter(function(x){return x.id!==g.id});ui.goalOpen=null;save();renderGoals();toast('Goal deleted')}else{b.dataset.armed='1';b.textContent='Click again to delete'}return}
 });
 
-/* ---------- settings only: download them, or load them into another browser ---------- */
-var SET_SKIP=['pin','pinEmail','lastGrp','lastAcct'];
-function settingsOut(){var o=JSON.parse(JSON.stringify(state.settings));SET_SKIP.forEach(function(k){delete o[k]});return o}
-document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
-  if(b.id==='setDl'){saveOut('trade-journal-settings-'+ymd(new Date())+'.json',JSON.stringify({app:'dayTradeLedger',kind:'settings',version:1,saved:new Date().toISOString(),settings:settingsOut()}),'application/json').then(function(p){if(p)toast('Settings file saved')});return}
-  if(b.id==='setConfirm'&&ui.pendingSet){var keep={};SET_SKIP.forEach(function(k){if(state.settings[k]!==undefined)keep[k]=state.settings[k]});
-    var ns=ui.pendingSet;ui.pendingSet=null;Object.keys(keep).forEach(function(k){ns[k]=keep[k]});
-    /* if trades here belong to groups the file does not have, keep this browser's accounts and groups so no trade loses its group */
-    var ids=(ns.groups||[]).map(function(g){return g.id}),clash=state.trades.some(function(t){return t.grp&&ids.indexOf(t.grp)<0});
-    if(clash){ns.groups=state.settings.groups;ns.accounts=state.settings.accounts}
-    state.settings=ns;migrate();save();renderAll();applyLook();applyTitles();toast(clash?'Settings loaded. Your accounts and groups here were kept, since your trades use them':'Settings loaded')}});
-document.addEventListener('change',function(e){if(e.target.id!=='setFile'||!e.target.files[0])return;var f=e.target.files[0];e.target.value='';var fr=new FileReader(),m=$('#setMsg');
-  fr.onload=function(){try{var o=JSON.parse(String(fr.result));if(!o||o.kind!=='settings'||!o.settings||typeof o.settings!=='object')throw new Error('bad');
-      ui.pendingSet=o.settings;m.innerHTML='Settings from '+esc(o.saved?shortDate(ymd(new Date(o.saved))):'an earlier date')+'. Loading them replaces every setting '+(APP?'in the app':'in this browser')+'; trades, reviews and pictures stay. <button class="btn small danger" type="button" id="setConfirm">Replace my settings</button>';m.className='help'}
-    catch(err){m.textContent=/full-backup/.test(String(fr.result).slice(0,200))?'That is a full backup. Use Restore from backup file above.':'That file is not a settings file from this journal.';m.className='err'}};
-  fr.readAsText(f)});
 /* ---------- backup file that includes pictures ---------- */
 function blobToData(blob){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(String(fr.result))};fr.onerror=function(){rej(fr.error)};fr.readAsDataURL(blob)})}
 /* saving a file: a Windows Save dialog in the app, a normal download in a browser; resolves to the path (app), true (browser) or false if cancelled */
@@ -4465,7 +4462,6 @@ function renderLimit(){var box=$('#limitBox');if(!box)return;var today=tday(),L=
     '<button class="btn small" type="button" data-limitok="'+L.level+'">'+(L.level==='stop'?'I’m done for today':'Got it')+'</button></div>';
   /* in the app, a Windows notification too, once for each level each day */
   if(!seen['told'+L.level]&&typeof limitTell==='function'){seen['told'+L.level]=1;lsSet('dayTradeLedger.limitSeen',JSON.stringify(seen));limitTell(L.level==='stop'?'Stop trading for today':'Close to your max daily loss',L.text+(rule?' Your rule: '+rule:''))}}
-var _renderAllLimit=renderAll;renderAll=function(){_renderAllLimit();renderLimit();renderSession()};
 
 /* ---------- the process score: each trading day scored on doing the right things, not on P&L ----------
    Points for a plan written, staying inside the loss and trade limits, following the plan, no mistakes and a review written.
@@ -4642,13 +4638,15 @@ function renderRemind(){
   if(ui.tab!=='dash'||(H.until&&H.until>=today)){box.hidden=true;box.innerHTML='';return}
   var day=H.day===today?H.keys||[]:[],L=remList().filter(function(x){return day.indexOf(x[0])<0});
   if(!L.length){box.hidden=true;box.innerHTML='';return}
-  box.hidden=false;box.innerHTML='<div class="remind" role="status">'+
+  /* one line until you open it: the first reminder, and how many more there are */
+  var open=L.length<2||state.settings.remOpen===true;
+  box.hidden=false;box.innerHTML='<div class="remind'+(open?'':' rem-short')+'" role="status">'+
     '<ul class="rem-list">'+L.map(function(x){return '<li><span>'+x[1]+'</span><button class="rem-one" type="button" data-remone="'+esc(x[0])+'" title="Dismiss this one for today" aria-label="Dismiss this reminder for today">×</button></li>'}).join('')+'</ul>'+
-    '<div class="rem-foot"><button class="btn small" type="button" data-remweek>Hide for a week</button></div></div>';
+    '<div class="rem-foot">'+(L.length>1?'<button class="btn small" type="button" data-remopen aria-expanded="'+open+'">'+(open?'Show less':'+'+(L.length-1)+' more')+'</button>':'')+'<button class="btn small" type="button" data-remweek>Hide for a week</button></div></div>';
 }
-var _renderAll15=renderAll;renderAll=function(){_renderAll15();renderRemind()};
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#remindBox button');if(!b)return;var today=ymd(new Date()),H=remHidden();
   if(b.dataset.remweek!==undefined){H.until=addDays(today,6);remHide(H);renderRemind();toast('Reminders hidden for a week');return}
+  if(b.dataset.remopen!==undefined){state.settings.remOpen=state.settings.remOpen!==true;saveSoon();renderRemind();return}
   if(b.dataset.remone){if(H.day!==today){H.day=today;H.keys=[]}H.keys.push(b.dataset.remone);remHide(H);renderRemind();return}
   var g=b.dataset.remgo;
   if(g==='plan'){ui.planDate=tday();ui.planSess=null;go('plan');return}
@@ -4794,7 +4792,7 @@ function calExport(){
   x.fillStyle='#0d1220';x.fillRect(0,0,W,H);
   x.fillStyle='#ffffff';font('700',30,'disp');x.fillText(calMonthLabel(m),pad,pad+28);
   var mw=x.measureText(calMonthLabel(m)).width;font('600',16);x.fillStyle=ACC;x.fillText(modeName,pad+mw+16,pad+28);
-  font('400',15);x.fillStyle=MUT;x.fillText((state.settings.titles&&state.settings.titles.main)||'Day Trade Ledger',pad,pad+52);
+  font('400',15);x.fillStyle=MUT;x.fillText((state.settings.titles&&state.settings.titles.main)||'TradeVault',pad,pad+52);
   x.textAlign='right';
   if(mode==='trades'||mode==='all'){font('600',22,'mono');x.fillStyle=s.net>=0?GAIN:LOSS;x.fillText(money(s.net,true),W-pad,pad+28)}
   font('400',14);x.fillStyle=MUT;x.fillText(sub,W-pad,pad+52);x.textAlign='left';
@@ -4839,7 +4837,6 @@ function renderHistory(){/* in the app the history is a separate file, loaded th
 document.addEventListener('input',function(e){if(e.target.id!=='histQ')return;ui.histQ=e.target.value;clearTimeout(renderHistory.h);renderHistory.h=setTimeout(function(){renderHistory();var i=$('#histQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},150)});
 var _rData16=renderData;renderData=function(){_rData16();$('#tab-data').insertAdjacentHTML('afterbegin',setSeg())};
 var _rSet16=renderSettings;renderSettings=function(){_rSet16();$('#tab-settings').insertAdjacentHTML('afterbegin',setSeg())};
-var _renderAll16=renderAll;renderAll=function(){_renderAll16();var g=$('#gearBtn');if(g){if(ui.tab==='data'||ui.tab==='settings'||ui.tab==='dashset'||ui.tab==='custom'||ui.tab==='history')g.setAttribute('aria-current','page');else g.removeAttribute('aria-current')}};
 
 /* ---------- celebration when a review is finished ---------- */
 /* the celebration sound is your own MP3, kept with your pictures; there is no built-in sound */
@@ -4915,10 +4912,6 @@ function tabsPanelHTML(){
     '<p class="muted" style="font-size:12px;margin:4px 0 0">The page you see each time you open the journal. A hidden tab falls back to the first one shown.</p></div>';
 }
 /* the sidebar tabs panel now lives in Settings, Customize */
-var _renderAll18=renderAll;renderAll=function(){
-  if(TAB_LIST.some(function(t){return t[0]===ui.tab})&&off(ui.tab))ui.tab=firstTab();
-  document.querySelectorAll('#nav button[data-tab]').forEach(function(b){b.hidden=off(b.dataset.tab)});
-  _renderAll18()};
 document.addEventListener('change',function(e){
   var el=e.target;
   if(el.dataset&&el.dataset.tabtoggle){var k=el.dataset.tabtoggle,ht=state.settings.hiddenTabs;
@@ -4934,6 +4927,11 @@ saveLifeWeek=function(manual){var k=ui.lifeWeek,prev=state.lifeWeek[k],was=!!(pr
   if(was){now.done=true;return}if(manual){now.done=true;save();celebrate('Weekly life review complete. Well done.')}};
 
 function renderAll(){
+  if(ui.tab==='settings')ui.tab='custom';
+  applyTabs();
+  /* a hidden sidebar tab falls back to the first one shown */
+  if(TAB_LIST.some(function(t){return t[0]===ui.tab})&&off(ui.tab))ui.tab=firstTab();
+  document.querySelectorAll('#nav button[data-tab]').forEach(function(b){b.hidden=off(b.dataset.tab)});
   boxPopClose();
   document.body.classList.toggle('wide',ui.tab==='trades');
   $('#exBanner').hidden=!exAny();
@@ -4941,8 +4939,19 @@ function renderAll(){
   document.querySelectorAll('[data-tab]').forEach(function(b){if(b.dataset.tab===ui.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   renderAcctCard();
   if(ui.tab==='dash')renderDash();else if(ui.tab==='trades')renderTrades();else if(ui.tab==='add')renderAdd();else if(ui.tab==='review')renderReview();else if(ui.tab==='plan')renderPlan();else if(ui.tab==='cal')renderCal();else if(ui.tab==='gallery')renderGallery();else if(ui.tab==='life')renderLife();else if(ui.tab==='goals')renderGoals();else if(ui.tab==='rules')renderRules();else if(ui.tab==='playbook')renderPlaybook();else if(ui.tab==='settings')renderSettings();else if(ui.tab==='dashset')renderDashSet();else if(ui.tab==='custom')renderCustom();else if(ui.tab==='history')renderHistory();else renderData();
+  /* the bars above every page, then the gear button's highlight */
+  renderCheckin();renderLimit();renderSession();renderRemind();
+  var g=$('#gearBtn');if(g){if(ui.tab==='data'||ui.tab==='settings'||ui.tab==='dashset'||ui.tab==='custom'||ui.tab==='history')g.setAttribute('aria-current','page');else g.removeAttribute('aria-current')}
+  renderBackup();
 }
-function go(tab){flushReview();flushPlan();if(saveSoon.h){clearTimeout(saveSoon.h);saveSoon.h=null;save()}ui.tab=tab;ui.confirmId=null;renderAll();window.scrollTo(0,0)}
+function go(tab){
+  if(ui.arr)arrEnd();
+  flushReview();flushPlan();if(saveSoon.h){clearTimeout(saveSoon.h);saveSoon.h=null;save()}ui.tab=tab;ui.confirmId=null;renderAll();window.scrollTo(0,0);
+  /* the calendar is drawn while hidden, so size it once it shows */
+  if(ui.tab==='cal')calFit();
+  /* on a phone, opening Add trade goes straight to the form instead of leaving it below the menu and banners */
+  if(tab==='add')try{if(window.matchMedia('(max-width:900px)').matches){var a=$('#tab-add');if(a)a.scrollIntoView({block:'start'})}}catch(e){}
+}
 document.addEventListener('click',function(e){
   if(e.target.id==='lightbox'||(e.target.classList&&e.target.classList.contains('lb-stage'))){lbClose();return}
   var b=e.target.closest('button,th');if(!b)return;
@@ -5061,13 +5070,7 @@ document.addEventListener('click',function(e){
     setLook({mode:lm},true);return}
   if(b.dataset.lookColor){setLook({mode:'color',color:b.dataset.lookColor},true);return}
   if(b.id==='bgRemove'){picByOwner('bg:main').then(function(rs){return Promise.all(rs.map(function(r){return picDel(r.id)}))}).then(function(){setLook(state.settings.look.mode==='image'?{mode:'blueprint'}:{},true);toast('Picture removed')});return}
-  if(b.id==='saveSettings'){
-    collectAccounts();
-    var lines=function(id){return $(id).value.split('\n').map(function(x){return x.trim()}).filter(Boolean)};
-    state.settings.setups=lines('#s-setups');state.settings.mistakes=lines('#s-mist');state.settings.premarketChecks=lines('#s-check');state.settings.lifeHabits=lines('#s-life');state.settings.conditions=lines('#s-cond');var rkv=parseFloat($('#s-risk').value);state.settings.riskPerTrade=rkv>0?rkv:0;var bev=parseFloat($('#s-be').value);state.settings.beRange=bev>=0?bev:10;state.settings.celebrate=$('#s-cheer').value;var tlv=parseInt($('#s-tilt').value,10);state.settings.tiltLosses=tlv>=0?tlv:2;
-    state.settings.tiltSpan=$('#s-tiltspan').value;var twv=parseInt($('#s-tiltwin').value,10);state.settings.tiltWin=twv>0?twv:2;
-    var fr={};document.querySelectorAll('#tab-data .fee-in').forEach(function(el){var fv=parseFloat(el.value);if(el.value!==''&&fv>=0)fr[el.dataset.root]=fv});state.settings.feeRates=fr;
-    save();renderAcctCard();renderData();toast('Settings saved');return}
+  if(b.id==='saveSettings'){dataSave();renderData();toast('Settings saved');return}
   if(b.id==='expCSV'){saveOut('trade-journal-trades-'+ymd(new Date())+'.csv',toCSV(),'text/csv').then(function(p){if(p)toast(state.trades.length+(state.trades.length===1?' trade':' trades')+' saved as CSV')});return}
   if(b.id==='wipe'){if(b.dataset.armed){picMeta().then(function(l){l.filter(function(m){return m.owner.indexOf('trade:')===0}).forEach(function(m){picDel(m.id)})});Object.keys(imgCounts).forEach(function(o){if(o.indexOf('trade:')===0)delete imgCounts[o]});state.trades=[];/* keep every setting; only the setups, mistake tags and premarket checklist go back to the defaults */var keepS=state.settings;keepS.setups=DEFAULTS.setups.slice();keepS.mistakes=DEFAULTS.mistakes.slice();keepS.premarketChecks=DEFAULTS.premarketChecks.slice();state.settings=keepS;migrate();save();renderAll();toast('All trades deleted')}else{b.dataset.armed='1';b.textContent='Click again to delete everything'}return}
 });
@@ -5360,7 +5363,6 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   if(b.id==='bkNow'){downloadBackup();return}
   if(b.id==='bkLater'){lsSet(BK_SNOOZE,ymd(new Date()));renderBackup();return}
 });
-var _renderAll19=renderAll;renderAll=function(){_renderAll19();renderBackup()};
 
 /* ---------- dashboard layout: every box can be moved, minimized or removed ---------- */
 /* [key, name, title it starts with, full width by default, note shown when it only appears sometimes] */
@@ -5371,8 +5373,19 @@ var DASH_REG=[['stats','Summary numbers','',1],['filters','Filters','',1],['acco
   ['hour','By time of day','By time of day',0],['weekday','By day of the week','By day of the week',0],['conds','By market condition','By market condition',0],['sessions','By market session','By market session',0],['setsess','Setup by session','Setup by session',1],['egrade','By execution grade','By execution grade',0],['life','Life and trading','Life and trading',1,'Shows when the Life journal tab is on and has entries.'],
   ['ltrends','Life trends','Life trends',0,'Mood, energy and sleep from the Life journal. Off at first.'],['lhabits','Habits','Habits',0,'The Life journal habits table. Off at first.'],['lpixels','Year in pixels','Year in pixels',0,'A compact year of moods. Shows while Year in pixels is on in Customize. Off at first.']];
 function dashCfg(){var st=state.settings,d=st.dash;if(!d||typeof d!=='object'||Array.isArray(d))d=st.dash={};
-  ['hidden','min','wide'].forEach(function(k){if(!d[k]||typeof d[k]!=='object'||Array.isArray(d[k]))d[k]={}});return d}
+  ['hidden','min','wide','tab'].forEach(function(k){if(!d[k]||typeof d[k]!=='object'||Array.isArray(d[k]))d[k]={}});return d}
 function dashReg(k){for(var i=0;i<DASH_REG.length;i++)if(DASH_REG[i][0]===k)return DASH_REG[i];return null}
+/* Dashboard tabs: each box lives on one tab (change it in Settings, Dashboard); the summary numbers and filters show on every tab */
+var DASH_TABS=[['main','Overview'],['break','Breakdowns'],['disc','Discipline'],['biz','Prop & business'],['all','Everything']];
+var DASH_TAB_DEF={stats:'*',filters:'*',accounts:'main',equity:'main',daily:'main',rolling:'main',
+  setup:'break',side:'break',contract:'break',rdist:'break',hold:'break',targets:'break',hour:'break',weekday:'break',conds:'break',sessions:'break',setsess:'break',egrade:'break',exits:'break',xfields:'break',
+  discipline:'disc',process:'disc',whatif:'disc',streaks:'disc',life:'disc',ltrends:'disc',lhabits:'disc',lpixels:'disc',prop:'biz',acctchart:'biz',business:'biz'};
+function dashTabsOn(){return state.settings.dashTabs!==false}
+function dashTabOf(k){var c=dashCfg().tab||{},b=String(k).replace(/#\d+$/,'');return DASH_TAB_DEF[b]==='*'?'*':c[b]||DASH_TAB_DEF[b]||'main'}
+function dashTabNow(){var t=ui.dashTab||state.settings.dashTabLast||'main';return DASH_TABS.some(function(x){return x[0]===t})?t:'main'}
+function dashTabsHTML(){var cur=dashTabNow();return '<nav class="panel dsub-nav dash-tabs" aria-label="Dashboard tabs"><div class="seg">'+DASH_TABS.map(function(x){return '<button class="btn'+(x[0]===cur?' primary':'')+'" type="button" data-dashtab="'+x[0]+'">'+esc(x[1])+'</button>'}).join('')+'</div></nav>'}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-dashtab]');if(!b)return;
+  if(ui.arr&&typeof arrEnd==='function')arrEnd();ui.dashTab=b.dataset.dashtab;state.settings.dashTabLast=ui.dashTab;saveSoon();renderDash();window.scrollTo(0,0)});
 function h2Text(el){var h=el.querySelector('h2');if(!h)return '';return Array.prototype.filter.call(h.childNodes,function(n){return n.nodeType===3}).map(function(n){return n.textContent}).join('').trim()}
 function dashKeyOf(el){
   if(el.matches('dl.strip'))return 'stats';if(el.classList.contains('dfilter'))return 'filters';
@@ -5395,8 +5408,9 @@ function dashArrange(){
   ui.dashSeen=ui.dashSeen||{};boxes.forEach(function(b){if(!dashReg(b.k))ui.dashSeen[b.k]=dashName(b.k,b.el)});
   var ord=dashOrder(boxes.map(function(b){return b.k}));
   boxes.sort(function(a,b){return ord.indexOf(a.k)-ord.indexOf(b.k)});
-  col.removeAttribute('style');col.className='dgrid';col.dataset.sortScope='dash';col.innerHTML='';
-  boxes.forEach(function(b){if(cfg.hidden[b.k])return;var mini=!!cfg.min[b.k],nm=esc(dashName(b.k,b.el));
+  var tab=dashTabsOn()?dashTabNow():'all';
+  col.removeAttribute('style');col.className='dgrid';col.dataset.sortScope=tab==='all'?'dash':'dash@'+tab;col.innerHTML='';
+  boxes.forEach(function(b){if(cfg.hidden[b.k])return;if(tab!=='all'){var bt=dashTabOf(b.k);if(bt!=='*'&&bt!==tab)return}var mini=!!cfg.min[b.k],nm=esc(dashName(b.k,b.el));
     var box=document.createElement('div');box.className='dbox'+(dashWide(b.k)?' dw-full':'')+(mini?' dmin':'')+(ui.dashSel===b.k?' dsel':'');box.dataset.bk=b.k;
     box.innerHTML='<div class="dbar"><button class="btn small cbox-drag" type="button" aria-label="Move '+nm+'. Drag it, or use the arrow keys." title="Drag to move">'+GRIP+'</button>'+
       '<span class="dname">'+(mini?nm:'')+'</span>'+
@@ -5404,7 +5418,7 @@ function dashArrange(){
     if(!mini)box.appendChild(b.el);
     col.appendChild(box)});
   dashLone(col);
-  if(!col.children.length)col.innerHTML='<div class="panel dw-full" style="grid-column:1/-1"><div class="empty">Every box is removed from the Dashboard. <button class="btn small" type="button" data-tab="dashset">Choose boxes</button></div></div>';
+  if(!col.querySelector('.dbox:not([data-bk=stats]):not([data-bk=filters])'))col.insertAdjacentHTML('beforeend','<div class="panel dw-full" style="grid-column:1/-1"><div class="empty">'+(tab==='all'?'Every box is removed from the Dashboard.':'No boxes on this tab yet.')+' <button class="btn small" type="button" data-tab="dashset">Choose boxes</button></div></div>');
 }
 /* a half-width box with no partner on its row is centered instead of hugging the left edge */
 function dashLone(col){
@@ -5437,6 +5451,7 @@ function renderDash(){
     }
   }finally{dashF=null;dashAcct=null}
   dashArrange();addNotes('dash');
+  if(dashTabsOn())$('#tab-dash').insertAdjacentHTML('afterbegin',dashTabsHTML());
 }
 /* clicking (or tabbing into) a box selects it and shows its controls; clicking anywhere else hides them */
 function dashSelect(k){ui.dashSel=k||null;document.querySelectorAll('#tab-dash .dbox').forEach(function(x){x.classList.toggle('dsel',x.dataset.bk===ui.dashSel)})}
@@ -5445,7 +5460,7 @@ document.addEventListener('focusin',function(e){var bx=e.target.closest&&e.targe
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ui.dashSel&&ui.tab==='dash')dashSelect(null)});
 /* dragging saves only the boxes on screen, so keep removed and hidden ones where they were */
 var _sortSave20=sortSave;sortSave=function(cont){
-  if(cont.dataset.sortScope!=='dash')return _sortSave20(cont);
+  if(scopeBase(cont.dataset.sortScope||'')!=='dash')return _sortSave20(cont);
   var vis=Array.prototype.filter.call(cont.children,function(c){return c.dataset.bk}).map(function(c){return c.dataset.bk});
   state.settings.order=state.settings.order||{};state.settings.order.dash=placeMissing(vis,dashOrder(vis));dashLone(cont);save()};
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;var cfg;
@@ -5462,6 +5477,8 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 document.addEventListener('change',function(e){var el=e.target,k,cfg;
   if(el.dataset&&el.dataset.dsshow){k=el.dataset.dsshow;cfg=dashCfg();if(el.checked)delete cfg.hidden[k];else cfg.hidden[k]=1;save();renderDashSet();return}
   if(el.dataset&&el.dataset.dsmin){k=el.dataset.dsmin;cfg=dashCfg();if(el.checked)cfg.min[k]=1;else delete cfg.min[k];save();return}
+  if(el.dataset&&el.dataset.dstab){k=el.dataset.dstab.replace(/#\d+$/,'');cfg=dashCfg();cfg.tab=cfg.tab||{};if(el.value===DASH_TAB_DEF[k]||(!DASH_TAB_DEF[k]&&el.value==='main'))delete cfg.tab[k];else cfg.tab[k]=el.value;save();toast('Moved to '+DASH_TABS.filter(function(x){return x[0]===el.value})[0][1]);return}
+  if(el.id==='dsTabs'){state.settings.dashTabs=el.checked;save();renderDashSet();toast(el.checked?'Dashboard tabs on':'Dashboard tabs off: every box on one page');return}
   if(el.dataset&&el.dataset.dswide){k=el.dataset.dswide;cfg=dashCfg();var r=dashReg(k),def=r&&r[3]?'full':'half';if(el.value===def)delete cfg.wide[k];else cfg.wide[k]=el.value;save();return}
 });
 
@@ -5472,10 +5489,12 @@ function renderDashSet(){
     return '<div class="dset-row'+(on?'':' off')+'">'+
       '<span style="display:flex;gap:4px"><button class="btn small" type="button" data-dsmove="'+esc(k)+'|-1" aria-label="Move '+esc(nm)+' up"'+(i?'':' disabled')+'>↑</button><button class="btn small" type="button" data-dsmove="'+esc(k)+'|1" aria-label="Move '+esc(nm)+' down"'+(i<ord.length-1?'':' disabled')+'>↓</button></span>'+
       '<label class="chk dset-name"><input type="checkbox" data-dsshow="'+esc(k)+'"'+(on?' checked':'')+'> <span><b>'+esc(nm)+'</b>'+(r&&r[4]?'<br><span class="muted" style="font-size:12px">'+esc(r[4])+'</span>':'')+'</span></label>'+
+      (dashTabsOn()&&dashTabOf(k)!=='*'?'<select data-dstab="'+esc(k)+'" aria-label="Tab for '+esc(nm)+'">'+DASH_TABS.filter(function(x){return x[0]!=='all'}).map(function(x){return '<option value="'+x[0]+'"'+(dashTabOf(k)===x[0]?' selected':'')+'>'+esc(x[1])+'</option>'}).join('')+'</select>':dashTabsOn()?'<span class="muted" style="font-size:12px">Every tab</span>':'')+
       '<select data-dswide="'+esc(k)+'" aria-label="Width of '+esc(nm)+'"><option value="half"'+(w==='half'?' selected':'')+'>Half width</option><option value="full"'+(w==='full'?' selected':'')+'>Full width</option></select>'+
       '<label class="chk"><input type="checkbox" data-dsmin="'+esc(k)+'"'+(cfg.min[k]?' checked':'')+'> Minimized</label></div>'}).join('');
   var nOn=ord.filter(function(k){return !cfg.hidden[k]}).length;
   $('#tab-dashset').innerHTML='<div class="panel"><h2>Dashboard boxes</h2><p class="help">Tick a box to show it on the Dashboard, untick it to remove it. Nothing is deleted, and you can add it back any time. Use the arrows to change the order. On the Dashboard itself, press Arrange at the top right to place any box anywhere, resize it, rename it or hide it, or click a box to show its minimize button. Half width boxes sit side by side, full width boxes take the whole row, until you arrange them yourself. Minimized boxes show only their name until you expand them. Your own note boxes stay at the bottom of the Dashboard.</p>'+
+    '<label class="chk" style="margin:0 0 6px"><input type="checkbox" id="dsTabs"'+(dashTabsOn()?' checked':'')+'> Split the Dashboard into tabs: Overview, Breakdowns, Discipline, Prop &amp; business and Everything. Pick each box&#39;s tab below.</label>'+
     '<p class="muted" style="font-size:13px;margin:0 0 12px">'+nOn+' of '+ord.length+' boxes showing.</p>'+
     '<div class="dset-list">'+rows+'</div>'+
     '<div class="actions"><button class="btn" type="button" id="dsShowAll">Show every box</button><button class="btn" type="button" id="dsExpandAll">Expand every box</button><button class="btn danger" type="button" id="dsReset">Reset layout</button><button class="btn primary" type="button" data-tab="dash">Go to the Dashboard</button></div></div>';
@@ -5843,7 +5862,6 @@ function applyTabs(){var nav=$('#nav');if(!nav)return;var rail=document.querySel
     if(b){var n=tabName(k);b.innerHTML=tabIcon(k)+'<span class="nav-label">'+esc(n)+'</span>';if(rail)b.title=n;else b.removeAttribute('title');nav.appendChild(b)}
     if(TAB_NAMES[k])TAB_NAMES[k]=tabName(k)});
   var a=document.querySelector('.side-add');if(a&&!a.querySelector('svg')){a.innerHTML=tabIcon('add')+'<span class="nav-label">Add trade</span>'}if(a){if(rail)a.title='Add trade';else a.removeAttribute('title')}}
-var _renderAll29=renderAll;renderAll=function(){applyTabs();_renderAll29()};
 
 /* ---------- moving things up and down in a saved order ---------- */
 function moveIn(order,k,dir){var i=order.indexOf(k),j=i+dir;if(i<0||j<0||j>=order.length)return order;order.splice(j,0,order.splice(i,1)[0]);return order}
@@ -5894,6 +5912,12 @@ function contractsHTML(){
     '<input type="text" id="ct-new" placeholder="e.g. MBT" autocapitalize="characters" aria-label="New contract symbol"><input type="number" step="any" min="0" id="ct-new-pv" placeholder="0.1" aria-label="New contract dollars per point"><input type="number" step="any" min="0" id="ct-new-tk" placeholder="5" aria-label="New contract tick size"><button class="btn small primary" type="button" id="ctAdd">Add contract</button></div>'+
     (gone.length?'<p class="help" style="margin:10px 0 0">Removed: '+gone.map(esc).join(', ')+'. <button class="btn small" type="button" id="ctRestore">Bring them back</button></p>':'');
 }
+/* market sessions, plan sessions and when a trading day starts: in Setup & data, Trading, and saved as you change them */
+function sessSetHTML(){var st=state.settings;
+  return '<h2 class="sub" style="margin-top:20px">Sessions and trading day</h2><div class="cust-grid">'+
+    custField('Market sessions','<textarea data-cs="sessions" data-ct="sessions" rows="7">'+esc(sessionsCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','One per line: a name and the time it starts, like London 03:00. Each runs until the next one starts. Uses the time zone you log trades in (the starting list is New York time). Clear it to go back to the original.')+
+    custField('Plan sessions','<textarea data-cs="planSess" data-ct="sessions" rows="4">'+esc(planSessCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','The tabs on the premarket plan, one per line with the time it starts, like Asia 18:00. Each runs until the next one starts, and a trade is linked to the session it was placed in. Clear it to go back to Asia, London and New York.')+
+    custField('Trading day',cChk('tdOn',tdStart()!=null,'A new trading day starts at')+' <input data-cs="dayStart" data-ct="hhmm" type="time" value="'+esc(hhmm(tdStart()==null?18*60:tdStart()))+'" style="max-width:130px" aria-label="Trading day starts at">','Futures trade from 6 PM to 5 PM New York time, so a trade placed at 7 PM Monday counts toward Tuesday: in the calendar, the daily P&amp;L, your loss limit and reviews. The trade still shows when you placed it. The Life journal keeps calendar days. Switch it off to use calendar days for everything.')+'</div>'}
 function renderCustom(){
   var st=state.settings,G=gradeCfg(),O=oddsCfg(),MS=monthSecs();
   var h=setSeg()+'<div class="cust">'+lookPanelsHTML()+tabsPanelHTML()+
@@ -5903,9 +5927,7 @@ function renderCustom(){
     custField('Time of day groups',cSel('hourStep',[[60,'Every hour'],[30,'Every 30 minutes'],[15,'Every 15 minutes']],[15,30,60].indexOf(+st.hourStep)>=0?st.hourStep:60))+
     custField('Sleep groups, hours',cIn('sleepCuts',sleepCuts().join(', '),'type="text" data-ct="csv2"'),'Two numbers: short sleep is under the first, good sleep is the second or more.')+
     custField('Mood and energy groups',cIn('moodCuts',moodCuts().join(', '),'type="text" data-ct="csv2"'),'Two numbers: low is the first or less, good is the second or more.')+
-    custField('Market sessions','<textarea data-cs="sessions" data-ct="sessions" rows="7">'+esc(sessionsCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','One per line: a name and the time it starts, like London 03:00. Each runs until the next one starts. Uses the time zone you log trades in (the starting list is New York time). Clear it to go back to the original.')+
-    custField('Plan sessions','<textarea data-cs="planSess" data-ct="sessions" rows="4">'+esc(planSessCfg().map(function(s){return s[0]+' '+hhmm(s[1])}).join('\n'))+'</textarea>','The tabs on the premarket plan, one per line with the time it starts, like Asia 18:00. Each runs until the next one starts, and a trade is linked to the session it was placed in. Clear it to go back to Asia, London and New York.')+
-    custField('Trading day',cChk('tdOn',tdStart()!=null,'A new trading day starts at')+' <input data-cs="dayStart" data-ct="hhmm" type="time" value="'+esc(hhmm(tdStart()==null?18*60:tdStart()))+'" style="max-width:130px" aria-label="Trading day starts at">','Futures trade from 6 PM to 5 PM New York time, so a trade placed at 7 PM Monday counts toward Tuesday: in the calendar, the daily P&amp;L, your loss limit and reviews. The trade still shows when you placed it. The Life journal keeps calendar days. Switch it off to use calendar days for everything.')+'</div></div>'+
+'</div></div>'+
     '<div class="panel"><h2>Keyboard shortcuts</h2><p class="help">'+(keyFor('help')?'Press <kbd>'+esc(keyShow(keyFor('help')))+'</kbd> anywhere to see these. ':'')+'They do nothing while you are typing in a box. The arrow keys and Esc always work in the trade view and picture viewer.</p>'+shortcutsEditHTML()+'</div>'+
   '<div class="panel"><h2>Formats</h2><div class="cust-grid">'+
     custField('Currency symbol',cIn('currency',cur(),'type="text" maxlength="4" style="max-width:100px"'),'Only changes the symbol shown, not the math.')+
@@ -5945,7 +5967,7 @@ function renderCustom(){
   window.scrollTo(0,y);
 }
 var CUST_SUBS=[['look','Look',['Site titles','Background','Theme','Colors and fonts']],['pages','Pages',['Tabs in the sidebar','Keyboard shortcuts','Trades tab','Trades filters','Account card','Gallery','Playbook','Life journal']],
-  ['layout','Layout',['Arrange and rename','Templates','Saved layouts','Setup file']],
+  ['layout','Layout',['Arrange and rename','Templates','Saved layouts']],
   ['stats','Stats',['Groupings in the stats','Formats','Odds of passing','Charts']],['reports','Reports',['Weekly report card','Monthly report','Yearly report']]];
 /* switching sub-menus only shows and hides panels, like Setup & data */
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button[data-csub]');if(!b)return;ui.custSub=b.dataset.csub;
@@ -5953,14 +5975,16 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   document.querySelectorAll('#tab-custom .cust>.panel').forEach(function(p){p.hidden=p.dataset.csub!==ui.custSub});window.scrollTo(0,0)});
 /* pieces that live in Setup & data but save as soon as they change, like the rest of Customize did */
 function dropdownListsHTML(){var ideas=GOAL_IDEAS.map(function(x){return x.title+(x.cat?' | '+x.cat:'')});
-  return '<h2 class="sub">Dropdown lists <span class="saves-now">saves right away</span></h2><p class="help">One choice per line. Clear a list to go back to the original. Anything already saved with an old choice keeps it.</p><div class="lists4 lists6">'+
+  return '<h2 class="sub">Dropdown lists</h2><p class="help">One choice per line. Clear a list to go back to the original. Anything already saved with an old choice keeps it.</p><div class="lists4 lists6">'+
     custField('Market bias',cLines('biases',BIASES))+custField('State of mind',cLines('moods',MOODS))+custField('Rule categories',cLines('ruleCats',RULE_CATS))+
-    custField('Goal categories',cLines('goalCats',GOAL_CATS))+custField('Life journal prompts',cLines('lifePrompts',LIFE_PROMPTS))+
-    custField('Execution grades',cLines('egrades',egrades()),'Best first')+custField('Goal ideas',cLines('goalIdeas',ideas),'Title | category')+'</div>'+
-    /* the prompt limit sits on its own row, so the prompts list keeps its full width */
-    '<div class="rem-row" style="margin-top:12px"><b style="font-size:13px">Life journal prompts</b><span class="rem-opt">New prompts a day '+cIn('lifeAskMax',lifeAskMax(),'type="number" min="0" step="1" data-ct="num" style="width:70px" aria-label="New prompts allowed a day"')+'</span>'+cChk('lifeQFree',!!state.settings.lifeQFree,'Unlimited new prompts a day')+'</div>'}
+    custField('Goal categories',cLines('goalCats',GOAL_CATS))+
+    custField('Execution grades',cLines('egrades',egrades()),'Best first')+custField('Goal ideas',cLines('goalIdeas',ideas),'Title | category')+'</div>'}
+/* Life journal habits and prompts, shown with the other Life journal settings in Customize, Pages */
+function lifeListsHTML(){var st=state.settings;
+  return '<div class="lists4" style="margin-top:14px">'+custField('Habits',cLines('lifeHabits',st.lifeHabits||[],6),'One per line.')+custField('Prompts',cLines('lifePrompts',LIFE_PROMPTS,6),'One per line. Clear it to go back to the original.')+'</div>'+
+    '<div class="rem-row" style="margin-top:8px"><span class="rem-opt">New prompts a day '+cIn('lifeAskMax',lifeAskMax(),'type="number" min="0" step="1" data-ct="num" style="width:70px" aria-label="New prompts allowed a day"')+'</span>'+cChk('lifeQFree',!!st.lifeQFree,'Unlimited new prompts a day')+'</div>'}
 function tdefHTML(){var st=state.settings,TD=st.tdef||{};
-  return '<h2 class="sub">New trade defaults <span class="saves-now">saves right away</span></h2><p class="help">What the Add trade form starts with each time.</p><div class="cust-grid">'+
+  return '<h2 class="sub">New trade defaults</h2><p class="help">What the Add trade form starts with each time.</p><div class="cust-grid">'+
     custField('Contract','<input data-cs="tdef.ticker" value="'+esc(TD.ticker||'')+'" type="text" list="contractList" autocapitalize="characters" placeholder="none">')+
     custField('Side',cSel('tdef.side',[['Long','Long'],['Short','Short']],TD.side||'Long'))+
     custField('Contracts',cIn('tdef.qty',TD.qty>0?TD.qty:'','type="number" min="0" step="any" data-ct="num" placeholder="none"'))+
@@ -5968,8 +5992,8 @@ function tdefHTML(){var st=state.settings,TD=st.tdef||{};
     custField('Followed plan',cSel('tdef.plan',[['Yes','Yes'],['No','No']],TD.plan||'Yes'))+'</div>'}
 function tiltExtraHTML(){var st=state.settings;
   return '<div class="cust-grid" style="margin-top:12px">'+
-    custField('Warning message','<textarea data-cs="tiltMsg" data-ct="text" rows="3" placeholder="'+esc(TILT_MSG_DEF)+'">'+esc(st.tiltMsg||'')+'</textarea>','Shown after your losing streak. Leave blank for the original. Saves right away.')+
-    custField('Recommended break, minutes',cIn('breakMin',breakMin(),'type="number" min="0" step="1" data-ct="num"'),'The warning suggests a break this long, with a button to start a countdown. It never stops you from logging a trade. Set 0 to stop suggesting one. Saves right away.')+'</div>'}
+    custField('Warning message','<textarea data-cs="tiltMsg" data-ct="text" rows="3" placeholder="'+esc(TILT_MSG_DEF)+'">'+esc(st.tiltMsg||'')+'</textarea>','Shown after your losing streak. Leave blank for the original.')+
+    custField('Recommended break, minutes',cIn('breakMin',breakMin(),'type="number" min="0" step="1" data-ct="num"'),'The warning suggests a break this long, with a button to start a countdown. It never stops you from logging a trade. Set 0 to stop suggesting one.')+'</div>'}
 function hourLabel(h){return h===0?'midnight':h===12?'noon':(h%12)+(h<12?' am':' pm')}
 function remindHTML(){var st=state.settings,on=function(k){return st['remind'+k]!==false},num=function(k,v,w){return cIn(k,v,'type="number" min="0" step="1" data-ct="num" style="width:'+(w||80)+'px"')};
   var row=function(inner){return '<div class="rem-row">'+inner+'</div>'},note=function(t){return '<p class="muted" style="font-size:12px;margin:4px 0 0">'+t+'</p>'};
@@ -6011,7 +6035,6 @@ function contractsRefresh(){
 function lookPanelsHTML(){ui._inCustom=true;renderSettings();ui._inCustom=false;
   var src=$('#tab-settings'),box=src.querySelector(':scope>div:not(.set-seg):not(.notes-wrap)'),html=box?box.innerHTML:'';src.innerHTML='';return html}
 var _renderSettings32=renderSettings;renderSettings=function(){_renderSettings32();if(ui.tab==='custom'&&!ui._inCustom)renderCustom()};
-var _renderAll32=renderAll;renderAll=function(){if(ui.tab==='settings')ui.tab='custom';_renderAll32()};
 /* every Customize field saves as soon as it changes */
 function custSet(path,v){var st=state.settings,p=path.split('.');
   if(p.length===2){if(!st[p[0]]||typeof st[p[0]]!=='object')st[p[0]]={};if(v===undefined)delete st[p[0]][p[1]];else st[p[0]][p[1]]=v}
@@ -6027,7 +6050,7 @@ document.addEventListener('change',function(e){var el=e.target;if(!el.dataset||!
   else if(t==='lines'){var L=lines(v);
     if(k==='goalIdeas'){v=L.length?L.map(function(line){var q=line.split('|'),ti=q[0].trim(),ca=(q[1]||'').trim(),old=GOAL_IDEAS.filter(function(x){return x.title===ti})[0]||DEF_CUSTOM.goalIdeas.filter(function(x){return x.title===ti})[0];
       var o=old?JSON.parse(JSON.stringify(old)):{title:ti,kind:'percent'};o.title=ti;o.cat=ca||o.cat||'Personal';return o}):undefined}
-    else v=L.length?L:undefined}
+    else v=k==='lifeHabits'?L:L.length?L:undefined}
   else if(t==='text'){v=v.trim()?v:undefined}
   else if(t==='hhmm'){var hm=tmin(v);if(hm==null){toast('Enter a time, like 18:00');return}v=hm}
   else if(k==='tdef.ticker'){v=v.trim().toUpperCase()||undefined}
@@ -6557,7 +6580,7 @@ document.addEventListener('keydown',function(e){if(isLocked()&&!(e.target&&e.tar
 ui.lastActive=Date.now();
 setInterval(function(){var p=state.settings.pin;if(!pinOn()||isLocked()||!(p.auto>0))return;if(Date.now()-ui.lastActive>p.auto*6e4)lockShow()},15000);
 function privacyHTML(){var p=state.settings.pin||{},on=pinOn();
-  return '<h2>Privacy</h2><h2 class="sub">PIN lock <span class="saves-now">saves right away</span></h2>'+
+  return '<h2>Privacy</h2><h2 class="sub">PIN lock</h2>'+
     '<p class="help">Optional. With a PIN set, the journal opens on a lock screen until you type it. This keeps your journal off the screen on a shared computer. It is not encryption: your trades stay '+(APP?'on this computer':'in this browser')+' as before, so keep backing up.</p>'+
     '<p class="help">A recovery email is required to turn the PIN on. Forgot your PIN? on the lock screen asks for it, so nobody can get in just by pressing that button. The journal runs only '+(APP?'on this computer':'in this browser')+' and cannot send email: the address is checked on the lock screen, and only a scrambled copy of it is stored.</p>'+
     '<p class="muted" style="font-size:13px;margin:0 0 10px">'+(on?'<b class="gain">PIN lock is on.</b>'+(p.email?' Recovery email: '+esc(p.hint||'set'):' <b class="loss">No recovery email yet.</b> Add one below to protect Forgot your PIN?'):'<b>PIN lock is off.</b>')+'</p>'+
@@ -6776,8 +6799,6 @@ function quickSave(){quickRead();var q=quickState(),en=parseFloat(q.entry),ex=pa
   t.id=uid();placeTrade(t,curGrp(),grpSolo(curGrp())?state.settings.lastAcct:null);state.trades.push(t);save();
   var c=calc(t);q.done='Saved: '+esc(t.ticker)+' '+t.side.toLowerCase()+' ×'+t.qty+', <b class="'+cls(c.net)+'">'+money(c.net,true)+'</b>. Ready for the next one.';q.entry='';q.exit='';q.stop='';
   var rw=ruleWarn(t);renderAll();toast('Trade saved'+rw,rw?6000:0)}
-/* on a phone, opening Add trade goes straight to the form instead of leaving it below the menu and banners */
-var _goQuick=go;go=function(tab){_goQuick(tab);if(tab==='add')try{if(window.matchMedia('(max-width:900px)').matches){var a=$('#tab-add');if(a)a.scrollIntoView({block:'start'})}}catch(e){}};
 var _renderAddQuick=renderAdd;renderAdd=function(){if(quickMode()){renderQuick();return}_renderAddQuick();
   if(!ui.editId){var h=$('#tab-add .add-head');if(h&&!$('#qlOpen'))h.insertAdjacentHTML('beforeend','<button class="btn small" type="button" id="qlOpen" title="A short form with big buttons">Quick log</button>')}};
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#tab-add button');if(!b)return;
@@ -6967,7 +6988,7 @@ function appQuit(){appS.quitting=true;appSaveNow().then(function(){return TWIN.d
 function appSettingsHTML(){var c=appS.cfg,mode=appTrayMode(),hidden=c.startHidden!==false;
   var opt=function(name,val,on,label){return '<label class="chk"><input type="radio" name="'+name+'" value="'+val+'"'+(on?' checked':'')+'> '+label+'</label>'};
   var note=function(t){return '<p class="muted" style="font-size:12px;margin:4px 0 0">'+t+'</p>'};
-  return '<h2>TradeVault app <span class="saves-now">saves right away</span></h2>'+
+  return '<h2>TradeVault app</h2>'+
     '<h2 class="sub">Opening when you sign in to Windows</h2>'+
     (TAUTO?'<label class="chk"><input id="appAuto" type="checkbox" disabled> Open TradeVault when I sign in</label>':'<p class="muted">Not available on this computer.</p>')+
     '<div style="margin:6px 0 0 26px">'+opt('appStart','tray',hidden,'Start in the tray, out of the way')+opt('appStart','window',!hidden,'Open the window')+'</div>'+
@@ -7312,7 +7333,6 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   if(b.id==='arrDone'){arrEnd();toast('Layout saved');return}
   if(b.id==='arrReset'){if(!b.dataset.armed){b.dataset.armed='1';b.textContent='Click again to reset';setTimeout(function(){if(b.isConnected){b.dataset.armed='';b.textContent='Reset this page'}},3000);return}arrReset();return}});
 document.addEventListener('change',function(e){if(e.target.id==='arrPreset'&&e.target.value)presetUse(e.target.value)});
-var _goArr=go;go=function(){if(ui.arr)arrEnd();return _goArr.apply(this,arguments)};
 
 /* ---------- templates: more than one version of the premarket plan and the reviews ---------- */
 var TPL_KINDS=[['plan','Premarket plan','p-',['plan']],['daily','Daily review','d-',['rev-daily-t','rev-daily-c']],['weekly','Weekly review','w-',['rev-weekly-t','rev-weekly-c']]];
@@ -7402,21 +7422,26 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 
 /* ---------- setup file: every setting without a single trade, for the phone or as a spare ---------- */
 var SETUP_SKIP={accounts:1,groups:1,startBalance:1,pin:1,tourDone:1,lastAcct:1,lastGrp:1,cheerName:1,ex25:1,dashLife61:1,dailyMore:1,lifeMore:1};
-function setupSave(){var st=state.settings,o={};Object.keys(st).forEach(function(k){if(!SETUP_SKIP[k]&&!/^pin/i.test(k))o[k]=st[k]});
+var SETUP_ACCTS=['accounts','groups','startBalance'];
+function setupSave(){var st=state.settings,o={},ac=$('#setupAccts')&&$('#setupAccts').checked;Object.keys(st).forEach(function(k){if((!SETUP_SKIP[k]||(ac&&SETUP_ACCTS.indexOf(k)>=0))&&!/^pin/i.test(k))o[k]=st[k]});
   var txt=JSON.stringify({kind:'tradevault-setup',v:1,made:new Date().toISOString(),settings:o},null,1);
   var r=saveOut('TradeVault setup '+ymd(new Date())+'.json',txt,'application/json');if(r&&r.then)r.then(function(ok){if(ok!==false)toast('Setup file saved')});else toast('Setup file saved')}
 function setupLoad(text){var d;try{d=JSON.parse(text)}catch(x){toast('That file is not a setup file');return}
-  if(!d||d.kind!=='tradevault-setup'||!d.settings||typeof d.settings!=='object'){toast(d&&d.trades?'That is a backup file. Restore it from Backup & data instead.':'That file is not a setup file');return}
-  var st=state.settings;Object.keys(d.settings).forEach(function(k){if(!SETUP_SKIP[k]&&!/^pin/i.test(k))st[k]=d.settings[k]});
+  /* setup files, and the settings files older versions saved */
+  if(!d||(d.kind!=='tradevault-setup'&&d.kind!=='settings')||!d.settings||typeof d.settings!=='object'){toast(d&&(d.trades||d.journal)?'That is a backup file. Restore it from Backup & data instead.':'That file is not a setup file');return}
+  var st=state.settings,src=d.settings,acc='';Object.keys(src).forEach(function(k){if(!SETUP_SKIP[k]&&!/^pin/i.test(k))st[k]=src[k]});
+  /* accounts come along only when the file has them, and only if every trade here keeps its group */
+  if(Array.isArray(src.groups)&&src.groups.length){var ids=src.groups.map(function(g){return g.id});
+    if(state.trades.some(function(t){return t.grp&&ids.indexOf(t.grp)<0}))acc=' Your accounts here were kept, since your trades use them.';
+    else{SETUP_ACCTS.forEach(function(k){if(src[k]!==undefined)st[k]=src[k]});acc=' Accounts and groups loaded too.'}}
   ui.tplPick={};migrate();save();[applyCustom,applyLook,applyTitles,applyLookExtra,applyTabs].forEach(function(f){try{f()}catch(x){}});
-  renderAll();toast('Setup loaded. Your trades, reviews and accounts are unchanged.')}
-function setupPanelHTML(){return '<div class="panel"><h2>Setup file</h2><p class="help">Saves everything you set up, without a single trade: Customize, the Dashboard, your box templates and layouts, renamed titles, colors, lists, rates and shortcuts. Load it on the phone, or keep it as a spare. Accounts, trades, reviews, pictures and your PIN are never in it, and loading one leaves them alone.</p>'+
-  '<div class="actions" style="margin-top:0"><button class="btn" type="button" id="setupSave">Save setup file</button><label class="btn" style="margin:0;cursor:pointer">Load setup file<input id="setupFile" type="file" accept=".json,application/json" hidden></label></div></div>'}
+  renderAll();toast('Setup loaded. Your trades and reviews are unchanged.'+(acc||' Your accounts are unchanged.'))}
 document.addEventListener('click',function(e){if(e.target.id==='setupSave')setupSave()});
 document.addEventListener('change',function(e){if(e.target.id!=='setupFile'||!e.target.files[0])return;var f=e.target.files[0];e.target.value='';var fr=new FileReader();fr.onload=function(){setupLoad(fr.result)};fr.readAsText(f)});
 
 /* ---------- Customize, Layout ---------- */
 function layPlace(sc){var b=lblScope(sc),m=/@(.+)$/.exec(sc),t='';
+  if(b==='dash'&&m){var dt=DASH_TABS.filter(function(x){return x[0]===m[1]})[0];return 'Dashboard, '+(dt?dt[1]:m[1])}
   var n={plan:'Premarket','rev-daily':'Daily review','rev-weekly':'Weekly review',add:'Add trade',life:'Life journal',lifew:'Weekly life review',dash:'Dashboard'}[b]||(/^notes-/.test(b)?tabName(b.slice(6))+' notes':b);
   if(m){var k=b==='plan'?'plan':b.slice(4),s=tplSets(k).filter(function(x){return x.id===m[1]})[0];t=' ('+(s?s.name:'deleted template')+')'}
   if(/-sess$/.test(sc.replace(/@.*$/,'')))t+=' sessions';if(/-t$/.test(sc.replace(/@.*$/,'')))t+=', text boxes';if(/-c$/.test(sc.replace(/@.*$/,'')))t+=', choices';return n+t}
@@ -7428,7 +7453,7 @@ function arrPanelHTML(){var st=layCfg(),L=Object.keys(st.labels),lay=Object.keys
     '<h3 class="lay-h">Pages laid out by hand</h3>'+(lay.length?'<div class="lay-list">'+lay.map(function(k){return row(esc(layPlace(k)),Object.keys(st.layout[k]).length+' boxes placed','<button class="btn small" type="button" data-layreset="'+esc(k)+'">Back to the original</button>')}).join('')+'</div>':'<p class="muted lay-none">None yet.</p>')+
     '<h3 class="lay-h">Hidden boxes</h3>'+(off.length?'<div class="lay-list">'+off.map(function(k){var i=k.lastIndexOf('|'),v=st.boxOff[k];return row(esc(layPlace(k.slice(0,i))),esc(typeof v==='string'?v:k.slice(i+1)),'<button class="btn small" type="button" data-offreset="'+esc(k)+'">Show it</button>')}).join('')+'</div>':'<p class="muted lay-none">None. Dashboard boxes are chosen in Settings, Dashboard.</p>')+
     (L.length||lay.length||off.length?'<div class="actions"><button class="btn danger" type="button" id="layResetAll">Reset every layout, title and hidden box</button></div>':'')+'</div>'}
-function layoutPanelsHTML(){return arrPanelHTML()+tplPanelHTML()+presetPanelHTML()+setupPanelHTML()}
+function layoutPanelsHTML(){return arrPanelHTML()+tplPanelHTML()+presetPanelHTML()}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||!b.closest('#tab-custom'))return;var st=layCfg();
   if(b.dataset.lblreset){delete st.labels[b.dataset.lblreset];save();renderCustom();toast('Original name back');return}
   if(b.dataset.layreset){delete st.layout[b.dataset.layreset];save();renderCustom();toast('Layout reset');return}
@@ -7542,7 +7567,7 @@ var TOUR=[
   {tab:'add',sel:['.add-import','#qlFull','#tab-add .panel'],h:'Or import your trades',p:function(){return '<p>Bring trades in from a TradingView, NinjaTrader, Tradovate or Rithmic export, or drop the file anywhere on the window. Name your accounts the way your platform does and each trade lands in the right one.</p>'+
     ($('.add-import')?'':'<p>The import button is on the full form: press <b>Full form</b>.</p>')+
     (APP?'<p class="muted" style="font-size:13px">TradeVault can also watch the folder your platform exports to and import new files by itself: Settings, Setup &amp; data, TradeVault app.</p>':'')}},
-  {tab:'dash',sel:['#tab-dash .strip','#tab-dash .panel'],h:function(){return esc(tabName('dash'))},p:'<p>Your results at a glance: net P&amp;L, win rate, equity curve, daily P&amp;L, accounts and prop firm progress. The filters narrow it to one account, setup or date range.</p><p>Choose its boxes and summary numbers in Settings, Dashboard, and move, resize, rename or hide them with Arrange.</p>'},
+  {tab:'dash',sel:['#tab-dash .strip','#tab-dash .panel'],h:function(){return esc(tabName('dash'))},p:function(){return '<p>Your results at a glance: net P&amp;L, win rate, equity curve, daily P&amp;L, accounts and prop firm progress. The filters narrow it to one account, setup or date range.</p>'+(dashTabsOn()?'<p>The tabs along the top split it up: <b>Overview</b>, <b>Breakdowns</b>, <b>Discipline</b>, <b>Prop &amp; business</b>, and <b>Everything</b> for all of it on one page.</p>':'')+'<p>Choose its boxes, which tab each one is on, and the summary numbers in Settings, Dashboard. Move, resize, rename or hide them with Arrange.</p>'}},
   {sel:['#acctCard'],h:'Your balance',p:'<p>This card shows your balance and the drawdown room left on your tightest account. Click it to switch between the total balance, profit above your start, and each group.</p>'},
   {tab:'dash',sel:['#boxPlus'],skip:function(){return state.settings.plusOn===false},h:'Add your own boxes',p:'<p>The + at the top of a page adds your own box to it, for anything the journal doesn&#39;t ask yet: text, multiple choice, tags, a number, yes or no, a 1 to 5 rating or a time. Boxes on the trade form become filters, Trades columns and a Dashboard breakdown.</p>'},
   {tab:'dash',sel:['#arrBtn'],skip:function(){return state.settings.arrOn===false},h:'Arrange any page',p:function(){return '<p>'+(innerWidth<=760?'On a computer or tablet, the grid button at the top turns on Arrange. ':'Press this grid button to Arrange the page you&#39;re on. ')+'Drag boxes anywhere, leave gaps, resize them from their edges, click a title to rename it, and hide the boxes you don&#39;t need with their x. Press Done when you&#39;re finished.</p><p>Each page keeps its own layout, and a phone stacks the boxes in the same order. Reset layout puts a page back the way it was.</p>'}},
@@ -7557,18 +7582,18 @@ var TOUR=[
   {tab:'goals',sel:['#tab-goals .strip','#tab-goals .panel'],h:function(){return esc(tabName('goals'))},p:'<p>Set goals, give them a due date and track your progress toward them.</p>'},
   {sel:['#gearBtn'],h:'Settings',p:'<p>The gear opens Settings. It has four parts along the top: <b>Setup &amp; data</b> for your accounts, rates, lists and backups, <b>Dashboard</b> for what the Dashboard shows, <b>Customize</b> for how the whole journal looks and works, and <b>Update history</b> for what changed in each version.</p><p>Everything there is optional. The next steps open each part and show what it holds.</p>'},
   {tab:'data',sub:'accounts',sel:['#tab-data [data-dsub="accounts"]'],h:'Accounts',p:'<p>Add each account with its starting balance. For a prop firm account, add its rules: the max drawdown (fixed or trailing), daily loss limit, max contracts, profit target, minimum days, consistency rule and payout rules. The Dashboard then tracks each rule for you.</p><p>Copy trades to several accounts? Put them in a group: log on the leader, and each follower copies it at its own size. An end date closes an account without losing its history.</p>'},
-  {tab:'data',sub:'trading',sel:['#tab-data [data-dsub="trading"]'],h:'Trading',p:'<p>The most you risk on one trade, with an optional position size calculator on the trade form. The breakeven range, so tiny wins and losses count as breakeven. Your own round-trip commission for each contract, the point value and tick size of each contract, and what the Add trade form starts with.</p>'},
-  {tab:'data',sub:'lists',sel:['#tab-data [data-dsub="lists"]'],h:'Lists',p:'<p>The choices you pick from all over the journal: your setups, mistake tags, premarket checklist, market conditions, habits, bias and state of mind, rule and goal categories, life journal prompts and execution grades. Add, rename or remove any of them.</p>'},
+  {tab:'data',sub:'trading',sel:['#tab-data [data-dsub="trading"]'],h:'Trading',p:'<p>The most you risk on one trade, with an optional position size calculator on the trade form. The breakeven range, so tiny wins and losses count as breakeven. Your own round-trip commission for each contract, the point value and tick size of each contract, and what the Add trade form starts with. Your market sessions, the premarket plan sessions and when a trading day starts.</p>'},
+  {tab:'data',sub:'lists',sel:['#tab-data [data-dsub="lists"]'],h:'Lists',p:'<p>The choices you pick from all over the journal: your setups, mistake tags, premarket checklist, market conditions, bias and state of mind, rule and goal categories and execution grades. Add, rename or remove any of them.</p><p>Everything in Setup &amp; data saves as you change it.</p>'},
   {tab:'data',sub:'alerts',sel:['#tab-data [data-dsub="alerts"]'],h:'Alerts &amp; reminders',p:'<p>A tilt warning after a run of losses, with a break timer. Daily limits that put up a stop banner when you hit your max loss or max trades. When your session ends. Which reminders the Dashboard shows, like a missing plan or review, and a celebration when you finish a review.</p>'},
   {tab:'data',sub:'backup',sel:function(){return APP?['#tab-data [data-dsub="app"]','#tab-data [data-dsub="backup"]']:['#tab-data [data-dsub="backup"]']},h:'Keep a backup',
-    p:function(){return (APP?'<p>TradeVault saves your journal on this computer and makes backups by itself. Choose a backup folder of your own, ideally on another drive, in <b>TradeVault app</b>, where you also set up auto import, quick log and updates.</p><p><b>Backup &amp; data</b> saves or restores a backup file, can lock it with a password, checks your journal for problems, and resets it.</p>':
-      '<p>Your journal is stored in this browser only, so clearing the browser&#39;s data would erase it. Save a backup file now and then from <b>Backup &amp; data</b>, where you can also pick a folder it backs up to by itself, lock backups with a password, check your journal for problems, or reset it.</p>')}},
+    p:function(){return (APP?'<p>TradeVault saves your journal on this computer and makes backups by itself. Choose a backup folder of your own, ideally on another drive, in <b>TradeVault app</b>, where you also set up auto import, quick log and updates.</p><p><b>Backup &amp; data</b> saves or restores a backup file, can lock it with a password, checks your journal for problems, and resets it. A <b>setup file</b> copies your setup to another device, without your trades.</p>':
+      '<p>Your journal is stored in this browser only, so clearing the browser&#39;s data would erase it. Save a backup file now and then from <b>Backup &amp; data</b>, where you can also pick a folder it backs up to by itself, lock backups with a password, check your journal for problems, or reset it. A <b>setup file</b> copies your setup to another device, without your trades.</p>')}},
   {tab:'data',sub:'privacy',sel:['#tab-data [data-dsub="privacy"]'],h:'Privacy',p:'<p>An optional PIN that locks the journal each time it opens, with a recovery email in case you forget it.</p>'},
   {tab:'dashset',sel:['#tab-dashset .panel:not(.set-seg) h2'],h:'Dashboard settings',p:'<p>Tick the boxes the Dashboard shows and put them in order. <b>Summary numbers</b> picks the numbers in the row at the top.</p><p><b>Your own numbers</b> makes new ones from any slice of your trades, like your win rate when you followed your plan, or your P&amp;L on Mondays.</p>'},
   {tab:'custom',csub:'look',sel:['#tab-custom [data-csub="look"]'],h:'Customize: Look',p:'<p>The title at the top, the background (a pattern, a color or your own picture), dark or light theme, the colors for profit, loss, buttons and boxes, and the fonts.</p>'},
-  {tab:'custom',csub:'pages',sel:['#tab-custom [data-csub="pages"]'],h:'Customize: Pages',p:'<p>Hide, rename and reorder the tabs in the sidebar and pick the one the journal opens on. Change the keyboard shortcuts or add your own. Choose the Trades filters, the account card views, the Gallery certificates, the Playbook pages and which Life journal features are on.</p>'},
-  {tab:'custom',csub:'layout',sel:['#tab-custom [data-csub="layout"]'],h:'Customize: Layout',p:'<p>Everything you changed with Arrange in one list, to undo any of it. Turn the Arrange and + buttons off if you don&#39;t want them.</p><p><b>Templates</b> keep more than one premarket plan, daily review or weekly review, each with its own boxes, picked by weekday. <b>Saved layouts</b> switch every page&#39;s look at once. A <b>setup file</b> copies your setup to another device, without your trades.</p>'},
-  {tab:'custom',csub:'stats',sel:['#tab-custom [data-csub="stats"]'],h:'Customize: Stats',p:'<p>How the stats group your trades: hold times, R, time of day, sleep and mood. Your market sessions, the premarket plan sessions and when a trading day starts. The currency symbol and date style, the odds of passing test and the rolling chart windows.</p>'},
+  {tab:'custom',csub:'pages',sel:['#tab-custom [data-csub="pages"]'],h:'Customize: Pages',p:'<p>Hide, rename and reorder the tabs in the sidebar and pick the one the journal opens on. Change the keyboard shortcuts or add your own. Choose the Trades filters, the account card views, the Gallery certificates, the Playbook pages, and the Life journal: which features are on, your habits and its daily prompts.</p>'},
+  {tab:'custom',csub:'layout',sel:['#tab-custom [data-csub="layout"]'],h:'Customize: Layout',p:'<p>Everything you changed with Arrange in one list, to undo any of it. Turn the Arrange and + buttons off if you don&#39;t want them.</p><p><b>Templates</b> keep more than one premarket plan, daily review or weekly review, each with its own boxes, picked by weekday. <b>Saved layouts</b> switch every page&#39;s look at once.</p>'},
+  {tab:'custom',csub:'stats',sel:['#tab-custom [data-csub="stats"]'],h:'Customize: Stats',p:'<p>How the stats group your trades: hold times, R, time of day, sleep and mood. The currency symbol and date style, the odds of passing test and the rolling chart windows.</p>'},
   {tab:'custom',csub:'reports',sel:['#tab-custom [data-csub="reports"]'],h:'Customize: Reports',p:'<p>How the weekly report card grades you: the grade cut-offs, the points off for mistakes and loss limit days, and what counts. And which sections the monthly and yearly reports show.</p>'},
   {tab:'dash',sel:['#exBanner'],h:'You&#39;re all set',p:function(){return '<p>To get started:</p><ol class="blist">'+(exAny()?'<li>Clear the example data with <b>Clear examples</b>.</li>':'')+
     '<li>Add your accounts in Settings, Setup &amp; data, Accounts.</li><li>Log or import your first trade.</li></ol><p class="muted" style="font-size:13px">Take this tour again any time from Settings.</p>'},
@@ -8595,5 +8620,38 @@ Version 89  (Nov 9, 2026)  (Update history: 2.27)
   each Customize section, explaining what is in it. Steps for the
   Arrange and + buttons are left out when you turn those buttons off
 - TradeVault desktop app updated to 2.27.0
+Version 90 (Nov 10, 2026) (Update history: 2.28)
+A cleanup of what is already in the journal. Nothing was taken away.
+- Dashboard tabs: Overview, Breakdowns, Discipline, Prop & business,
+  and Everything for the whole thing on one page. Each tab keeps its
+  own Arrange layout. Move a box to another tab in Settings,
+  Dashboard, or turn the tabs off there to keep one long page
+- Reminders on the Dashboard now take one line, with "+N more" to
+  open the rest. The example data banner is slimmer, and the gap
+  under the quick check-in is no longer doubled
+- Setup & data saves as you make changes, like the rest of Settings.
+  The Save settings bar is gone
+- One setup file instead of two: it now lives in Backup & data and
+  replaces "Settings only". Tick "Include my accounts and groups" to
+  bring those along too. Older settings files still load
+- Market sessions, plan sessions and when a trading day starts moved
+  to Setup & data, Trading. Life journal habits and daily prompts
+  moved next to the other Life journal settings in Customize, Pages
+- Accounts only show the fields that apply: drawdown fields when a
+  drawdown type is picked, the trailing fields for a trailing
+  drawdown, and the prop firm fields for a prop firm account
+- "Choose TradingView file" is now "Import trades", since it takes
+  every platform's files
+- New journals are named TradeVault. A journal you already renamed
+  keeps its name
+- Add trade asks for the contract, side, size and setup first, then
+  prices, then the date and times
+- The Trades table has a little more room between its number columns
+- Tidied the code: page switching and page drawing are each one
+  function again instead of a stack of add-ons, and repeated styles
+  were merged. The look was checked page by page, on a computer and a
+  phone, to make sure nothing moved
+- The tour and the guide follow all of these moves
+- TradeVault desktop app updated to 2.28.0
 </script>
 </body></html>

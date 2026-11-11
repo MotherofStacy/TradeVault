@@ -20,7 +20,7 @@ TradeVault keeps your whole trading life in one place: trades, premarket plans, 
 - A position size calculator, and tilt warnings after a run of losses
 
 ### See where your edge is
-- A **dashboard** with net P&L, win rate, profit factor, expectancy, average R, average win and loss, and max drawdown
+- A **dashboard** with net P&L, win rate, profit factor, expectancy, average R, average win and loss, and max drawdown, split into tabs (Overview, Breakdowns, Discipline, Prop & business) so it stays easy to read
 - Equity curves, daily P&L, rolling stats, and breakdowns by setup, side, time of day, session, hold time, mistakes, mood and sleep
 - A **calendar** of your trading days, plans, reviews and life entries
 - A **weekly report card** with a grade, plus monthly and yearly reports

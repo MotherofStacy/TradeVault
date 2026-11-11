@@ -112,7 +112,7 @@ There are three ways to get trades in.
 
 The extra detail is what makes the reports useful, so fill in what you can.
 
-**Import from your platform.** Export your fills or trades from **TradingView, NinjaTrader, Tradovate or Rithmic**. Then press the import button on Add trade, or drop the file anywhere on the window. Trades you already have are skipped, so importing the same file twice is safe. From NinjaTrader you can import the Orders grid, the Trades tab, or both: the second one fills in the trades the first one made (stop and target from the Orders grid; MAE, MFE and commission from the Trades tab) instead of adding copies.
+**Import from your platform.** Export your fills or trades from **TradingView, NinjaTrader, Tradovate or Rithmic**. Then press **Import trades** on Add trade, or drop the file anywhere on the window. Trades you already have are skipped, so importing the same file twice is safe. From NinjaTrader you can import the Orders grid, the Trades tab, or both: the second one fills in the trades the first one made (stop and target from the Orders grid; MAE, MFE and commission from the Trades tab) instead of adding copies.
 
 In the Windows app, two extras help:
 
@@ -133,7 +133,7 @@ Reminders on the Dashboard nudge you about a missing plan or review, drawdown or
 
 | Page | What it's for |
 |---|---|
-| **Dashboard** | Your results at a glance: P&L, win rate, equity curve, daily P&L, accounts, prop firm progress and breakdowns by setup, time and more |
+| **Dashboard** | Your results at a glance: P&L, win rate, equity curve, daily P&L, accounts, prop firm progress and breakdowns by setup, time and more. Tabs along the top split it into Overview, Breakdowns, Discipline, Prop & business, and Everything |
 | **Calendar** | Each day's P&L. Click a day to see its trades, plan and review together |
 | **Premarket** | Your plan before the session |
 | **Trades** | Every trade in a list you can search, filter and sort. Click one to see it in full |
@@ -149,32 +149,32 @@ The **balance card** at the top shows your balance and the drawdown room left on
 
 ## 7. Every setting, and what it does
 
-The gear opens **Settings**. Everything in it is optional: leave it alone and the journal works out of the box. It has four parts along the top.
+The gear opens **Settings**. Everything in it is optional: leave it alone and the journal works out of the box. Changes save as you make them; there is no Save button. It has four parts along the top.
 
 ### Setup & data
 
 | Section | What's in it |
 |---|---|
 | **Accounts** | Each account's starting balance, start and end dates, and prop firm rules: max drawdown (fixed or trailing), daily loss limit, max contracts, profit target, minimum days, consistency rule and payout rules. Groups copy trades from a leader account to followers at their own size |
-| **Trading** | The most you risk on one trade and the position size calculator, the breakeven range, your own round-trip commission per contract, each contract's point value and tick size, and what the Add trade form starts with |
-| **Lists** | The choices you pick from: setups, mistake tags, premarket checklist, market conditions, habits, bias, state of mind, rule and goal categories, life journal prompts and execution grades |
+| **Trading** | The most you risk on one trade and the position size calculator, the breakeven range, your own round-trip commission per contract, each contract's point value and tick size, what the Add trade form starts with, your market sessions and premarket plan sessions, and when a trading day starts (6 PM by default, when the futures session opens) |
+| **Lists** | The choices you pick from: setups, mistake tags, premarket checklist, market conditions, bias, state of mind, rule and goal categories and execution grades |
 | **Alerts & reminders** | Tilt warning after a run of losses, daily limits with a stop banner, when your session ends, which reminders the Dashboard shows, and celebrations |
-| **Backup & data** | Save or restore a backup file, an automatic backup folder, a backup password, Check my journal, and Reset |
+| **Backup & data** | Save or restore a backup file, an automatic backup folder, a backup password, Check my journal, and Reset. A **setup file** copies your setup to another device without your trades; tick **Include my accounts and groups** to bring those too |
 | **Privacy** | An optional PIN lock, with a recovery email |
 | **TradeVault app** | (Windows app only) Your backup folder, auto import from your platform's export folder, quick log and updates |
 
 ### Dashboard
 
-Tick the boxes the Dashboard shows and put them in order. **Summary numbers** picks the numbers in the row at the top. **Your own numbers** makes new ones from any slice of your trades, like your win rate when you followed your plan, or your P&L on Mondays in the last 30 days.
+Tick the boxes the Dashboard shows, put them in order, and pick the tab each one sits on. You can also turn the tabs off to keep one long page. **Summary numbers** picks the numbers in the row at the top. **Your own numbers** makes new ones from any slice of your trades, like your win rate when you followed your plan, or your P&L on Mondays in the last 30 days.
 
 ### Customize
 
 | Section | What's in it |
 |---|---|
 | **Look** | The site title, background (Blueprint, Chart paper, Dot grid, Topographic, Carbon fiber, a solid color or your own picture), dark or light theme, colors for profit, loss, buttons and boxes, and fonts |
-| **Pages** | Hide, rename and reorder the tabs and pick the one the journal opens on, keyboard shortcuts (change them or add your own), how many trades the Trades tab shows, which Trades filters appear, the account card views, Gallery certificates, Playbook options and which Life journal features are on |
-| **Layout** | Everything you changed with Arrange, to undo any of it, and switches to turn the Arrange and + buttons off. **Templates**: more than one premarket plan, daily review or weekly review, each with its own boxes, picked per day or by weekday. **Saved layouts** to switch every page's look at once. A **setup file** that copies your setup to another device, without your trades or accounts |
-| **Stats** | How the stats group your trades (hold time, R, time of day, sleep, mood), your market sessions and plan sessions, when a trading day starts (6 PM by default, when the futures session opens), currency symbol and date style, the odds of passing test, and the rolling chart windows |
+| **Pages** | Hide, rename and reorder the tabs and pick the one the journal opens on, keyboard shortcuts (change them or add your own), how many trades the Trades tab shows, which Trades filters appear, the account card views, Gallery certificates, Playbook options, and the Life journal: which features are on, your habits and its daily prompts |
+| **Layout** | Everything you changed with Arrange, to undo any of it, and switches to turn the Arrange and + buttons off. **Templates**: more than one premarket plan, daily review or weekly review, each with its own boxes, picked per day or by weekday. **Saved layouts** to switch every page's look at once |
+| **Stats** | How the stats group your trades (hold time, R, time of day, sleep, mood), currency symbol and date style, the odds of passing test, and the rolling chart windows |
 | **Reports** | How the weekly report card grades you (grade cut-offs, points off for mistakes and loss limit days, what counts) and which sections the monthly and yearly reports show |
 
 ### Update history
@@ -193,7 +193,7 @@ Your journal lives only on your own devices. Nothing is uploaded anywhere, which
 
 **Windows won't install it.** Click **More info**, then **Run anyway** on the "Windows protected your PC" screen. If the download itself is blocked, open the browser's downloads list and choose **Keep**.
 
-**Why did a trade after 6 PM land on the next day?** Futures trading days start in the evening, so an evening trade belongs to the next day's session. You can change or turn this off in **Customize → Groupings in the stats**.
+**Why did a trade after 6 PM land on the next day?** Futures trading days start in the evening, so an evening trade belongs to the next day's session. You can change or turn this off in **Setup & data → Trading**.
 
 **My fees look wrong.** TradeVault only uses the per-contract rates you entered in **Setup & data → Trading**. Check the rate for that market. Each trade keeps the rate from the day it was logged, so changing your rates later doesn't rewrite past trades.
 
